@@ -223,24 +223,24 @@
         <!-- HERO: Total PNL + Equity Curve -->
         <div class="lg:col-span-12">
             <div class="porto-card hero-panel rounded-3xl p-5 md:p-7">
-                <div class="relative flex flex-col md:flex-row md:items-end justify-between gap-6">
-                    <div>
-                        <div class="text-[11px] font-semibold tracking-wide text-[var(--text-faint)] mb-1.5">Total P&amp;L</div>
-                        <div id="statTotal" class="font-display text-4xl md:text-5xl font-bold leading-none">–</div>
-                        <div id="statTotalIdr" class="num text-sm text-[var(--text-dim)] mt-2">–</div>
+                <div class="relative flex flex-row items-end justify-between gap-3">
+                    <div class="min-w-0">
+                        <div class="text-[10px] md:text-[11px] font-semibold tracking-wide text-[var(--text-faint)] mb-1 md:mb-1.5">Total P&amp;L</div>
+                        <div id="statTotal" class="font-display text-2xl sm:text-3xl md:text-5xl font-bold leading-none truncate">–</div>
+                        <div id="statTotalIdr" class="num text-[11px] md:text-sm text-[var(--text-dim)] mt-1.5 md:mt-2 truncate">–</div>
                     </div>
-                    <div class="flex gap-8 md:gap-12">
+                    <div class="flex gap-4 md:gap-12 shrink-0 text-right">
                         <div>
-                            <div class="text-[11px] font-semibold tracking-wide text-[var(--text-faint)] mb-1.5">Trades</div>
-                            <div id="statCount" class="font-display text-2xl font-bold text-slate-100">–</div>
+                            <div class="text-[10px] md:text-[11px] font-semibold tracking-wide text-[var(--text-faint)] mb-1 md:mb-1.5">Trades</div>
+                            <div id="statCount" class="font-display text-base md:text-2xl font-bold text-slate-100">–</div>
                         </div>
                         <div>
-                            <div class="text-[11px] font-semibold tracking-wide text-[var(--text-faint)] mb-1.5">Win rate</div>
-                            <div id="statWinRate" class="font-display text-2xl font-bold text-slate-100">–</div>
+                            <div class="text-[10px] md:text-[11px] font-semibold tracking-wide text-[var(--text-faint)] mb-1 md:mb-1.5">Win rate</div>
+                            <div id="statWinRate" class="font-display text-base md:text-2xl font-bold text-slate-100">–</div>
                         </div>
                     </div>
                 </div>
-                <div id="equityCurve" class="relative mt-5 h-20 md:h-24 w-full"></div>
+                <div id="equityCurve" class="relative mt-4 md:mt-5 h-14 sm:h-16 md:h-24 w-full"></div>
             </div>
         </div>
 
@@ -708,7 +708,17 @@
                 dailyMap[closedDate].count += 1;
             });
 
+            // Di layar mobile (<1024px), begitu satu tanggal difilter, tanggal
+            // lain disembunyikan total -> kolom Rekap Harian jadi pendek dan
+            // Riwayat Trade otomatis naik ke atas tanpa perlu scroll manual.
+            // Di desktop kolomnya independen, jadi tetap tampilkan semua tanggal.
+            const isMobileView = window.matchMedia('(max-width: 1023px)').matches;
+
             Object.keys(dailyMap).forEach((date, i) => {
+                if (isMobileView && selectedFilterDate && date !== selectedFilterDate) {
+                    return;
+                }
+
                 const summary = dailyMap[date];
                 const isProf = summary.total >= 0;
                 const color = isProf ? 'text-emerald-400' : 'text-rose-400';
@@ -782,7 +792,7 @@
                             <span class="num font-bold text-sm ${pnlColor} whitespace-nowrap">${isProfit ? '+' : ''}${pnlNum.toFixed(2)} USDT</span>
                         </div>
                         <div class="flex items-center justify-between gap-2 mt-0.5">
-                            <span class="text-[10px] sm:text-[11px] text-[var(--text-dim)]">#${item.no} • ${item.closed}</span>
+                            <span class="text-[10px] sm:text-[11px] text-[var(--text-faint)]">#${item.no} • ${item.closed}</span>
                             <span class="text-[9px] sm:text-[10px] text-[var(--text-faint)] num">${totalIdr}</span>
                         </div>
                     </div>
@@ -803,7 +813,7 @@
             const isProfit = total >= 0;
 
             totalEl.textContent = `${isProfit ? '+' : ''}${total.toFixed(2)} USDT`;
-            totalEl.className = `font-display text-4xl md:text-5xl font-bold leading-none ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
+            totalEl.className = `font-display text-2xl sm:text-3xl md:text-5xl font-bold leading-none truncate ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
             
             if (totalIdrEl) {
                 totalIdrEl.textContent = formatRupiah(total * currentKursIdr);
