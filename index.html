@@ -398,7 +398,10 @@
             };
 
             if (!cachedGlobalResponse.history) cachedGlobalResponse.history = [];
-            cachedGlobalResponse.history.push(newItem);
+            // unshift, BUKAN push -> history dari server selalu "terbaru duluan"
+            // (lihat history.reverse() di Update.gs), jadi item baru wajib masuk
+            // ke index 0 (paling atas), bukan ke ujung array.
+            cachedGlobalResponse.history.unshift(newItem);
 
             let sumPnl = 0;
             let wins = 0;
