@@ -3,67 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fast Trading Log - Porto Style</title>
+    <meta name="theme-color" content="#06070b">
+    <title>Trading Log</title>
     <link rel="manifest" href="./manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <style>
+        :root {
+            --bg: #06070b;
+            --surface: #0f121a;
+            --surface-2: #161a24;
+            --border: #212635;
+            --border-soft: rgba(255,255,255,0.07);
+            --text: #eef1f7;
+            --text-dim: #8891a4;
+            --text-faint: #565e70;
+            --accent: #d9a441;
+            --accent-bright: #f0bd63;
+            --accent-dim: rgba(217,164,65,0.12);
+            --profit: #34d399;
+            --loss: #fb7185;
+        }
+
         html, body {
             width: 100%;
             min-height: 100vh;
             margin: 0;
             padding: 0;
-            background: #090a10;
-            color: #e2e8f0;
-            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Plus Jakarta Sans', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
         * { box-sizing: border-box; }
-        input, select, textarea, button { font-size: 15px !important; font-family: 'Inter', sans-serif; }
+        input, select, textarea, button { font-size: 15px !important; font-family: 'Plus Jakarta Sans', sans-serif; }
         .font-display { font-family: 'Space Grotesk', sans-serif; }
         .num { font-family: 'Space Grotesk', sans-serif; font-variant-numeric: tabular-nums; }
 
-        /* Custom Scrollbar Porto Style */
+        .bg-glow {
+            position: fixed;
+            top: -220px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 900px;
+            height: 420px;
+            background: radial-gradient(ellipse at center, rgba(217,164,65,0.10) 0%, rgba(217,164,65,0) 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Custom Scrollbar */
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 8px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #23273c; border-radius: 8px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #6366f1; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--accent); }
 
-        /* Batasi maksimal 7 baris rekap harian khusus Tampilan HP */
         @media (max-width: 1023px) {
-            #dailySummaryList {
-                max-height: 380px;
-                overflow-y: auto;
-            }
+            #dailySummaryList { max-height: 380px; overflow-y: auto; }
         }
 
-        /* Porto Theme Cards */
         .porto-card {
-            background: #10121d;
-            border: 1px solid #1e2235;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.03);
         }
         .porto-input {
-            background: #090a10;
-            border: 1px solid #23273c;
-            color: #f1f5f9;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            transition: border-color .15s ease, box-shadow .15s ease;
         }
         .porto-input:focus {
-            border-color: #6366f1;
+            border-color: var(--accent);
             outline: none;
+            box-shadow: 0 0 0 3px var(--accent-dim);
         }
 
-        .flatpickr-calendar { background: #10121d !important; box-shadow: 0 10px 30px rgba(0,0,0,.6) !important; border: 1px solid #23273c !important; }
-        .flatpickr-day.selected { background: #6366f1 !important; border-color: #6366f1 !important; color: #ffffff !important; }
-        .flatpickr-day.today { border-color: #6366f1 !important; }
-        
+        .section-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #e7eaf1;
+            letter-spacing: 0.01em;
+        }
+        .section-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .flatpickr-calendar { background: var(--surface) !important; box-shadow: 0 10px 30px rgba(0,0,0,.6) !important; border: 1px solid var(--border) !important; }
+        .flatpickr-day.selected { background: var(--accent) !important; border-color: var(--accent) !important; color: #06070b !important; }
+        .flatpickr-day.today { border-color: var(--accent) !important; }
+
         @keyframes riseIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .rise-in { animation: riseIn .3s ease-out both; }
 
-        /* Toast Notification Styling (Tengah-Atas Layar) */
         #toast {
             position: fixed;
             top: 20%;
@@ -78,52 +117,94 @@
             opacity: 1;
             transform: translate(-50%, -50%) scale(1);
         }
+
+        .topbar {
+            background: rgba(15,18,26,0.85);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-soft);
+        }
+        .logo-mark {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--accent-dim);
+            border: 1px solid rgba(217,164,65,0.35);
+            color: var(--accent-bright);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .kurs-pill {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+        }
+        .stat-card {
+            border-left: 2px solid var(--border);
+            transition: border-color .2s ease;
+        }
     </style>
 </head>
-<body class="p-3 md:p-6 flex justify-center">
+<body class="relative">
+    <div class="bg-glow"></div>
 
-    <!-- Container Utama Layout 3 Kolom Full Layar -->
-    <div class="w-full max-w-[1600px] grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-
-        <!-- KOLOM 1 (KIRI): Header, Stats, Form Input Awal -->
-        <div class="lg:col-span-4 xl:col-span-4 space-y-5 lg:sticky lg:top-6">
-            
-            <!-- Header (Compact Style) -->
-            <div class="porto-card px-4 py-3 rounded-xl flex items-center justify-between border-l-4 border-l-indigo-500">
-                <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-display text-base font-bold">
-                        ⚡
-                    </div>
-                    <div>
-                        <h1 class="font-display text-base font-bold tracking-tight text-white leading-none">TRADING LOG</h1>
-                        <p class="text-[10px] text-slate-400 mt-0.5">Jurnal Presisi & Rekap Otomatis</p>
-                    </div>
+    <!-- TOP BAR -->
+    <header class="topbar sticky top-0 z-40">
+        <div class="max-w-[1600px] mx-auto px-4 md:px-6 py-3 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="logo-mark">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 17 L4 11" />
+                        <rect x="2.3" y="11" width="3.4" height="4" rx="0.6" />
+                        <path d="M12 19 L12 9" />
+                        <rect x="10.3" y="9" width="3.4" height="6" rx="0.6" />
+                        <path d="M20 15 L20 5" />
+                        <rect x="18.3" y="5" width="3.4" height="6" rx="0.6" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-display text-[15px] font-bold tracking-tight text-white leading-none">Trading Log</h1>
+                    <p class="text-[11px] text-[var(--text-dim)] mt-1">Jurnal presisi & rekap otomatis</p>
                 </div>
             </div>
+            <div id="headerKurs" class="kurs-pill num text-[11px] px-3 py-1.5 rounded-full whitespace-nowrap">
+                Memuat kurs…
+            </div>
+        </div>
+    </header>
+
+    <main class="relative z-10 p-3 md:p-6 flex justify-center">
+    <div class="w-full max-w-[1600px] grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+        <!-- KOLOM 1 (KIRI): Stats, Form Input -->
+        <div class="lg:col-span-4 xl:col-span-4 space-y-5 lg:sticky lg:top-20">
 
             <!-- Stats Bar -->
             <div id="statsBar" class="grid grid-cols-3 gap-2.5">
-                <div class="porto-card p-3 rounded-xl text-center flex flex-col justify-center">
-                    <div class="text-[10px] uppercase font-semibold tracking-wider text-slate-400 mb-0.5">Total PNL</div>
+                <div id="statTotalCard" class="porto-card stat-card p-3 rounded-xl text-center flex flex-col justify-center">
+                    <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-0.5">Total PNL</div>
                     <div id="statTotal" class="num text-sm font-bold text-slate-200">–</div>
-                    <div id="statTotalIdr" class="text-[10px] text-slate-400 font-medium num mt-0.5">–</div>
+                    <div id="statTotalIdr" class="text-[10px] text-[var(--text-dim)] font-medium num mt-0.5">–</div>
                 </div>
-                <div class="porto-card p-3 rounded-xl text-center flex flex-col justify-center">
-                    <div class="text-[10px] uppercase font-semibold tracking-wider text-slate-400 mb-0.5">Trades</div>
+                <div class="porto-card stat-card p-3 rounded-xl text-center flex flex-col justify-center">
+                    <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-0.5">Trades</div>
                     <div id="statCount" class="num text-sm font-bold text-slate-200">–</div>
                 </div>
-                <div class="porto-card p-3 rounded-xl text-center flex flex-col justify-center">
-                    <div class="text-[10px] uppercase font-semibold tracking-wider text-slate-400 mb-0.5">Win Rate</div>
+                <div class="porto-card stat-card p-3 rounded-xl text-center flex flex-col justify-center">
+                    <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-0.5">Win Rate</div>
                     <div id="statWinRate" class="num text-sm font-bold text-slate-200">–</div>
                 </div>
             </div>
 
-            <!-- Form Input Trade Langsung -->
+            <!-- Form Input Trade -->
             <form id="tradeForm" onsubmit="handleSubmit(event)" class="porto-card p-5 rounded-2xl space-y-4">
-                <h2 class="text-xs font-bold uppercase tracking-wider text-indigo-400">Input Position</h2>
-                
+                <div class="flex items-center gap-2">
+                    <span class="section-dot"></span>
+                    <h2 class="section-label">Input position</h2>
+                </div>
+
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Pair / Koin</label>
+                    <label class="block text-xs font-medium text-[var(--text-dim)] mb-1.5">Pair / Koin</label>
                     <input type="text" id="pair" list="pairList" required placeholder="Contoh: BTCUSDT" onblur="formatPairInput(this)" class="w-full porto-input rounded-xl px-3.5 py-2.5 uppercase font-medium">
                     <datalist id="pairList">
                         <option value="ADAUSDT">
@@ -168,65 +249,72 @@
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1.5">Opened Date</label>
+                        <label class="block text-xs font-medium text-[var(--text-dim)] mb-1.5">Opened date</label>
                         <input type="text" id="opened" required placeholder="dd/mm/yyyy" class="w-full porto-input rounded-xl px-3.5 py-2.5">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1.5">Closed Date</label>
+                        <label class="block text-xs font-medium text-[var(--text-dim)] mb-1.5">Closed date</label>
                         <input type="text" id="closed" required placeholder="dd/mm/yyyy" class="w-full porto-input rounded-xl px-3.5 py-2.5">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Closing PNL (USDT)</label>
+                    <label class="block text-xs font-medium text-[var(--text-dim)] mb-1.5">Closing PNL (USDT)</label>
                     <input type="number" step="any" id="pnl" required placeholder="0.00 (minus pakai -)" class="w-full porto-input rounded-xl px-3.5 py-2.5 num font-medium">
                 </div>
 
-                <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-indigo-600/20">
-                    Simpan Position
+                <button type="submit" id="submitBtn" class="w-full bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-[#1a1305] font-semibold py-3 rounded-xl transition shadow-lg shadow-amber-500/20">
+                    Simpan position
                 </button>
             </form>
         </div>
 
         <!-- KOLOM 2 (TENGAH): Rekap Harian -->
-        <div class="lg:col-span-4 xl:col-span-4 space-y-4 lg:sticky lg:top-6">
+        <div class="lg:col-span-4 xl:col-span-4 space-y-4 lg:sticky lg:top-20">
             <div class="porto-card p-4 sm:p-5 rounded-2xl space-y-3">
                 <div class="flex justify-between items-center mb-1">
-                    <h2 class="text-xs font-bold uppercase tracking-wider text-indigo-400">Rekap Harian</h2>
-                    <span class="text-[10px] text-slate-400">Klik tanggal untuk filter</span>
+                    <div class="flex items-center gap-2">
+                        <span class="section-dot"></span>
+                        <h2 class="section-label">Rekap harian</h2>
+                    </div>
+                    <span class="text-[10px] text-[var(--text-faint)]">Klik tanggal untuk filter</span>
                 </div>
-                <div id="dailySummaryList" class="space-y-2 lg:max-h-[calc(100vh-140px)] overflow-y-auto pr-1 custom-scroll"></div>
+                <div id="dailySummaryList" class="space-y-2 lg:max-h-[calc(100vh-160px)] overflow-y-auto pr-1 custom-scroll"></div>
             </div>
         </div>
 
-        <!-- KOLOM 3 (KANAN): Seluruh Riwayat Trade -->
-        <div class="lg:col-span-4 xl:col-span-4 space-y-4 lg:sticky lg:top-6">
+        <!-- KOLOM 3 (KANAN): Riwayat Trade -->
+        <div class="lg:col-span-4 xl:col-span-4 space-y-4 lg:sticky lg:top-20">
             <div class="porto-card p-4 sm:p-5 rounded-2xl space-y-3">
                 <div class="flex justify-between items-center mb-1">
-                    <h2 id="listHeaderTitle" class="text-xs font-bold uppercase tracking-wider text-indigo-400">Riwayat Trade</h2>
-                    <button id="resetFilterBtn" onclick="filterByDate(null)" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded hidden border border-slate-700">
-                        🔄 Semua Tanggal
+                    <div class="flex items-center gap-2">
+                        <span class="section-dot"></span>
+                        <h2 id="listHeaderTitle" class="section-label">Riwayat trade</h2>
+                    </div>
+                    <button id="resetFilterBtn" onclick="filterByDate(null)" class="text-[10px] bg-[var(--surface-2)] hover:bg-[#1d2230] text-slate-300 px-2 py-1 rounded hidden border border-[var(--border)]">
+                        ↺ Semua tanggal
                     </button>
                 </div>
-                <div id="loading" class="text-center text-xs text-slate-500 py-6" style="display:none;">Memuat data...</div>
-                <div id="tradeList" class="space-y-2 max-h-[calc(100vh-140px)] overflow-y-auto pr-1 custom-scroll"></div>
+                <div id="loading" class="text-center text-xs text-[var(--text-faint)] py-6" style="display:none;">Memuat data...</div>
+                <div id="tradeList" class="space-y-2 max-h-[calc(100vh-160px)] overflow-y-auto pr-1 custom-scroll"></div>
             </div>
         </div>
 
     </div>
+    </main>
 
-    <!-- POPUP MODAL HAPUS KUSTOM (PORTO STYLE) -->
+    <!-- MODAL HAPUS -->
     <div id="deleteModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="porto-card w-full max-w-sm p-6 rounded-2xl border border-rose-500/30 shadow-2xl space-y-4 rise-in text-center relative">
             <div class="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center text-xl font-bold mx-auto">
                 ⚠️
             </div>
             <div>
-                <h3 class="font-display font-bold text-white text-base mb-1">Hapus Trade</h3>
-                <p id="deleteModalText" class="text-xs text-slate-400">Yakin mau hapus trade ini?</p>
+                <h3 class="font-display font-bold text-white text-base mb-1">Hapus trade</h3>
+                <p id="deleteModalText" class="text-xs text-[var(--text-dim)]">Yakin mau hapus trade ini?</p>
             </div>
             <div class="flex gap-2 pt-2">
-                <button type="button" onclick="closeDeleteModal()" class="w-1/2 bg-[#1e2235] hover:bg-[#282d47] text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition">
+                <button type="button" onclick="closeDeleteModal()" class="w-1/2 bg-[var(--surface-2)] hover:bg-[#1d2230] text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition border border-[var(--border)]">
                     Batal
                 </button>
                 <button type="button" id="confirmDeleteBtn" class="w-1/2 bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-lg shadow-rose-600/20">
@@ -236,7 +324,7 @@
         </div>
     </div>
 
-    <!-- TOAST NOTIFICATION FLOATING -->
+    <!-- TOAST -->
     <div id="toast" class="px-5 py-3 rounded-2xl text-xs font-semibold shadow-2xl backdrop-blur-md border flex items-center gap-2">
         <span id="toastIcon"></span>
         <span id="toastText"></span>
@@ -256,6 +344,8 @@
                 .then(data => {
                     if (data && data.price) {
                         currentKursIdr = parseFloat(data.price);
+                        const kursEl = document.getElementById('headerKurs');
+                        if (kursEl) kursEl.textContent = `1 USDT ≈ ${formatRupiah(currentKursIdr)}`;
                     }
                 })
                 .catch(err => console.log("Pakai kurs fallback:", currentKursIdr));
@@ -336,8 +426,8 @@
                 } catch(e) {}
             }
             
-            // Ambil data terbaru di background
-            fetch(API_URL)
+            // Ambil data terbaru di background (no-store: jangan pernah kena cache)
+            fetch(`${API_URL}?_ts=${Date.now()}`, { cache: 'no-store' })
                 .then(res => res.json())
                 .then(data => {
                     cachedGlobalResponse = data;
@@ -371,7 +461,9 @@
             }).format(amount);
         }
 
-        // LOGIKA INSTAN SAMA PERSIS SEPERTI APLIKASI HUTANG
+        // LOGIKA INSTAN: render lokal duluan, sync ke Sheet di belakang layar.
+        // TIDAK ada refetch langsung setelah kirim -> itu penyebab data sempat
+        // "kedip" balik ke versi lama (race condition / cache jaringan).
         function handleSubmit(e) {
             e.preventDefault();
             const pairField = document.getElementById('pair');
@@ -398,9 +490,9 @@
             };
 
             if (!cachedGlobalResponse.history) cachedGlobalResponse.history = [];
-            // unshift, BUKAN push -> history dari server selalu "terbaru duluan"
-            // (lihat history.reverse() di Update.gs), jadi item baru wajib masuk
-            // ke index 0 (paling atas), bukan ke ujung array.
+            // unshift, BUKAN push -> history selalu "terbaru duluan" (lihat
+            // history.reverse() di Update.gs), jadi item baru wajib masuk ke
+            // index 0 (paling atas), bukan ke ujung array.
             cachedGlobalResponse.history.unshift(newItem);
 
             let sumPnl = 0;
@@ -427,16 +519,13 @@
             const encClosed = encodeURIComponent(closedVal);
             const encPnl = encodeURIComponent(pnlVal);
 
-            // Kirim ke Google Sheet di background
-            fetch(`${API_URL}?action=add&pair=${encPair}&opened=${encOpened}&closed=${encClosed}&pnl=${encPnl}`)
-                .then(() => {
-                    fetch(API_URL).then(res => res.json()).then(data => {
-                        cachedGlobalResponse = data;
-                        localStorage.setItem('tradingDataCache', JSON.stringify(data));
-                        renderDashboard(data);
-                    }).catch(err => {});
-                })
-                .catch(err => console.log(err));
+            // Kirim ke Google Sheet di background. Fire-and-forget: TIDAK ada
+            // refetch susulan yang menimpa state lokal yang sudah benar.
+            fetch(`${API_URL}?action=add&pair=${encPair}&opened=${encOpened}&closed=${encClosed}&pnl=${encPnl}`, { cache: 'no-store' })
+                .catch(err => {
+                    console.log(err);
+                    showToast("Gagal sync ke Sheet", "error");
+                });
         }
 
         function handleHapus(no) {
@@ -450,7 +539,7 @@
             document.getElementById('deleteModal').classList.add('hidden');
         }
 
-        // HAPUS INSTAN LOKAL LALU SINKRONISASI DI BACKGROUND
+        // HAPUS INSTAN LOKAL, sync ke Sheet di background tanpa refetch susulan
         document.getElementById('confirmDeleteBtn').onclick = function() {
             if (selectedNoToDelete === null) return;
             const no = selectedNoToDelete;
@@ -476,15 +565,11 @@
 
             showToast("Terhapus", "error");
 
-            fetch(`${API_URL}?action=delete&no=${no}`)
-                .then(() => {
-                    fetch(API_URL).then(res => res.json()).then(data => {
-                        cachedGlobalResponse = data;
-                        localStorage.setItem('tradingDataCache', JSON.stringify(data));
-                        renderDashboard(data);
-                    }).catch(err => {});
-                })
-                .catch(err => console.log(err));
+            fetch(`${API_URL}?action=delete&no=${no}`, { cache: 'no-store' })
+                .catch(err => {
+                    console.log(err);
+                    showToast("Gagal hapus di Sheet", "error");
+                });
         };
 
         function bindLongPress(element, no) {
@@ -531,8 +616,8 @@
             renderStats(res);
 
             if (!data || data.length === 0) {
-                tradeContainer.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">Belum ada data trading.</p>';
-                dailyContainer.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">Belum ada rekap.</p>';
+                tradeContainer.innerHTML = '<p class="text-xs text-[var(--text-faint)] text-center py-4">Belum ada data trading.</p>';
+                dailyContainer.innerHTML = '<p class="text-xs text-[var(--text-faint)] text-center py-4">Belum ada rekap.</p>';
                 return;
             }
 
@@ -563,21 +648,21 @@
                 const div = document.createElement('div');
                 div.className = `p-3 rounded-xl border cursor-pointer transition flex justify-between items-center ${
                     isSelected 
-                    ? 'bg-indigo-500/10 border-indigo-500 text-white font-bold ring-1 ring-indigo-500' 
-                    : 'bg-[#090a10] border-[#23273c] hover:border-slate-600 text-slate-200'
+                    ? 'bg-amber-500/10 border-amber-500 text-white font-bold ring-1 ring-amber-500' 
+                    : 'bg-[var(--bg)] border-[var(--border)] hover:border-slate-600 text-slate-200'
                 }`;
                 div.style.animationDelay = `${i * 25}ms`;
                 div.onclick = () => filterByDate(isSelected ? null : date);
                 div.innerHTML = `
                     <div>
                         <div class="font-display font-bold text-xs sm:text-sm text-white">${fullDateLabel}</div>
-                        <div class="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">${summary.count} trade tertutup</div>
+                        <div class="text-[10px] sm:text-[11px] text-[var(--text-dim)] mt-0.5">${summary.count} trade tertutup</div>
                     </div>
                     <div class="text-right">
                         <div class="num font-bold text-xs sm:text-sm ${color} whitespace-nowrap">
                             ${isProf ? '+' : ''}${summary.total.toFixed(2)} USDT
                         </div>
-                        <div class="num text-[9px] sm:text-[10px] text-slate-400 font-medium num mt-0.5 whitespace-nowrap">
+                        <div class="num text-[9px] sm:text-[10px] text-[var(--text-dim)] font-medium num mt-0.5 whitespace-nowrap">
                             ${totalIdr}
                         </div>
                     </div>
@@ -592,12 +677,12 @@
                 headerTitle.innerText = `Trade: ${selectedFilterDate}`;
                 resetBtn.classList.remove('hidden');
             } else {
-                headerTitle.innerText = "Riwayat Trade";
+                headerTitle.innerText = "Riwayat trade";
                 resetBtn.classList.add('hidden');
             }
 
             if (filteredData.length === 0) {
-                tradeContainer.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">Tidak ada trade pada tanggal ini.</p>';
+                tradeContainer.innerHTML = '<p class="text-xs text-[var(--text-faint)] text-center py-4">Tidak ada trade pada tanggal ini.</p>';
                 return;
             }
 
@@ -615,7 +700,7 @@
                 div.innerHTML = `
                     <div class="w-[38%] min-w-0 text-left">
                         <div class="text-[11px] sm:text-xs text-slate-300 font-medium truncate">
-                            <span class="text-indigo-400 font-bold">#${item.no}</span> • <span class="text-slate-200">${item.closed}</span>
+                            <span class="text-amber-400 font-bold">#${item.no}</span> • <span class="text-slate-200">${item.closed}</span>
                         </div>
                         <div class="text-[9px] sm:text-[10px] font-semibold ${isProfit ? 'text-emerald-500' : 'text-rose-500'} uppercase mt-0.5">${isProfit ? 'PROFIT' : 'LOSS'}</div>
                     </div>
@@ -624,7 +709,7 @@
                     </div>
                     <div class="w-[34%] text-right min-w-0">
                         <div class="num font-bold text-xs sm:text-sm ${pnlColor} whitespace-nowrap">${isProfit ? '+' : ''}${pnlNum.toFixed(2)} USDT</div>
-                        <div class="num text-[9px] sm:text-[10px] text-slate-400 font-medium num mt-0.5 whitespace-nowrap">${totalIdr}</div>
+                        <div class="num text-[9px] sm:text-[10px] text-[var(--text-dim)] font-medium num mt-0.5 whitespace-nowrap">${totalIdr}</div>
                     </div>
                 `;
 
@@ -636,6 +721,7 @@
         function renderStats(res) {
             const totalEl = document.getElementById('statTotal');
             const totalIdrEl = document.getElementById('statTotalIdr');
+            const totalCard = document.getElementById('statTotalCard');
             const countEl = document.getElementById('statCount');
             const winEl = document.getElementById('statWinRate');
 
@@ -644,6 +730,10 @@
 
             totalEl.textContent = `${isProfit ? '+' : ''}${total.toFixed(2)}`;
             totalEl.className = `num text-sm font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
+
+            if (totalCard) {
+                totalCard.style.borderLeftColor = isProfit ? '#34d399' : '#fb7185';
+            }
             
             if (totalIdrEl) {
                 totalIdrEl.textContent = formatRupiah(total * currentKursIdr);
