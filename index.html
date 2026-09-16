@@ -50,12 +50,11 @@
             transform: translateX(-50%);
             width: 900px;
             height: 420px;
-            background: radial-gradient(ellipse at center, rgba(217,164,65,0.10) 0%, rgba(217,164,65,0) 70%);
+            background: radial-gradient(ellipse at center, rgba(217,164,65,0.09) 0%, rgba(217,164,65,0) 70%);
             pointer-events: none;
             z-index: 0;
         }
 
-        /* Custom Scrollbar */
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 8px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
@@ -80,6 +79,14 @@
             border-color: var(--accent);
             outline: none;
             box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+
+        .row-card {
+            transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+        }
+        .row-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(0,0,0,.35);
         }
 
         .section-label {
@@ -119,9 +126,19 @@
         }
 
         .topbar {
+            position: sticky;
+            top: 0;
             background: rgba(15,18,26,0.85);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border-soft);
+        }
+        .topbar::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; bottom: -1px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent) 50%, transparent);
+            opacity: .45;
         }
         .logo-mark {
             width: 36px;
@@ -139,9 +156,35 @@
             border: 1px solid var(--border);
             color: var(--text-dim);
         }
-        .stat-card {
-            border-left: 2px solid var(--border);
-            transition: border-color .2s ease;
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 999px;
+            background: var(--profit);
+            box-shadow: 0 0 0 0 rgba(52,211,153,.6);
+            animation: pulse 2s infinite;
+            flex-shrink: 0;
+        }
+        @keyframes pulse {
+            0%   { box-shadow: 0 0 0 0 rgba(52,211,153,.55); }
+            70%  { box-shadow: 0 0 0 6px rgba(52,211,153,0); }
+            100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); }
+        }
+
+        .hero-panel {
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-panel::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(217,164,65,0.06), transparent 55%);
+            pointer-events: none;
+        }
+
+        .coin-badge {
+            font-family: 'Space Grotesk', sans-serif;
         }
     </style>
 </head>
@@ -149,7 +192,7 @@
     <div class="bg-glow"></div>
 
     <!-- TOP BAR -->
-    <header class="topbar sticky top-0 z-40">
+    <header class="topbar relative z-40">
         <div class="max-w-[1600px] mx-auto px-4 md:px-6 py-3 flex items-center justify-between gap-3">
             <div class="flex items-center gap-3">
                 <div class="logo-mark">
@@ -167,8 +210,9 @@
                     <p class="text-[11px] text-[var(--text-dim)] mt-1">Jurnal presisi & rekap otomatis</p>
                 </div>
             </div>
-            <div id="headerKurs" class="kurs-pill num text-[11px] px-3 py-1.5 rounded-full whitespace-nowrap">
-                Memuat kurs…
+            <div class="kurs-pill num text-[11px] px-3 py-1.5 rounded-full whitespace-nowrap flex items-center gap-2">
+                <span class="pulse-dot"></span>
+                <span id="headerKursValue">Memuat kurs…</span>
             </div>
         </div>
     </header>
@@ -176,27 +220,32 @@
     <main class="relative z-10 p-3 md:p-6 flex justify-center">
     <div class="w-full max-w-[1600px] grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
-        <!-- KOLOM 1 (KIRI): Stats, Form Input -->
-        <div class="lg:col-span-4 xl:col-span-4 space-y-5 lg:sticky lg:top-20">
-
-            <!-- Stats Bar -->
-            <div id="statsBar" class="grid grid-cols-3 gap-2.5">
-                <div id="statTotalCard" class="porto-card stat-card p-3 rounded-xl text-center flex flex-col justify-center">
-                    <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-0.5">Total PNL</div>
-                    <div id="statTotal" class="num text-sm font-bold text-slate-200">–</div>
-                    <div id="statTotalIdr" class="text-[10px] text-[var(--text-dim)] font-medium num mt-0.5">–</div>
+        <!-- HERO: Total PNL + Equity Curve -->
+        <div class="lg:col-span-12">
+            <div class="porto-card hero-panel rounded-3xl p-5 md:p-7">
+                <div class="relative flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div>
+                        <div class="text-[11px] font-semibold tracking-wide text-[var(--text-faint)] mb-1.5">Total P&amp;L</div>
+                        <div id="statTotal" class="font-display text-4xl md:text-5xl font-bold leading-none">–</div>
+                        <div id="statTotalIdr" class="num text-sm text-[var(--text-dim)] mt-2">–</div>
+                    </div>
+                    <div class="flex gap-8 md:gap-12">
+                        <div>
+                            <div class="text-[11px] font-semibold tracking-wide text-[var(--text-faint)] mb-1.5">Trades</div>
+                            <div id="statCount" class="font-display text-2xl font-bold text-slate-100">–</div>
+                        </div>
+                        <div>
+                            <div class="text-[11px] font-semibold tracking-wide text-[var(--text-faint)] mb-1.5">Win rate</div>
+                            <div id="statWinRate" class="font-display text-2xl font-bold text-slate-100">–</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="porto-card stat-card p-3 rounded-xl text-center flex flex-col justify-center">
-                    <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-0.5">Trades</div>
-                    <div id="statCount" class="num text-sm font-bold text-slate-200">–</div>
-                </div>
-                <div class="porto-card stat-card p-3 rounded-xl text-center flex flex-col justify-center">
-                    <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-0.5">Win Rate</div>
-                    <div id="statWinRate" class="num text-sm font-bold text-slate-200">–</div>
-                </div>
+                <div id="equityCurve" class="relative mt-5 h-20 md:h-24 w-full"></div>
             </div>
+        </div>
 
-            <!-- Form Input Trade -->
+        <!-- KOLOM 1 (KIRI): Form Input -->
+        <div class="lg:col-span-4 xl:col-span-4 space-y-5 lg:sticky lg:top-20">
             <form id="tradeForm" onsubmit="handleSubmit(event)" class="porto-card p-5 rounded-2xl space-y-4">
                 <div class="flex items-center gap-2">
                     <span class="section-dot"></span>
@@ -260,7 +309,8 @@
 
                 <div>
                     <label class="block text-xs font-medium text-[var(--text-dim)] mb-1.5">Closing PNL (USDT)</label>
-                    <input type="number" step="any" id="pnl" required placeholder="0.00 (minus pakai -)" class="w-full porto-input rounded-xl px-3.5 py-2.5 num font-medium">
+                    <input type="number" step="any" id="pnl" required placeholder="0.00 (minus pakai -)" oninput="updatePnlPreview()" class="w-full porto-input rounded-xl px-3.5 py-2.5 num font-medium">
+                    <div id="pnlPreview" class="text-[11px] text-[var(--text-faint)] num mt-1.5">≈ Rp 0</div>
                 </div>
 
                 <button type="submit" id="submitBtn" class="w-full bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-[#1a1305] font-semibold py-3 rounded-xl transition shadow-lg shadow-amber-500/20">
@@ -344,8 +394,9 @@
                 .then(data => {
                     if (data && data.price) {
                         currentKursIdr = parseFloat(data.price);
-                        const kursEl = document.getElementById('headerKurs');
+                        const kursEl = document.getElementById('headerKursValue');
                         if (kursEl) kursEl.textContent = `1 USDT ≈ ${formatRupiah(currentKursIdr)}`;
+                        updatePnlPreview();
                     }
                 })
                 .catch(err => console.log("Pakai kurs fallback:", currentKursIdr));
@@ -392,6 +443,16 @@
             } else {
                 input.value = val;
             }
+        }
+
+        // Live preview konversi PNL -> IDR saat user ngetik
+        function updatePnlPreview() {
+            const el = document.getElementById('pnlPreview');
+            if (!el) return;
+            const val = parseFloat(document.getElementById('pnl').value) || 0;
+            const isProfit = val >= 0;
+            el.textContent = `≈ ${isProfit ? '' : '-'}${formatRupiah(Math.abs(val) * currentKursIdr)}`;
+            el.style.color = val === 0 ? 'var(--text-faint)' : (isProfit ? 'var(--profit)' : 'var(--loss)');
         }
 
         function showToast(message, type = 'success') {
@@ -461,6 +522,16 @@
             }).format(amount);
         }
 
+        // Warna badge koin dihasilkan deterministik dari nama pair, jadi tiap
+        // koin selalu punya warna yang sama tiap render, tanpa perlu aset gambar.
+        function hashHue(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return Math.abs(hash) % 360;
+        }
+
         // LOGIKA INSTAN: render lokal duluan, sync ke Sheet di belakang layar.
         // TIDAK ada refetch langsung setelah kirim -> itu penyebab data sempat
         // "kedip" balik ke versi lama (race condition / cache jaringan).
@@ -513,6 +584,7 @@
 
             document.getElementById('pair').value = '';
             document.getElementById('pnl').value = '';
+            updatePnlPreview();
 
             const encPair = encodeURIComponent(pairVal);
             const encOpened = encodeURIComponent(openedVal);
@@ -614,6 +686,7 @@
             const data = res.history || [];
 
             renderStats(res);
+            renderEquityCurve(data);
 
             if (!data || data.length === 0) {
                 tradeContainer.innerHTML = '<p class="text-xs text-[var(--text-faint)] text-center py-4">Belum ada data trading.</p>';
@@ -646,11 +719,12 @@
                 var totalIdr = formatRupiah(summary.total * currentKursIdr);
 
                 const div = document.createElement('div');
-                div.className = `p-3 rounded-xl border cursor-pointer transition flex justify-between items-center ${
+                div.className = `row-card p-3 rounded-xl border cursor-pointer flex justify-between items-center border-l-2 ${
                     isSelected 
                     ? 'bg-amber-500/10 border-amber-500 text-white font-bold ring-1 ring-amber-500' 
                     : 'bg-[var(--bg)] border-[var(--border)] hover:border-slate-600 text-slate-200'
                 }`;
+                div.style.borderLeftColor = isProf ? 'var(--profit)' : 'var(--loss)';
                 div.style.animationDelay = `${i * 25}ms`;
                 div.onclick = () => filterByDate(isSelected ? null : date);
                 div.innerHTML = `
@@ -686,30 +760,31 @@
                 return;
             }
 
-            // Render Riwayat Trade (Format #no • tanggal)
+            // Render Riwayat Trade: badge koin berwarna + hierarki 2 baris
             filteredData.forEach((item, i) => {
                 const pnlNum = parseFloat(item.pnl) || 0;
                 const isProfit = pnlNum >= 0;
                 const pnlColor = isProfit ? 'text-emerald-400' : 'text-rose-400';
-                const bgCard = isProfit ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-rose-500/20 bg-rose-500/5';
                 const totalIdr = formatRupiah(pnlNum * currentKursIdr);
 
+                const hue = hashHue(item.pair);
+                const initials = item.pair.replace('USDT', '').slice(0, 3).toUpperCase() || '—';
+                const badgeStyle = `background: hsla(${hue},60%,55%,0.16); color: hsl(${hue},70%,70%); border:1px solid hsla(${hue},60%,55%,0.35);`;
+
                 const div = document.createElement('div');
-                div.className = `rise-in p-2.5 sm:p-3 rounded-xl border ${bgCard} flex items-center justify-between hover:border-slate-700 transition gap-1.5 cursor-pointer select-none`;
+                div.className = `row-card rise-in p-2.5 sm:p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] flex items-center gap-3 cursor-pointer select-none`;
                 div.style.animationDelay = `${i * 15}ms`;
                 div.innerHTML = `
-                    <div class="w-[38%] min-w-0 text-left">
-                        <div class="text-[11px] sm:text-xs text-slate-300 font-medium truncate">
-                            <span class="text-amber-400 font-bold">#${item.no}</span> • <span class="text-slate-200">${item.closed}</span>
+                    <div class="coin-badge shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold" style="${badgeStyle}">${initials}</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-display font-bold text-sm text-white truncate">${item.pair}</span>
+                            <span class="num font-bold text-sm ${pnlColor} whitespace-nowrap">${isProfit ? '+' : ''}${pnlNum.toFixed(2)} USDT</span>
                         </div>
-                        <div class="text-[9px] sm:text-[10px] font-semibold ${isProfit ? 'text-emerald-500' : 'text-rose-500'} uppercase mt-0.5">${isProfit ? 'PROFIT' : 'LOSS'}</div>
-                    </div>
-                    <div class="w-[28%] text-center px-1">
-                        <div class="font-display font-bold text-xs sm:text-sm text-white truncate">${item.pair}</div>
-                    </div>
-                    <div class="w-[34%] text-right min-w-0">
-                        <div class="num font-bold text-xs sm:text-sm ${pnlColor} whitespace-nowrap">${isProfit ? '+' : ''}${pnlNum.toFixed(2)} USDT</div>
-                        <div class="num text-[9px] sm:text-[10px] text-[var(--text-dim)] font-medium num mt-0.5 whitespace-nowrap">${totalIdr}</div>
+                        <div class="flex items-center justify-between gap-2 mt-0.5">
+                            <span class="text-[10px] sm:text-[11px] text-[var(--text-dim)]">#${item.no} • ${item.closed}</span>
+                            <span class="text-[9px] sm:text-[10px] text-[var(--text-faint)] num">${totalIdr}</span>
+                        </div>
                     </div>
                 `;
 
@@ -721,19 +796,14 @@
         function renderStats(res) {
             const totalEl = document.getElementById('statTotal');
             const totalIdrEl = document.getElementById('statTotalIdr');
-            const totalCard = document.getElementById('statTotalCard');
             const countEl = document.getElementById('statCount');
             const winEl = document.getElementById('statWinRate');
 
             const total = parseFloat(res.totalPnl) || 0;
             const isProfit = total >= 0;
 
-            totalEl.textContent = `${isProfit ? '+' : ''}${total.toFixed(2)}`;
-            totalEl.className = `num text-sm font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
-
-            if (totalCard) {
-                totalCard.style.borderLeftColor = isProfit ? '#34d399' : '#fb7185';
-            }
+            totalEl.textContent = `${isProfit ? '+' : ''}${total.toFixed(2)} USDT`;
+            totalEl.className = `font-display text-4xl md:text-5xl font-bold leading-none ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
             
             if (totalIdrEl) {
                 totalIdrEl.textContent = formatRupiah(total * currentKursIdr);
@@ -741,6 +811,53 @@
 
             countEl.textContent = res.totalTrades || 0;
             winEl.textContent = `${res.winRate || 0}%`;
+        }
+
+        // Equity curve: kumulatif PNL dari trade pertama -> terakhir,
+        // digambar sebagai mini area-chart, warna ikut arah total (untung/rugi).
+        function renderEquityCurve(history) {
+            const container = document.getElementById('equityCurve');
+            if (!container) return;
+
+            if (!history || history.length === 0) {
+                container.innerHTML = '<div class="h-full flex items-center text-[11px] text-[var(--text-faint)]">Belum ada data untuk kurva.</div>';
+                return;
+            }
+
+            const chron = [...history].reverse(); // history newest-first -> balik jadi kronologis
+            let cum = 0;
+            const points = chron.map(item => { cum += parseFloat(item.pnl) || 0; return cum; });
+
+            const n = points.length;
+            const w = 600, h = 100;
+            const min = Math.min(0, ...points);
+            const max = Math.max(0, ...points);
+            const range = (max - min) || 1;
+            const stepX = n > 1 ? w / (n - 1) : 0;
+
+            const coords = points.map((v, i) => {
+                const x = n > 1 ? i * stepX : w / 2;
+                const y = h - ((v - min) / range) * h;
+                return [x, y];
+            });
+
+            const linePath = coords.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+            const areaPath = `${linePath} L${w},${h} L0,${h} Z`;
+            const isProfit = points[points.length - 1] >= 0;
+            const strokeColor = isProfit ? '#34d399' : '#fb7185';
+
+            container.innerHTML = `
+                <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" class="w-full h-full">
+                    <defs>
+                        <linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="${strokeColor}" stop-opacity="0.35" />
+                            <stop offset="100%" stop-color="${strokeColor}" stop-opacity="0" />
+                        </linearGradient>
+                    </defs>
+                    <path d="${areaPath}" fill="url(#sparkGrad)" stroke="none" />
+                    <path d="${linePath}" fill="none" stroke="${strokeColor}" stroke-width="2" vector-effect="non-scaling-stroke" />
+                </svg>
+            `;
         }
 
         function handleError(err) {
