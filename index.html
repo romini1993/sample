@@ -253,7 +253,7 @@
                         </div>
                     </div>
                 </div>
-                <div id="equityCurve" class="relative mt-3 h-14 sm:h-16 w-full"></div>
+                <div id="equityCurve" class="relative mt-2 h-6 sm:h-8 w-full"></div>
             </div>
 
             <form id="tradeForm" onsubmit="handleSubmit(event)" class="porto-card p-3.5 rounded-2xl space-y-2">
@@ -311,11 +311,9 @@
                     </div>
                 </div>
 
-                <div>
-                    <input type="number" step="any" id="pnl" required placeholder="Closing PNL (USDT)" oninput="updatePnlPreview()" class="w-full porto-input rounded-xl px-3.5 py-2 num font-medium">
-                    <div class="flex justify-end mt-1">
-                        <span id="pnlPreview" class="text-[11px] text-[var(--text-faint)] num">≈ Rp 0</span>
-                    </div>
+                <div class="relative">
+                    <input type="number" step="any" id="pnl" required placeholder="Closing PNL (USDT)" oninput="updatePnlPreview()" class="w-full porto-input rounded-xl pl-3.5 pr-24 py-2 num font-medium">
+                    <span id="pnlPreview" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-[11px] text-[var(--text-faint)] num pointer-events-none text-right">≈ Rp 0</span>
                 </div>
 
                 <button type="submit" id="submitBtn" class="w-full bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-[#1a1305] font-semibold py-2.5 rounded-xl transition shadow-lg shadow-amber-500/20">
@@ -334,23 +332,23 @@
 
         <!-- KOLOM 2 (TENGAH): Rekap Harian (accordion) -->
         <div class="lg:col-span-4 xl:col-span-4 lg:sticky lg:top-16">
-            <div id="rekapCard" class="porto-card p-3 sm:p-4 rounded-2xl space-y-1.5 lg:block">
+            <div id="rekapCard" class="porto-card p-3 rounded-2xl space-y-1 lg:block">
 
-                <div class="hidden lg:flex justify-between items-center mb-0.5">
+                <div class="hidden lg:flex justify-between items-center">
                     <div class="flex items-center gap-2">
                         <span class="section-dot"></span>
                         <h2 class="section-label">Rekap harian</h2>
                     </div>
                     <span class="text-[10px] text-[var(--text-faint)]">Klik untuk buka</span>
                 </div>
-                <div id="dailySummaryList" class="space-y-1.5 lg:max-h-[calc(100vh-120px)] overflow-y-auto pr-1 custom-scroll"></div>
+                <div id="dailySummaryList" class="space-y-1.5 lg:max-h-[calc(100vh-100px)] overflow-y-auto pr-1 custom-scroll"></div>
             </div>
         </div>
 
         <!-- KOLOM 3 (KANAN): Riwayat Trade (selalu semua, tidak difilter) -->
         <div class="lg:col-span-4 xl:col-span-4 lg:sticky lg:top-16">
-            <div id="riwayatCard" class="porto-card p-3 sm:p-4 rounded-2xl space-y-1.5 hidden lg:block">
-                <div class="hidden lg:flex justify-between items-center mb-0.5">
+            <div id="riwayatCard" class="porto-card p-3 rounded-2xl space-y-1 hidden lg:block">
+                <div class="hidden lg:flex justify-between items-center">
                     <div class="flex items-center gap-2">
                         <span class="section-dot"></span>
                         <h2 class="section-label">Riwayat trade</h2>
@@ -358,7 +356,7 @@
                     <span class="text-[10px] text-[var(--text-faint)]">Tahan untuk edit/hapus</span>
                 </div>
                 <div id="loading" class="text-center text-xs text-[var(--text-faint)] py-6" style="display:none;">Memuat data...</div>
-                <div id="tradeList" class="space-y-1.5 lg:max-h-[calc(100vh-120px)] overflow-y-auto pr-1 custom-scroll"></div>
+                <div id="tradeList" class="space-y-1.5 lg:max-h-[calc(100vh-100px)] overflow-y-auto pr-1 custom-scroll"></div>
             </div>
         </div>
 
