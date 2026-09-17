@@ -60,7 +60,10 @@
         .custom-scroll { scrollbar-width: none; -ms-overflow-style: none; }
 
         @media (max-width: 1023px) {
-            #dailySummaryList { max-height: 420px; overflow-y: auto; }
+            #dailySummaryList, #tradeList {
+                max-height: calc(100vh - 300px);
+                overflow-y: auto;
+            }
         }
 
         .porto-card {
@@ -224,36 +227,35 @@
     <main class="relative z-10 p-3 md:p-6 flex justify-center">
     <div class="w-full max-w-[1600px] grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
-        <!-- HERO: Total PNL + Equity Curve -->
-        <div class="lg:col-span-12">
-            <div class="porto-card hero-panel rounded-3xl p-5 md:p-7">
+        <!-- KOLOM 1 (KIRI): Hero PNL + Form Input -->
+        <div class="lg:col-span-4 xl:col-span-4 space-y-4 lg:sticky lg:top-20">
+
+            <!-- HERO: Total PNL + Equity Curve -->
+            <div class="porto-card hero-panel rounded-3xl p-4 md:p-5">
                 <div class="relative flex flex-row items-start justify-between gap-3">
                     <div class="min-w-0">
-                        <div class="text-[10px] md:text-[11px] font-semibold tracking-wide text-[var(--text-faint)] mb-1 md:mb-1.5">Total P&amp;L</div>
-                        <div id="statTotal" class="font-display text-2xl sm:text-3xl md:text-5xl font-bold leading-none truncate">–</div>
-                        <div id="statTotalIdr" class="num text-[11px] md:text-sm text-[var(--text-dim)] mt-1.5 md:mt-2 truncate">–</div>
+                        <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1">Total P&amp;L</div>
+                        <div id="statTotal" class="font-display text-2xl sm:text-3xl md:text-3xl font-bold leading-none truncate">–</div>
+                        <div id="statTotalIdr" class="num text-[11px] text-[var(--text-dim)] mt-1.5 truncate">–</div>
                     </div>
-                    <div class="flex gap-4 md:gap-12 shrink-0 text-right">
+                    <div class="flex gap-4 shrink-0 text-right">
                         <div>
-                            <div class="text-[10px] md:text-[11px] font-semibold tracking-wide text-[var(--text-faint)] mb-1 md:mb-1.5">Trades</div>
-                            <div id="statCount" class="font-display text-base md:text-2xl font-bold text-slate-100">–</div>
+                            <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1">Trades</div>
+                            <div id="statCount" class="font-display text-base font-bold text-slate-100">–</div>
                         </div>
                         <div>
-                            <div class="text-[10px] md:text-[11px] font-semibold tracking-wide text-[var(--text-faint)] mb-1 md:mb-1.5">Win rate</div>
-                            <div id="statWinRate" class="font-display text-base md:text-2xl font-bold text-slate-100">–</div>
+                            <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1">Win rate</div>
+                            <div id="statWinRate" class="font-display text-base font-bold text-slate-100">–</div>
                         </div>
                     </div>
                 </div>
-                <div id="equityCurve" class="relative mt-4 md:mt-5 h-14 sm:h-16 md:h-24 w-full"></div>
+                <div id="equityCurve" class="relative mt-3 h-14 sm:h-16 w-full"></div>
             </div>
-        </div>
 
-        <!-- KOLOM 1 (KIRI): Form Input -->
-        <div class="lg:col-span-4 xl:col-span-4 space-y-5 lg:sticky lg:top-20">
-            <form id="tradeForm" onsubmit="handleSubmit(event)" class="porto-card p-4 rounded-2xl space-y-3">
+            <form id="tradeForm" onsubmit="handleSubmit(event)" class="porto-card p-3.5 rounded-2xl space-y-2.5">
                 <div>
                     <label class="block text-xs font-medium text-[var(--text-dim)] mb-1">Pair / Koin</label>
-                    <input type="text" id="pair" list="pairList" required placeholder="Contoh: BTCUSDT" onblur="formatPairInput(this)" class="w-full porto-input rounded-xl px-3.5 py-2.5 uppercase font-medium">
+                    <input type="text" id="pair" list="pairList" required placeholder="Contoh: BTCUSDT" onblur="formatPairInput(this)" class="w-full porto-input rounded-xl px-3.5 py-2 text-sm uppercase font-medium">
                     <datalist id="pairList">
                         <option value="ADAUSDT">
                         <option value="ALGOUSDT">
@@ -295,47 +297,56 @@
                     </datalist>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-2 gap-1.5">
                     <div>
                         <label class="block text-xs font-medium text-[var(--text-dim)] mb-1">Opened date</label>
-                        <input type="text" id="opened" required placeholder="dd/mm/yyyy" class="w-full porto-input rounded-xl px-3.5 py-2.5">
+                        <input type="text" id="opened" required placeholder="dd/mm/yyyy" class="w-full porto-input rounded-xl px-3.5 py-2 text-sm">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-[var(--text-dim)] mb-1">Closed date</label>
-                        <input type="text" id="closed" required placeholder="dd/mm/yyyy" class="w-full porto-input rounded-xl px-3.5 py-2.5">
+                        <input type="text" id="closed" required placeholder="dd/mm/yyyy" class="w-full porto-input rounded-xl px-3.5 py-2 text-sm">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-[var(--text-dim)] mb-1">Closing PNL (USDT)</label>
-                    <input type="number" step="any" id="pnl" required placeholder="0.00 (minus pakai -)" oninput="updatePnlPreview()" class="w-full porto-input rounded-xl px-3.5 py-2.5 num font-medium">
-                    <div id="pnlPreview" class="text-[11px] text-[var(--text-faint)] num mt-1">≈ Rp 0</div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="text-xs font-medium text-[var(--text-dim)]">Closing PNL (USDT)</label>
+                        <span id="pnlPreview" class="text-[11px] text-[var(--text-faint)] num">≈ Rp 0</span>
+                    </div>
+                    <input type="number" step="any" id="pnl" required placeholder="0.00 (minus pakai -)" oninput="updatePnlPreview()" class="w-full porto-input rounded-xl px-3.5 py-2 num font-medium">
                 </div>
 
-                <button type="submit" id="submitBtn" class="w-full bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-[#1a1305] font-semibold py-3 rounded-xl transition shadow-lg shadow-amber-500/20">
+                <button type="submit" id="submitBtn" class="w-full bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-[#1a1305] font-semibold py-2.5 rounded-xl transition shadow-lg shadow-amber-500/20">
                     Simpan position
                 </button>
             </form>
         </div>
 
         <!-- KOLOM 2 (TENGAH): Rekap Harian (accordion) -->
-        <div class="lg:col-span-4 xl:col-span-4 space-y-4 lg:sticky lg:top-20">
-            <div class="porto-card p-4 sm:p-5 rounded-2xl space-y-3">
-                <div class="flex justify-between items-center mb-1">
+        <div class="lg:col-span-4 xl:col-span-4 lg:sticky lg:top-20">
+            <div id="rekapCard" class="porto-card p-4 sm:p-5 rounded-2xl space-y-3 lg:block">
+
+                <!-- Tab pill: mobile only -->
+                <div class="lg:hidden flex items-center gap-1 p-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)]">
+                    <button type="button" id="tabBtnRekap" onclick="switchTab('rekap')" class="flex-1 text-center text-xs font-semibold py-2 rounded-full transition">Rekap Harian</button>
+                    <button type="button" id="tabBtnRiwayat" onclick="switchTab('riwayat')" class="flex-1 text-center text-xs font-semibold py-2 rounded-full transition">Riwayat Trade</button>
+                </div>
+
+                <div class="hidden lg:flex justify-between items-center mb-1">
                     <div class="flex items-center gap-2">
                         <span class="section-dot"></span>
                         <h2 class="section-label">Rekap harian</h2>
                     </div>
                     <span class="text-[10px] text-[var(--text-faint)]">Klik untuk buka</span>
                 </div>
-                <div id="dailySummaryList" class="space-y-2 lg:max-h-[calc(100vh-160px)] overflow-y-auto pr-1 custom-scroll"></div>
+                <div id="dailySummaryList" class="space-y-2 lg:max-h-[calc(100vh-140px)] overflow-y-auto pr-1 custom-scroll"></div>
             </div>
         </div>
 
         <!-- KOLOM 3 (KANAN): Riwayat Trade (selalu semua, tidak difilter) -->
-        <div class="lg:col-span-4 xl:col-span-4 space-y-4 lg:sticky lg:top-20">
-            <div class="porto-card p-4 sm:p-5 rounded-2xl space-y-3">
-                <div class="flex justify-between items-center mb-1">
+        <div class="lg:col-span-4 xl:col-span-4 lg:sticky lg:top-20">
+            <div id="riwayatCard" class="porto-card p-4 sm:p-5 rounded-2xl space-y-3 hidden lg:block">
+                <div class="hidden lg:flex justify-between items-center mb-1">
                     <div class="flex items-center gap-2">
                         <span class="section-dot"></span>
                         <h2 class="section-label">Riwayat trade</h2>
@@ -343,7 +354,7 @@
                     <span class="text-[10px] text-[var(--text-faint)]">Tahan untuk edit/hapus</span>
                 </div>
                 <div id="loading" class="text-center text-xs text-[var(--text-faint)] py-6" style="display:none;">Memuat data...</div>
-                <div id="tradeList" class="space-y-2 max-h-[calc(100vh-160px)] overflow-y-auto pr-1 custom-scroll"></div>
+                <div id="tradeList" class="space-y-2 lg:max-h-[calc(100vh-140px)] overflow-y-auto pr-1 custom-scroll"></div>
             </div>
         </div>
 
@@ -421,6 +432,7 @@
         let selectedNoForAction = null; // trade # yang sedang dipilih lewat long-press
         let selectedNoToDelete = null;
         let expandedDate = null; // tanggal yang sedang di-expand di Rekap Harian
+        let activeTab = 'rekap'; // tab aktif di mobile: 'rekap' atau 'riwayat'
         let cachedGlobalResponse = { history: [], totalPnl: 0, totalTrades: 0, winRate: 0 };
         let toastTimeout = null;
 
@@ -511,8 +523,31 @@
             }, 1800);
         }
 
+        function switchTab(tab) {
+            activeTab = tab;
+            const rekapCard = document.getElementById('rekapCard');
+            const riwayatCard = document.getElementById('riwayatCard');
+            const btnRekap = document.getElementById('tabBtnRekap');
+            const btnRiwayat = document.getElementById('tabBtnRiwayat');
+
+            // Di desktop (lg+) dua-duanya tetap tampil terpisah (class lg:block
+            // di riwayatCard yang nge-override 'hidden'); ini cuma ngatur mobile.
+            if (tab === 'rekap') {
+                rekapCard.classList.remove('hidden');
+                riwayatCard.classList.add('hidden');
+                btnRekap.className = 'flex-1 text-center text-xs font-semibold py-2 rounded-full transition bg-amber-500 text-[#1a1305]';
+                btnRiwayat.className = 'flex-1 text-center text-xs font-semibold py-2 rounded-full transition text-slate-400';
+            } else {
+                rekapCard.classList.add('hidden');
+                riwayatCard.classList.remove('hidden');
+                btnRiwayat.className = 'flex-1 text-center text-xs font-semibold py-2 rounded-full transition bg-amber-500 text-[#1a1305]';
+                btnRekap.className = 'flex-1 text-center text-xs font-semibold py-2 rounded-full transition text-slate-400';
+            }
+        }
+
         window.onload = function() {
             fetchRealtimeKurs();
+            switchTab('rekap');
             
             const cachedData = localStorage.getItem('tradingDataCache');
             if (cachedData) {
@@ -861,7 +896,7 @@
             const isProfit = total >= 0;
 
             totalEl.textContent = `${isProfit ? '+' : ''}${total.toFixed(2)} USDT`;
-            totalEl.className = `font-display text-2xl sm:text-3xl md:text-5xl font-bold leading-none truncate ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
+            totalEl.className = `font-display text-2xl sm:text-3xl font-bold leading-none truncate ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
 
             if (totalIdrEl) {
                 totalIdrEl.textContent = formatRupiah(total * currentKursIdr);
