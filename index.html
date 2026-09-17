@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <style>
         :root {
             --bg: #06070b;
@@ -119,19 +120,29 @@
         @keyframes expandIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
         .expand-in { animation: expandIn .2s ease-out both; }
 
-        #toast {
-            position: fixed;
-            top: 20%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.85);
-            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease;
-            opacity: 0;
-            z-index: 9999;
-            pointer-events: none;
+        .swal2-toast {
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            padding: 0.55em 1em !important;
+            font-size: 0.8rem !important;
+            border-radius: 12px !important;
+            box-shadow: 0 8px 20px rgba(0,0,0,.35) !important;
         }
-        #toast.show {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
+        .swal2-toast .swal2-title {
+            font-size: 0.82rem !important;
+            font-weight: 600 !important;
+            margin: 0 !important;
+        }
+        .swal2-toast .swal2-icon {
+            width: 1.4em !important;
+            height: 1.4em !important;
+            min-width: 1.4em !important;
+            margin: 0 0.5em 0 0 !important;
+        }
+        .swal2-toast .swal2-icon .swal2-icon-content {
+            font-size: 0.85em !important;
+        }
+        .swal2-toast .swal2-timer-progress-bar {
+            height: 3px !important;
         }
 
         .topbar {
@@ -236,7 +247,7 @@
 
             <form id="tradeForm" onsubmit="handleSubmit(event)" class="porto-card p-3.5 rounded-2xl space-y-2">
                 <div>
-                    <input type="text" id="pair" list="pairList" required placeholder="Pair" onblur="formatPairInput(this)" class="w-full porto-input rounded-xl px-3.5 py-2 text-sm uppercase font-medium">
+                    <input type="text" id="pair" list="pairList" required placeholder="Pair / Koin" onblur="formatPairInput(this)" class="w-full porto-input rounded-xl px-3.5 py-2 text-sm uppercase font-medium">
                     <datalist id="pairList">
                         <option value="ADAUSDT">
                         <option value="ALGOUSDT">
@@ -290,7 +301,7 @@
                 </div>
 
                 <div class="relative">
-                    <input type="number" step="any" id="pnl" required placeholder="Closing P&L" oninput="updatePnlPreview()" class="w-full porto-input rounded-xl pl-3.5 pr-24 py-2 num font-medium">
+                    <input type="number" step="any" id="pnl" required placeholder="Closing PNL (USDT)" oninput="updatePnlPreview()" class="w-full porto-input rounded-xl pl-3.5 pr-24 py-2 num font-medium">
                     <span id="pnlPreview" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-[11px] text-[var(--text-faint)] num pointer-events-none text-right">≈ Rp 0</span>
                 </div>
 
@@ -400,12 +411,7 @@
         </div>
     </div>
 
-    <!-- TOAST -->
-    <div id="toast" class="px-5 py-3 rounded-2xl text-xs font-semibold shadow-2xl backdrop-blur-md border flex items-center gap-2">
-        <span id="toastIcon"></span>
-        <span id="toastText"></span>
-    </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbxXyZd1pekC0tZRdwuY-aQzJb7veINYpp_sheoxMemO9sSrduj26QRhR4kHokR5iqJq/exec"; 
         let currentKursIdr = 17550;
@@ -483,24 +489,35 @@
         }
 
         function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const icon = document.getElementById('toastIcon');
-            const text = document.getElementById('toastText');
-
-            if (toastTimeout) clearTimeout(toastTimeout);
-            text.innerText = message;
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
 
             if (type === 'success') {
-                icon.innerText = '✓';
-                toast.className = "px-5 py-3 rounded-2xl text-xs font-semibold shadow-2xl backdrop-blur-md border flex items-center gap-2 bg-emerald-500/20 border-emerald-500/40 text-emerald-300 show";
+                Toast.fire({
+                    icon: 'success',
+                    title: message,
+                    background: 'linear-gradient(to right, #00b09b, #96c93d)',
+                    color: '#ffffff',
+                    iconColor: '#ffffff'
+                });
             } else {
-                icon.innerText = '✕';
-                toast.className = "px-5 py-3 rounded-2xl text-xs font-semibold shadow-2xl backdrop-blur-md border flex items-center gap-2 bg-rose-500/20 border-rose-500/40 text-rose-300 show";
+                Toast.fire({
+                    icon: 'error',
+                    title: message,
+                    background: 'linear-gradient(to right, #ff416c, #ff4b2b)',
+                    color: '#ffffff',
+                    iconColor: '#ffffff'
+                });
             }
-
-            toastTimeout = setTimeout(() => {
-                toast.classList.remove('show');
-            }, 1800);
         }
 
         function switchTab(tab) {
