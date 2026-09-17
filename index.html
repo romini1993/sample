@@ -229,7 +229,7 @@
     </header>
 
     <main class="relative z-10 p-2 md:p-4 flex justify-center">
-    <div class="w-full max-w-[1600px] grid grid-cols-1 lg:grid-cols-12 gap-3 items-start">
+    <div class="w-full max-w-[1600px] grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-3 items-start">
 
         <!-- KOLOM 1 (KIRI): Hero PNL + Form Input -->
         <div class="lg:col-span-4 xl:col-span-4 space-y-2.5 lg:sticky lg:top-16">
@@ -324,15 +324,15 @@
 
         <!-- Tab pill: mobile only, independen dari kedua card -->
         <div class="lg:hidden">
-            <div class="flex items-center gap-1 p-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] mb-1.5">
+            <div class="flex items-center gap-1 p-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] mb-1">
                 <button type="button" id="tabBtnRekap" onclick="switchTab('rekap')" class="flex-1 text-center text-xs font-semibold py-2 rounded-full transition">Rekap Harian</button>
                 <button type="button" id="tabBtnRiwayat" onclick="switchTab('riwayat')" class="flex-1 text-center text-xs font-semibold py-2 rounded-full transition">Riwayat Trade</button>
             </div>
         </div>
 
         <!-- KOLOM 2 (TENGAH): Rekap Harian (accordion) -->
-        <div class="lg:col-span-4 xl:col-span-4 lg:sticky lg:top-16">
-            <div id="rekapCard" class="porto-card p-3 rounded-2xl space-y-1 lg:block">
+        <div id="rekapCardWrap" class="lg:col-span-4 xl:col-span-4 lg:sticky lg:top-16 lg:block">
+            <div id="rekapCard" class="porto-card p-3 rounded-2xl space-y-1">
 
                 <div class="hidden lg:flex justify-between items-center">
                     <div class="flex items-center gap-2">
@@ -346,8 +346,8 @@
         </div>
 
         <!-- KOLOM 3 (KANAN): Riwayat Trade (selalu semua, tidak difilter) -->
-        <div class="lg:col-span-4 xl:col-span-4 lg:sticky lg:top-16">
-            <div id="riwayatCard" class="porto-card p-3 rounded-2xl space-y-1 hidden lg:block">
+        <div id="riwayatCardWrap" class="lg:col-span-4 xl:col-span-4 lg:sticky lg:top-16 hidden lg:block">
+            <div id="riwayatCard" class="porto-card p-3 rounded-2xl space-y-1">
                 <div class="hidden lg:flex justify-between items-center">
                     <div class="flex items-center gap-2">
                         <span class="section-dot"></span>
@@ -527,8 +527,8 @@
 
         function switchTab(tab) {
             activeTab = tab;
-            const rekapCard = document.getElementById('rekapCard');
-            const riwayatCard = document.getElementById('riwayatCard');
+            const rekapCard = document.getElementById('rekapCardWrap');
+            const riwayatCard = document.getElementById('riwayatCardWrap');
             const btnRekap = document.getElementById('tabBtnRekap');
             const btnRiwayat = document.getElementById('tabBtnRiwayat');
 
