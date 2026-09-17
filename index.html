@@ -55,13 +55,12 @@
             z-index: 0;
         }
 
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 8px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+        /* Scrollbar disembunyikan visualnya saja - box tetap bisa di-scroll normal */
+        .custom-scroll::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
+        .custom-scroll { scrollbar-width: none; -ms-overflow-style: none; }
 
         @media (max-width: 1023px) {
-            #dailySummaryList { max-height: 380px; overflow-y: auto; }
+            #dailySummaryList { max-height: 420px; overflow-y: auto; }
         }
 
         .porto-card {
@@ -109,6 +108,9 @@
 
         @keyframes riseIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .rise-in { animation: riseIn .3s ease-out both; }
+
+        @keyframes expandIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+        .expand-in { animation: expandIn .2s ease-out both; }
 
         #toast {
             position: fixed;
@@ -183,9 +185,11 @@
             pointer-events: none;
         }
 
-        .coin-badge {
-            font-family: 'Space Grotesk', sans-serif;
+        .chevron {
+            transition: transform .2s ease;
+            color: var(--text-faint);
         }
+        .chevron.open { transform: rotate(90deg); color: var(--accent); }
     </style>
 </head>
 <body class="relative">
@@ -223,7 +227,7 @@
         <!-- HERO: Total PNL + Equity Curve -->
         <div class="lg:col-span-12">
             <div class="porto-card hero-panel rounded-3xl p-5 md:p-7">
-                <div class="relative flex flex-row items-end justify-between gap-3">
+                <div class="relative flex flex-row items-start justify-between gap-3">
                     <div class="min-w-0">
                         <div class="text-[10px] md:text-[11px] font-semibold tracking-wide text-[var(--text-faint)] mb-1 md:mb-1.5">Total P&amp;L</div>
                         <div id="statTotal" class="font-display text-2xl sm:text-3xl md:text-5xl font-bold leading-none truncate">–</div>
@@ -246,14 +250,9 @@
 
         <!-- KOLOM 1 (KIRI): Form Input -->
         <div class="lg:col-span-4 xl:col-span-4 space-y-5 lg:sticky lg:top-20">
-            <form id="tradeForm" onsubmit="handleSubmit(event)" class="porto-card p-5 rounded-2xl space-y-4">
-                <div class="flex items-center gap-2">
-                    <span class="section-dot"></span>
-                    <h2 class="section-label">Input position</h2>
-                </div>
-
+            <form id="tradeForm" onsubmit="handleSubmit(event)" class="porto-card p-4 rounded-2xl space-y-3">
                 <div>
-                    <label class="block text-xs font-medium text-[var(--text-dim)] mb-1.5">Pair / Koin</label>
+                    <label class="block text-xs font-medium text-[var(--text-dim)] mb-1">Pair / Koin</label>
                     <input type="text" id="pair" list="pairList" required placeholder="Contoh: BTCUSDT" onblur="formatPairInput(this)" class="w-full porto-input rounded-xl px-3.5 py-2.5 uppercase font-medium">
                     <datalist id="pairList">
                         <option value="ADAUSDT">
@@ -296,21 +295,21 @@
                     </datalist>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-xs font-medium text-[var(--text-dim)] mb-1.5">Opened date</label>
+                        <label class="block text-xs font-medium text-[var(--text-dim)] mb-1">Opened date</label>
                         <input type="text" id="opened" required placeholder="dd/mm/yyyy" class="w-full porto-input rounded-xl px-3.5 py-2.5">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-[var(--text-dim)] mb-1.5">Closed date</label>
+                        <label class="block text-xs font-medium text-[var(--text-dim)] mb-1">Closed date</label>
                         <input type="text" id="closed" required placeholder="dd/mm/yyyy" class="w-full porto-input rounded-xl px-3.5 py-2.5">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-[var(--text-dim)] mb-1.5">Closing PNL (USDT)</label>
+                    <label class="block text-xs font-medium text-[var(--text-dim)] mb-1">Closing PNL (USDT)</label>
                     <input type="number" step="any" id="pnl" required placeholder="0.00 (minus pakai -)" oninput="updatePnlPreview()" class="w-full porto-input rounded-xl px-3.5 py-2.5 num font-medium">
-                    <div id="pnlPreview" class="text-[11px] text-[var(--text-faint)] num mt-1.5">≈ Rp 0</div>
+                    <div id="pnlPreview" class="text-[11px] text-[var(--text-faint)] num mt-1">≈ Rp 0</div>
                 </div>
 
                 <button type="submit" id="submitBtn" class="w-full bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-[#1a1305] font-semibold py-3 rounded-xl transition shadow-lg shadow-amber-500/20">
@@ -319,7 +318,7 @@
             </form>
         </div>
 
-        <!-- KOLOM 2 (TENGAH): Rekap Harian -->
+        <!-- KOLOM 2 (TENGAH): Rekap Harian (accordion) -->
         <div class="lg:col-span-4 xl:col-span-4 space-y-4 lg:sticky lg:top-20">
             <div class="porto-card p-4 sm:p-5 rounded-2xl space-y-3">
                 <div class="flex justify-between items-center mb-1">
@@ -327,23 +326,21 @@
                         <span class="section-dot"></span>
                         <h2 class="section-label">Rekap harian</h2>
                     </div>
-                    <span class="text-[10px] text-[var(--text-faint)]">Klik tanggal untuk filter</span>
+                    <span class="text-[10px] text-[var(--text-faint)]">Klik untuk buka</span>
                 </div>
                 <div id="dailySummaryList" class="space-y-2 lg:max-h-[calc(100vh-160px)] overflow-y-auto pr-1 custom-scroll"></div>
             </div>
         </div>
 
-        <!-- KOLOM 3 (KANAN): Riwayat Trade -->
+        <!-- KOLOM 3 (KANAN): Riwayat Trade (selalu semua, tidak difilter) -->
         <div class="lg:col-span-4 xl:col-span-4 space-y-4 lg:sticky lg:top-20">
             <div class="porto-card p-4 sm:p-5 rounded-2xl space-y-3">
                 <div class="flex justify-between items-center mb-1">
                     <div class="flex items-center gap-2">
                         <span class="section-dot"></span>
-                        <h2 id="listHeaderTitle" class="section-label">Riwayat trade</h2>
+                        <h2 class="section-label">Riwayat trade</h2>
                     </div>
-                    <button id="resetFilterBtn" onclick="filterByDate(null)" class="text-[10px] bg-[var(--surface-2)] hover:bg-[#1d2230] text-slate-300 px-2 py-1 rounded hidden border border-[var(--border)]">
-                        ↺ Semua tanggal
-                    </button>
+                    <span class="text-[10px] text-[var(--text-faint)]">Tahan untuk edit/hapus</span>
                 </div>
                 <div id="loading" class="text-center text-xs text-[var(--text-faint)] py-6" style="display:none;">Memuat data...</div>
                 <div id="tradeList" class="space-y-2 max-h-[calc(100vh-160px)] overflow-y-auto pr-1 custom-scroll"></div>
@@ -352,6 +349,44 @@
 
     </div>
     </main>
+
+    <!-- ACTION SHEET: Edit / Hapus -->
+    <div id="actionModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4 hidden">
+        <div class="porto-card w-full max-w-sm p-3 rounded-2xl space-y-1.5 rise-in">
+            <button type="button" id="actionEditBtn" class="w-full text-left px-4 py-3.5 rounded-xl hover:bg-[var(--surface-2)] transition flex items-center gap-3 text-sm font-medium text-slate-200">
+                <span>✏️</span> Edit Trade
+            </button>
+            <button type="button" id="actionDeleteBtn" class="w-full text-left px-4 py-3.5 rounded-xl hover:bg-rose-500/10 transition flex items-center gap-3 text-sm font-medium text-rose-400">
+                <span>🗑️</span> Hapus Trade
+            </button>
+            <button type="button" onclick="closeActionModal()" class="w-full text-center px-4 py-3 rounded-xl bg-[var(--surface-2)] text-slate-400 text-xs font-medium mt-1">
+                Batal
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT -->
+    <div id="editModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="porto-card w-full max-w-sm p-6 rounded-2xl shadow-2xl space-y-4 rise-in">
+            <h3 class="font-display font-bold text-white text-base">Edit Trade #<span id="editNoLabel"></span></h3>
+            <div>
+                <label class="block text-xs font-medium text-[var(--text-dim)] mb-1.5">Pair / Koin</label>
+                <input type="text" id="editPair" class="w-full porto-input rounded-xl px-3.5 py-2.5 uppercase font-medium">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-[var(--text-dim)] mb-1.5">Closing PNL (USDT)</label>
+                <input type="number" step="any" id="editPnl" class="w-full porto-input rounded-xl px-3.5 py-2.5 num font-medium">
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button type="button" onclick="closeEditModal()" class="w-1/2 bg-[var(--surface-2)] hover:bg-[#1d2230] text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition border border-[var(--border)]">
+                    Batal
+                </button>
+                <button type="button" id="confirmEditBtn" class="w-1/2 bg-amber-500 hover:bg-amber-400 text-[#1a1305] font-semibold py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/20">
+                    Simpan
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- MODAL HAPUS -->
     <div id="deleteModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -383,8 +418,9 @@
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbxXyZd1pekC0tZRdwuY-aQzJb7veINYpp_sheoxMemO9sSrduj26QRhR4kHokR5iqJq/exec"; 
         let currentKursIdr = 17550;
+        let selectedNoForAction = null; // trade # yang sedang dipilih lewat long-press
         let selectedNoToDelete = null;
-        let selectedFilterDate = null;
+        let expandedDate = null; // tanggal yang sedang di-expand di Rekap Harian
         let cachedGlobalResponse = { history: [], totalPnl: 0, totalTrades: 0, winRate: 0 };
         let toastTimeout = null;
 
@@ -445,7 +481,6 @@
             }
         }
 
-        // Live preview konversi PNL -> IDR saat user ngetik
         function updatePnlPreview() {
             const el = document.getElementById('pnlPreview');
             if (!el) return;
@@ -487,7 +522,6 @@
                 } catch(e) {}
             }
             
-            // Ambil data terbaru di background (no-store: jangan pernah kena cache)
             fetch(`${API_URL}?_ts=${Date.now()}`, { cache: 'no-store' })
                 .then(res => res.json())
                 .then(data => {
@@ -497,11 +531,6 @@
                 })
                 .catch(err => console.log(err));
         };
-
-        function filterByDate(dateStr) {
-            selectedFilterDate = dateStr;
-            renderDashboard(cachedGlobalResponse);
-        }
 
         function getDayName(dateStr) {
             if (!dateStr) return '';
@@ -522,14 +551,15 @@
             }).format(amount);
         }
 
-        // Warna badge koin dihasilkan deterministik dari nama pair, jadi tiap
-        // koin selalu punya warna yang sama tiap render, tanpa perlu aset gambar.
-        function hashHue(str) {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                hash = str.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            return Math.abs(hash) % 360;
+        function recalcTotals() {
+            let sumPnl = 0, wins = 0;
+            cachedGlobalResponse.history.forEach(item => {
+                sumPnl += parseFloat(item.pnl) || 0;
+                if ((parseFloat(item.pnl) || 0) > 0) wins++;
+            });
+            cachedGlobalResponse.totalPnl = sumPnl;
+            cachedGlobalResponse.totalTrades = cachedGlobalResponse.history.length;
+            cachedGlobalResponse.winRate = cachedGlobalResponse.totalTrades > 0 ? Math.round((wins / cachedGlobalResponse.totalTrades) * 100) : 0;
         }
 
         // LOGIKA INSTAN: render lokal duluan, sync ke Sheet di belakang layar.
@@ -561,22 +591,9 @@
             };
 
             if (!cachedGlobalResponse.history) cachedGlobalResponse.history = [];
-            // unshift, BUKAN push -> history selalu "terbaru duluan" (lihat
-            // history.reverse() di Update.gs), jadi item baru wajib masuk ke
-            // index 0 (paling atas), bukan ke ujung array.
             cachedGlobalResponse.history.unshift(newItem);
+            recalcTotals();
 
-            let sumPnl = 0;
-            let wins = 0;
-            cachedGlobalResponse.history.forEach(item => {
-                sumPnl += parseFloat(item.pnl) || 0;
-                if ((parseFloat(item.pnl) || 0) > 0) wins++;
-            });
-            cachedGlobalResponse.totalPnl = sumPnl;
-            cachedGlobalResponse.totalTrades = cachedGlobalResponse.history.length;
-            cachedGlobalResponse.winRate = Math.round((wins / cachedGlobalResponse.totalTrades) * 100);
-
-            // Simpan lokal & langsung render instan detik itu juga
             localStorage.setItem('tradingDataCache', JSON.stringify(cachedGlobalResponse));
             renderDashboard(cachedGlobalResponse);
 
@@ -591,8 +608,6 @@
             const encClosed = encodeURIComponent(closedVal);
             const encPnl = encodeURIComponent(pnlVal);
 
-            // Kirim ke Google Sheet di background. Fire-and-forget: TIDAK ada
-            // refetch susulan yang menimpa state lokal yang sudah benar.
             fetch(`${API_URL}?action=add&pair=${encPair}&opened=${encOpened}&closed=${encClosed}&pnl=${encPnl}`, { cache: 'no-store' })
                 .catch(err => {
                     console.log(err);
@@ -600,18 +615,70 @@
                 });
         }
 
+        // Dipanggil dari long-press: buka action sheet (Edit / Hapus), bukan langsung hapus
         function handleHapus(no) {
-            selectedNoToDelete = no;
-            document.getElementById('deleteModalText').innerText = "Yakin mau hapus trade No #" + no + "?";
-            document.getElementById('deleteModal').classList.remove('hidden');
+            selectedNoForAction = no;
+            document.getElementById('actionModal').classList.remove('hidden');
         }
+
+        function closeActionModal() {
+            document.getElementById('actionModal').classList.add('hidden');
+        }
+
+        document.getElementById('actionDeleteBtn').onclick = function() {
+            closeActionModal();
+            selectedNoToDelete = selectedNoForAction;
+            document.getElementById('deleteModalText').innerText = "Yakin mau hapus trade No #" + selectedNoToDelete + "?";
+            document.getElementById('deleteModal').classList.remove('hidden');
+        };
+
+        document.getElementById('actionEditBtn').onclick = function() {
+            closeActionModal();
+            const item = (cachedGlobalResponse.history || []).find(x => parseInt(x.no) === parseInt(selectedNoForAction));
+            if (!item) return;
+            document.getElementById('editNoLabel').innerText = item.no;
+            document.getElementById('editPair').value = item.pair;
+            document.getElementById('editPnl').value = item.pnl;
+            document.getElementById('editModal').classList.remove('hidden');
+        };
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+        }
+
+        // EDIT: update lokal instan, sync ke Sheet di background (fire-and-forget)
+        document.getElementById('confirmEditBtn').onclick = function() {
+            const no = selectedNoForAction;
+            if (no === null) return;
+
+            let newPair = document.getElementById('editPair').value.trim().toUpperCase();
+            if (newPair && !newPair.includes('USDT')) newPair += 'USDT';
+            const newPnl = parseFloat(document.getElementById('editPnl').value) || 0;
+
+            closeEditModal();
+
+            const idx = cachedGlobalResponse.history.findIndex(x => parseInt(x.no) === parseInt(no));
+            if (idx === -1) return;
+            cachedGlobalResponse.history[idx].pair = newPair;
+            cachedGlobalResponse.history[idx].pnl = newPnl;
+            recalcTotals();
+
+            localStorage.setItem('tradingDataCache', JSON.stringify(cachedGlobalResponse));
+            renderDashboard(cachedGlobalResponse);
+            showToast("Trade diupdate", "success");
+
+            fetch(`${API_URL}?action=edit&no=${encodeURIComponent(no)}&pair=${encodeURIComponent(newPair)}&pnl=${encodeURIComponent(newPnl)}`, { cache: 'no-store' })
+                .catch(err => {
+                    console.log(err);
+                    showToast("Gagal sync edit ke Sheet", "error");
+                });
+        };
 
         function closeDeleteModal() {
             selectedNoToDelete = null;
             document.getElementById('deleteModal').classList.add('hidden');
         }
 
-        // HAPUS INSTAN LOKAL, sync ke Sheet di background tanpa refetch susulan
         document.getElementById('confirmDeleteBtn').onclick = function() {
             if (selectedNoToDelete === null) return;
             const no = selectedNoToDelete;
@@ -620,17 +687,7 @@
             if (cachedGlobalResponse.history) {
                 cachedGlobalResponse.history = cachedGlobalResponse.history.filter(item => parseInt(item.no) !== parseInt(no));
             }
-
-            let sumPnl = 0;
-            let wins = 0;
-            const totalCount = cachedGlobalResponse.history.length;
-            cachedGlobalResponse.history.forEach(item => {
-                sumPnl += parseFloat(item.pnl) || 0;
-                if ((parseFloat(item.pnl) || 0) > 0) wins++;
-            });
-            cachedGlobalResponse.totalPnl = sumPnl;
-            cachedGlobalResponse.totalTrades = totalCount;
-            cachedGlobalResponse.winRate = totalCount > 0 ? Math.round((wins / totalCount) * 100) : 0;
+            recalcTotals();
 
             localStorage.setItem('tradingDataCache', JSON.stringify(cachedGlobalResponse));
             renderDashboard(cachedGlobalResponse);
@@ -674,11 +731,45 @@
             });
         }
 
+        // Kartu trade dipakai bareng di Riwayat Trade & panel expand Rekap Harian
+        function createTradeCardElement(item, i) {
+            const pnlNum = parseFloat(item.pnl) || 0;
+            const isProfit = pnlNum >= 0;
+            const pnlColor = isProfit ? 'text-emerald-400' : 'text-rose-400';
+            const bgCard = isProfit ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-rose-500/20 bg-rose-500/5';
+            const totalIdr = formatRupiah(pnlNum * currentKursIdr);
+
+            const div = document.createElement('div');
+            div.className = `row-card rise-in p-2.5 sm:p-3 rounded-xl border ${bgCard} flex items-center justify-between hover:border-slate-700 transition gap-1.5 cursor-pointer select-none`;
+            if (i !== undefined) div.style.animationDelay = `${i * 15}ms`;
+            div.innerHTML = `
+                <div class="w-[38%] min-w-0 text-left">
+                    <div class="text-[11px] sm:text-xs text-slate-300 font-medium truncate">
+                        <span class="text-amber-400 font-bold">#${item.no}</span> • <span class="text-slate-200">${item.closed}</span>
+                    </div>
+                    <div class="text-[9px] sm:text-[10px] font-semibold ${isProfit ? 'text-emerald-500' : 'text-rose-500'} uppercase mt-0.5">${isProfit ? 'PROFIT' : 'LOSS'}</div>
+                </div>
+                <div class="w-[28%] text-center px-1">
+                    <div class="font-display font-bold text-xs sm:text-sm text-white truncate">${item.pair}</div>
+                </div>
+                <div class="w-[34%] text-right min-w-0">
+                    <div class="num font-bold text-xs sm:text-sm ${pnlColor} whitespace-nowrap">${isProfit ? '+' : ''}${pnlNum.toFixed(2)} USDT</div>
+                    <div class="num text-[9px] sm:text-[10px] text-[var(--text-dim)] font-medium num mt-0.5 whitespace-nowrap">${totalIdr}</div>
+                </div>
+            `;
+
+            bindLongPress(div, item.no);
+            return div;
+        }
+
+        function toggleExpand(date) {
+            expandedDate = (expandedDate === date) ? null : date;
+            renderDashboard(cachedGlobalResponse);
+        }
+
         function renderDashboard(res) {
             const tradeContainer = document.getElementById('tradeList');
             const dailyContainer = document.getElementById('dailySummaryList');
-            const headerTitle = document.getElementById('listHeaderTitle');
-            const resetBtn = document.getElementById('resetFilterBtn');
 
             tradeContainer.innerHTML = '';
             dailyContainer.innerHTML = '';
@@ -694,55 +785,50 @@
                 return;
             }
 
-            // Render Rekap Harian
+            // Riwayat Trade: SELALU semua trade, tidak pernah difilter
+            data.forEach((item, i) => {
+                tradeContainer.appendChild(createTradeCardElement(item, i));
+            });
+
+            // Rekap Harian: setiap tanggal bisa di-expand/collapse, tampil inline
             const dailyMap = {};
             data.forEach(item => {
                 const closedDate = item.closed;
                 const pnlVal = parseFloat(item.pnl) || 0;
                 if (!closedDate) return;
-
-                if (!dailyMap[closedDate]) {
-                    dailyMap[closedDate] = { total: 0, count: 0 };
-                }
+                if (!dailyMap[closedDate]) dailyMap[closedDate] = { total: 0, count: 0 };
                 dailyMap[closedDate].total += pnlVal;
                 dailyMap[closedDate].count += 1;
             });
 
-            // Di layar mobile (<1024px), begitu satu tanggal difilter, tanggal
-            // lain disembunyikan total -> kolom Rekap Harian jadi pendek dan
-            // Riwayat Trade otomatis naik ke atas tanpa perlu scroll manual.
-            // Di desktop kolomnya independen, jadi tetap tampilkan semua tanggal.
-            const isMobileView = window.matchMedia('(max-width: 1023px)').matches;
-
             Object.keys(dailyMap).forEach((date, i) => {
-                if (isMobileView && selectedFilterDate && date !== selectedFilterDate) {
-                    return;
-                }
-
                 const summary = dailyMap[date];
                 const isProf = summary.total >= 0;
                 const color = isProf ? 'text-emerald-400' : 'text-rose-400';
-                const isSelected = selectedFilterDate === date;
-                
+                const isExpanded = expandedDate === date;
+
                 var dayName = getDayName(date);
                 var fullDateLabel = dayName ? `${dayName}, ${date}` : date;
                 var totalIdr = formatRupiah(summary.total * currentKursIdr);
 
-                const div = document.createElement('div');
-                div.className = `row-card p-3 rounded-xl border cursor-pointer flex justify-between items-center border-l-2 ${
-                    isSelected 
-                    ? 'bg-amber-500/10 border-amber-500 text-white font-bold ring-1 ring-amber-500' 
-                    : 'bg-[var(--bg)] border-[var(--border)] hover:border-slate-600 text-slate-200'
+                const row = document.createElement('div');
+                row.className = `p-3 rounded-xl border cursor-pointer flex justify-between items-center border-l-2 ${
+                    isExpanded
+                    ? 'bg-amber-500/10 border-amber-500 ring-1 ring-amber-500'
+                    : 'bg-[var(--bg)] border-[var(--border)] hover:border-slate-600'
                 }`;
-                div.style.borderLeftColor = isProf ? 'var(--profit)' : 'var(--loss)';
-                div.style.animationDelay = `${i * 25}ms`;
-                div.onclick = () => filterByDate(isSelected ? null : date);
-                div.innerHTML = `
-                    <div>
-                        <div class="font-display font-bold text-xs sm:text-sm text-white">${fullDateLabel}</div>
-                        <div class="text-[10px] sm:text-[11px] text-[var(--text-dim)] mt-0.5">${summary.count} trade tertutup</div>
+                row.style.borderLeftColor = isProf ? 'var(--profit)' : 'var(--loss)';
+                row.style.animationDelay = `${i * 25}ms`;
+                row.onclick = () => toggleExpand(date);
+                row.innerHTML = `
+                    <div class="flex items-center gap-2 min-w-0">
+                        <svg class="chevron ${isExpanded ? 'open' : ''} shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+                        <div class="min-w-0">
+                            <div class="font-display font-bold text-xs sm:text-sm text-white truncate">${fullDateLabel}</div>
+                            <div class="text-[10px] sm:text-[11px] text-[var(--text-dim)] mt-0.5">${summary.count} trade tertutup</div>
+                        </div>
                     </div>
-                    <div class="text-right">
+                    <div class="text-right shrink-0 pl-2">
                         <div class="num font-bold text-xs sm:text-sm ${color} whitespace-nowrap">
                             ${isProf ? '+' : ''}${summary.total.toFixed(2)} USDT
                         </div>
@@ -751,55 +837,17 @@
                         </div>
                     </div>
                 `;
-                dailyContainer.appendChild(div);
-            });
+                dailyContainer.appendChild(row);
 
-            // Filter Data Riwayat Trade Berdasarkan Tanggal yang Diklik
-            let filteredData = data;
-            if (selectedFilterDate) {
-                filteredData = data.filter(item => item.closed === selectedFilterDate);
-                headerTitle.innerText = `Trade: ${selectedFilterDate}`;
-                resetBtn.classList.remove('hidden');
-            } else {
-                headerTitle.innerText = "Riwayat trade";
-                resetBtn.classList.add('hidden');
-            }
-
-            if (filteredData.length === 0) {
-                tradeContainer.innerHTML = '<p class="text-xs text-[var(--text-faint)] text-center py-4">Tidak ada trade pada tanggal ini.</p>';
-                return;
-            }
-
-            // Render Riwayat Trade: badge koin berwarna + hierarki 2 baris
-            filteredData.forEach((item, i) => {
-                const pnlNum = parseFloat(item.pnl) || 0;
-                const isProfit = pnlNum >= 0;
-                const pnlColor = isProfit ? 'text-emerald-400' : 'text-rose-400';
-                const totalIdr = formatRupiah(pnlNum * currentKursIdr);
-
-                const hue = hashHue(item.pair);
-                const initials = item.pair.replace('USDT', '').slice(0, 3).toUpperCase() || '—';
-                const badgeStyle = `background: hsla(${hue},60%,55%,0.16); color: hsl(${hue},70%,70%); border:1px solid hsla(${hue},60%,55%,0.35);`;
-
-                const div = document.createElement('div');
-                div.className = `row-card rise-in p-2.5 sm:p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] flex items-center gap-3 cursor-pointer select-none`;
-                div.style.animationDelay = `${i * 15}ms`;
-                div.innerHTML = `
-                    <div class="coin-badge shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold" style="${badgeStyle}">${initials}</div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="font-display font-bold text-sm text-white truncate">${item.pair}</span>
-                            <span class="num font-bold text-sm ${pnlColor} whitespace-nowrap">${isProfit ? '+' : ''}${pnlNum.toFixed(2)} USDT</span>
-                        </div>
-                        <div class="flex items-center justify-between gap-2 mt-0.5">
-                            <span class="text-[10px] sm:text-[11px] text-[var(--text-faint)]">#${item.no} • ${item.closed}</span>
-                            <span class="text-[9px] sm:text-[10px] text-[var(--text-faint)] num">${totalIdr}</span>
-                        </div>
-                    </div>
-                `;
-
-                bindLongPress(div, item.no);
-                tradeContainer.appendChild(div);
+                if (isExpanded) {
+                    const panel = document.createElement('div');
+                    panel.className = 'expand-in space-y-2 pl-1 pt-1';
+                    const dayTrades = data.filter(item => item.closed === date);
+                    dayTrades.forEach((item, idx) => {
+                        panel.appendChild(createTradeCardElement(item, idx));
+                    });
+                    dailyContainer.appendChild(panel);
+                }
             });
         }
 
@@ -814,7 +862,7 @@
 
             totalEl.textContent = `${isProfit ? '+' : ''}${total.toFixed(2)} USDT`;
             totalEl.className = `font-display text-2xl sm:text-3xl md:text-5xl font-bold leading-none truncate ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
-            
+
             if (totalIdrEl) {
                 totalIdrEl.textContent = formatRupiah(total * currentKursIdr);
             }
@@ -823,8 +871,6 @@
             winEl.textContent = `${res.winRate || 0}%`;
         }
 
-        // Equity curve: kumulatif PNL dari trade pertama -> terakhir,
-        // digambar sebagai mini area-chart, warna ikut arah total (untung/rugi).
         function renderEquityCurve(history) {
             const container = document.getElementById('equityCurve');
             if (!container) return;
@@ -834,7 +880,7 @@
                 return;
             }
 
-            const chron = [...history].reverse(); // history newest-first -> balik jadi kronologis
+            const chron = [...history].reverse();
             let cum = 0;
             const points = chron.map(item => { cum += parseFloat(item.pnl) || 0; return cum; });
 
