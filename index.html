@@ -364,7 +364,7 @@
     </main>
 
     <!-- ACTION SHEET: Edit / Hapus -->
-    <div id="actionModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4 hidden">
+    <div id="actionModal" onclick="if(event.target===this) closeActionModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4 hidden">
         <div class="porto-card w-full max-w-sm p-3 rounded-2xl space-y-1.5 rise-in">
             <button type="button" id="actionEditBtn" class="w-full text-left px-4 py-3.5 rounded-xl hover:bg-[var(--surface-2)] transition flex items-center gap-3 text-sm font-medium text-slate-200">
                 <span>✏️</span> Edit Trade
@@ -379,7 +379,7 @@
     </div>
 
     <!-- MODAL EDIT -->
-    <div id="editModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div id="editModal" onclick="if(event.target===this) closeEditModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="porto-card w-full max-w-sm p-6 rounded-2xl shadow-2xl space-y-4 rise-in">
             <h3 class="font-display font-bold text-white text-base">Edit Trade #<span id="editNoLabel"></span></h3>
             <div>
@@ -402,7 +402,7 @@
     </div>
 
     <!-- MODAL HAPUS -->
-    <div id="deleteModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div id="deleteModal" onclick="if(event.target===this) closeDeleteModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="porto-card w-full max-w-sm p-6 rounded-2xl border border-rose-500/30 shadow-2xl space-y-4 rise-in text-center relative">
             <div class="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center text-xl font-bold mx-auto">
                 ⚠️
