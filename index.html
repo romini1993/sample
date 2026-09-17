@@ -258,7 +258,7 @@
 
             <form id="tradeForm" onsubmit="handleSubmit(event)" class="porto-card p-3.5 rounded-2xl space-y-2">
                 <div>
-                    <input type="text" id="pair" list="pairList" required placeholder="Pair / Koin" onblur="formatPairInput(this)" class="w-full porto-input rounded-xl px-3.5 py-2 text-sm uppercase font-medium">
+                    <input type="text" id="pair" list="pairList" required placeholder="Pair / Coin" onblur="formatPairInput(this)" class="w-full porto-input rounded-xl px-3.5 py-2 text-sm uppercase font-medium">
                     <datalist id="pairList">
                         <option value="ADAUSDT">
                         <option value="ALGOUSDT">
@@ -312,7 +312,7 @@
                 </div>
 
                 <div class="relative">
-                    <input type="number" step="any" id="pnl" required placeholder="Closing PNL (USDT)" oninput="updatePnlPreview()" class="w-full porto-input rounded-xl pl-3.5 pr-24 py-2 num font-medium">
+                    <input type="number" step="any" id="pnl" required placeholder="Closing P&L" oninput="updatePnlPreview()" class="w-full porto-input rounded-xl pl-3.5 pr-24 py-2 num font-medium">
                     <span id="pnlPreview" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-[11px] text-[var(--text-faint)] num pointer-events-none text-right">≈ Rp 0</span>
                 </div>
 
