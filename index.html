@@ -322,15 +322,17 @@
             </form>
         </div>
 
+        <!-- Tab pill: mobile only, independen dari kedua card -->
+        <div class="lg:hidden">
+            <div class="flex items-center gap-1 p-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] mb-3">
+                <button type="button" id="tabBtnRekap" onclick="switchTab('rekap')" class="flex-1 text-center text-xs font-semibold py-2 rounded-full transition">Rekap Harian</button>
+                <button type="button" id="tabBtnRiwayat" onclick="switchTab('riwayat')" class="flex-1 text-center text-xs font-semibold py-2 rounded-full transition">Riwayat Trade</button>
+            </div>
+        </div>
+
         <!-- KOLOM 2 (TENGAH): Rekap Harian (accordion) -->
         <div class="lg:col-span-4 xl:col-span-4 lg:sticky lg:top-20">
             <div id="rekapCard" class="porto-card p-4 sm:p-5 rounded-2xl space-y-3 lg:block">
-
-                <!-- Tab pill: mobile only -->
-                <div class="lg:hidden flex items-center gap-1 p-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)]">
-                    <button type="button" id="tabBtnRekap" onclick="switchTab('rekap')" class="flex-1 text-center text-xs font-semibold py-2 rounded-full transition">Rekap Harian</button>
-                    <button type="button" id="tabBtnRiwayat" onclick="switchTab('riwayat')" class="flex-1 text-center text-xs font-semibold py-2 rounded-full transition">Riwayat Trade</button>
-                </div>
 
                 <div class="hidden lg:flex justify-between items-center mb-1">
                     <div class="flex items-center gap-2">
