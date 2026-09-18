@@ -7,6 +7,17 @@
     <title>Trading Log</title>
     <link rel="manifest" href="./manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    screens: {
+                        lg: '768px'
+                    }
+                }
+            }
+        };
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
@@ -302,11 +313,11 @@
             <!-- WIDGET TAMBAHAN (khusus desktop) -->
             <div class="hidden lg:flex lg:flex-col lg:flex-1 lg:min-h-0 space-y-2.5">
 
-                <!-- Statistik -->
+                <!-- Statistik Cepat -->
                 <div class="porto-card p-3.5 rounded-2xl shrink-0">
                     <div class="flex items-center gap-2 mb-2.5">
                         <span class="section-dot"></span>
-                        <h2 class="section-label">Statistik</h2>
+                        <h2 class="section-label">Statistik cepat</h2>
                     </div>
                     <div id="quickStatsGrid" class="grid grid-cols-3 gap-2"></div>
                 </div>
