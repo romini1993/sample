@@ -221,28 +221,31 @@
 
             <!-- HERO: Total PNL + Equity Curve -->
             <div class="porto-card hero-panel rounded-3xl p-4 md:p-5 lg:shrink-0">
-                <div class="relative flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+                <div class="relative flex flex-row items-start justify-between gap-2">
                     <div class="shrink-0">
                         <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1">Total P&amp;L</div>
                         <div id="statTotal" class="font-display text-2xl sm:text-3xl md:text-3xl font-bold leading-none">–</div>
                         <div id="statTotalIdr" class="num text-[11px] text-[var(--text-dim)] mt-1.5">–</div>
                     </div>
-                    <div class="flex gap-4 shrink-0 text-right ml-auto">
-                        <div>
-                            <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1">USDT/IDR</div>
-                            <div id="headerKursValue" class="font-display text-xs lg:text-sm font-bold text-slate-100 num">–</div>
+                    <div class="flex gap-3 min-w-0 overflow-hidden text-right">
+                        <div class="min-w-0">
+                            <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1 truncate">USDT/IDR</div>
+                            <div id="headerKursValue" class="font-display text-xs lg:text-sm font-bold text-slate-100 num truncate">–</div>
                         </div>
-                        <div>
-                            <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1">Trades</div>
-                            <div id="statCount" class="font-display text-xs lg:text-sm font-bold text-slate-100">–</div>
+                        <div class="min-w-0">
+                            <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1 truncate">Trades</div>
+                            <div id="statCount" class="font-display text-xs lg:text-sm font-bold text-slate-100 truncate">–</div>
                         </div>
-                        <div>
-                            <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1">Win rate</div>
-                            <div id="statWinRate" class="font-display text-xs lg:text-sm font-bold text-slate-100">–</div>
+                        <div class="min-w-0">
+                            <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1 truncate">Win rate</div>
+                            <div id="statWinRate" class="font-display text-xs lg:text-sm font-bold text-slate-100 truncate">–</div>
                         </div>
                     </div>
                 </div>
-                <div id="equityCurve" class="relative mt-2 h-[72px] lg:h-16 w-full"></div>
+                <div class="relative mt-2">
+                    <div id="equityCurve" class="h-[72px] lg:h-16 w-full touch-none select-none cursor-crosshair"></div>
+                    <div id="curveTooltip" class="hidden absolute top-1 z-10 px-1.5 py-0.5 rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[9px] font-semibold text-slate-100 whitespace-nowrap pointer-events-none"></div>
+                </div>
             </div>
 
             <form id="tradeForm" onsubmit="handleSubmit(event)" class="porto-card p-3.5 rounded-2xl space-y-2 lg:shrink-0">
@@ -313,11 +316,11 @@
             <!-- WIDGET TAMBAHAN (khusus desktop) -->
             <div class="hidden lg:flex lg:flex-col lg:flex-1 lg:min-h-0 space-y-2.5">
 
-                <!-- Statistik -->
+                <!-- Statistik Cepat -->
                 <div class="porto-card p-3.5 rounded-2xl shrink-0">
                     <div class="flex items-center gap-2 mb-2.5">
                         <span class="section-dot"></span>
-                        <h2 class="section-label">Statistik</h2>
+                        <h2 class="section-label">Statistik cepat</h2>
                     </div>
                     <div id="quickStatsGrid" class="grid grid-cols-3 gap-2"></div>
                 </div>
@@ -451,6 +454,8 @@
         let activeTab = 'rekap'; // tab aktif di mobile: 'rekap' atau 'riwayat'
         let cachedGlobalResponse = { history: [], totalPnl: 0, totalTrades: 0, winRate: 0 };
         let toastTimeout = null;
+        let curveState = { w: 600, h: 100, data: [] };
+        let isCurveDragging = false;
         const now_ = new Date();
         let heatmapYear = now_.getFullYear();
         let heatmapMonth = now_.getMonth();
@@ -578,6 +583,7 @@
         window.onload = function() {
             fetchRealtimeKurs();
             switchTab('rekap');
+            initCurveInteraction();
             
             const cachedData = localStorage.getItem('tradingDataCache');
             if (cachedData) {
@@ -951,6 +957,7 @@
             if (!container) return;
 
             if (!history || history.length === 0) {
+                curveState = { w: 600, h: 100, data: [] };
                 container.innerHTML = '<div class="h-full flex items-center text-[11px] text-[var(--text-faint)]">Belum ada data untuk kurva.</div>';
                 return;
             }
@@ -972,6 +979,16 @@
                 return [x, y];
             });
 
+            curveState = {
+                w, h,
+                data: coords.map((c, i) => ({
+                    x: c[0],
+                    y: c[1],
+                    value: points[i],
+                    dateShort: (chron[i].closed || '').split('/').slice(0, 2).join('/')
+                }))
+            };
+
             const linePath = coords.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
             const areaPath = `${linePath} L${w},${h} L0,${h} Z`;
             const isProfit = points[points.length - 1] >= 0;
@@ -987,8 +1004,87 @@
                     </defs>
                     <path d="${areaPath}" fill="url(#sparkGrad)" stroke="none" />
                     <path d="${linePath}" fill="none" stroke="${strokeColor}" stroke-width="2" vector-effect="non-scaling-stroke" />
+                    <g id="curveCrosshairGroup" style="opacity:0; transition:opacity .12s ease;">
+                        <line id="curveCrosshairLine" x1="0" y1="0" x2="0" y2="${h}" stroke="rgba(255,255,255,0.45)" stroke-width="1" stroke-dasharray="4,3" vector-effect="non-scaling-stroke" />
+                        <circle id="curveCrosshairDot" r="4" fill="${strokeColor}" stroke="#06070b" stroke-width="1.5" vector-effect="non-scaling-stroke" />
+                    </g>
                 </svg>
             `;
+        }
+
+        function initCurveInteraction() {
+            const container = document.getElementById('equityCurve');
+            const tooltip = document.getElementById('curveTooltip');
+            if (!container || !tooltip) return;
+
+            const getVbX = (e) => {
+                const rect = container.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                let relX = rect.width > 0 ? (clientX - rect.left) / rect.width : 0;
+                relX = Math.max(0, Math.min(1, relX));
+                return { vbX: relX * curveState.w, rect };
+            };
+
+            const updateCrosshair = (e) => {
+                const data = curveState.data;
+                if (!data || data.length === 0) return;
+                const { vbX, rect } = getVbX(e);
+
+                let nearestIdx = 0, nearestDist = Infinity;
+                data.forEach((p, i) => {
+                    const dist = Math.abs(p.x - vbX);
+                    if (dist < nearestDist) { nearestDist = dist; nearestIdx = i; }
+                });
+                const point = data[nearestIdx];
+
+                const line = document.getElementById('curveCrosshairLine');
+                const dot = document.getElementById('curveCrosshairDot');
+                const group = document.getElementById('curveCrosshairGroup');
+                if (!line || !dot || !group) return;
+
+                line.setAttribute('x1', point.x);
+                line.setAttribute('x2', point.x);
+                dot.setAttribute('cx', point.x);
+                dot.setAttribute('cy', point.y);
+                group.style.opacity = '1';
+
+                const leftPx = (point.x / curveState.w) * rect.width;
+                tooltip.textContent = point.dateShort;
+                tooltip.classList.remove('hidden');
+                tooltip.style.left = '0px';
+                const tw = tooltip.offsetWidth || 32;
+                let left = leftPx - tw / 2;
+                left = Math.max(0, Math.min(rect.width - tw, left));
+                tooltip.style.left = `${left}px`;
+            };
+
+            const hideCrosshair = () => {
+                isCurveDragging = false;
+                const group = document.getElementById('curveCrosshairGroup');
+                if (group) group.style.opacity = '0';
+                tooltip.classList.add('hidden');
+            };
+
+            const startDrag = (e) => {
+                if (!curveState.data || curveState.data.length === 0) return;
+                isCurveDragging = true;
+                updateCrosshair(e);
+            };
+            const moveDrag = (e) => {
+                if (!isCurveDragging) return;
+                if (e.cancelable) e.preventDefault();
+                updateCrosshair(e);
+            };
+
+            container.addEventListener('mousedown', startDrag);
+            window.addEventListener('mousemove', moveDrag);
+            window.addEventListener('mouseup', hideCrosshair);
+            container.addEventListener('mouseleave', hideCrosshair);
+
+            container.addEventListener('touchstart', startDrag, { passive: true });
+            container.addEventListener('touchmove', moveDrag, { passive: false });
+            container.addEventListener('touchend', hideCrosshair);
+            container.addEventListener('touchcancel', hideCrosshair);
         }
 
         function getWeekStartKey(d) {
