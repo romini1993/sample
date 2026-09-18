@@ -203,13 +203,13 @@
     <div class="bg-glow"></div>
 
     <main class="relative z-10 p-2 md:p-4 flex justify-center">
-    <div class="w-full max-w-[1600px] grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-3 items-start lg:items-stretch">
+    <div class="w-full max-w-[1600px] grid grid-cols-1 lg:grid-cols-12 gap-2 lg:gap-3 items-start">
 
         <!-- KOLOM 1 (KIRI): Hero PNL + Form Input -->
-        <div class="lg:col-span-4 xl:col-span-4 space-y-2.5 lg:flex lg:flex-col">
+        <div class="lg:col-span-4 xl:col-span-4 space-y-2.5">
 
             <!-- HERO: Total PNL + Equity Curve -->
-            <div class="porto-card hero-panel rounded-3xl p-4 md:p-5 lg:shrink-0">
+            <div class="porto-card hero-panel rounded-3xl p-4 md:p-5">
                 <div class="relative flex flex-row items-start justify-between gap-3">
                     <div class="min-w-0">
                         <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1">Total P&amp;L</div>
@@ -234,7 +234,7 @@
                 <div id="equityCurve" class="relative mt-2 h-[72px] lg:h-16 w-full"></div>
             </div>
 
-            <form id="tradeForm" onsubmit="handleSubmit(event)" class="porto-card p-3.5 rounded-2xl space-y-2 lg:shrink-0">
+            <form id="tradeForm" onsubmit="handleSubmit(event)" class="porto-card p-3.5 rounded-2xl space-y-2">
                 <div>
                     <input type="text" id="pair" list="pairList" required placeholder="Pairs" onblur="formatPairInput(this)" class="w-full porto-input rounded-xl px-3.5 py-2 text-sm uppercase font-display font-medium">
                     <datalist id="pairList">
@@ -299,11 +299,11 @@
                 </button>
             </form>
 
-            <!-- WIDGET TAMBAHAN (khusus desktop) -->
-            <div class="hidden lg:flex lg:flex-col lg:flex-1 lg:min-h-0 space-y-2.5">
+            <!-- WIDGET TAMBAHAN (khusus desktop, buat isi ruang kosong) -->
+            <div class="hidden lg:block space-y-2.5">
 
                 <!-- Statistik Cepat -->
-                <div class="porto-card p-3.5 rounded-2xl shrink-0">
+                <div class="porto-card p-3.5 rounded-2xl">
                     <div class="flex items-center gap-2 mb-2.5">
                         <span class="section-dot"></span>
                         <h2 class="section-label">Statistik cepat</h2>
@@ -312,8 +312,8 @@
                 </div>
 
                 <!-- Kalender Aktivitas (Heatmap) -->
-                <div class="porto-card p-3.5 rounded-2xl lg:flex lg:flex-col lg:flex-1 lg:min-h-0">
-                    <div class="flex items-center justify-between mb-2.5 shrink-0">
+                <div class="porto-card p-3.5 rounded-2xl">
+                    <div class="flex items-center justify-between mb-2.5">
                         <div class="flex items-center gap-2">
                             <span class="section-dot"></span>
                             <h2 class="section-label">Kalender aktivitas</h2>
@@ -324,7 +324,16 @@
                             <button type="button" onclick="changeHeatmapMonth(1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-dim)] hover:text-white hover:border-slate-500 transition text-[10px]">›</button>
                         </div>
                     </div>
-                    <div id="heatmapCalendar" class="lg:flex-1 lg:flex lg:flex-col lg:justify-center"></div>
+                    <div id="heatmapCalendar"></div>
+                </div>
+
+                <!-- Top Pairs -->
+                <div class="porto-card p-3.5 rounded-2xl">
+                    <div class="flex items-center gap-2 mb-2.5">
+                        <span class="section-dot"></span>
+                        <h2 class="section-label">Top pairs</h2>
+                    </div>
+                    <div id="topPairsList" class="space-y-2"></div>
                 </div>
 
             </div>
@@ -340,7 +349,7 @@
 
         <!-- KOLOM 2 (TENGAH): Rekap Harian (accordion) -->
         <div id="rekapCardWrap" class="lg:col-span-4 xl:col-span-4 lg:block">
-            <div id="rekapCard" class="porto-card p-3 rounded-2xl space-y-1 lg:flex lg:flex-col lg:h-[620px]">
+            <div id="rekapCard" class="porto-card p-3 rounded-2xl space-y-1 lg:flex lg:flex-col lg:h-[calc(100vh-32px)]">
 
                 <div class="hidden lg:flex justify-between items-center">
                     <div class="flex items-center gap-2">
@@ -355,7 +364,7 @@
 
         <!-- KOLOM 3 (KANAN): Riwayat Trade (selalu semua, tidak difilter) -->
         <div id="riwayatCardWrap" class="lg:col-span-4 xl:col-span-4 hidden lg:block">
-            <div id="riwayatCard" class="porto-card p-3 rounded-2xl space-y-1 lg:flex lg:flex-col lg:h-[620px]">
+            <div id="riwayatCard" class="porto-card p-3 rounded-2xl space-y-1 lg:flex lg:flex-col lg:h-[calc(100vh-32px)]">
                 <div class="hidden lg:flex justify-between items-center">
                     <div class="flex items-center gap-2">
                         <span class="section-dot"></span>
@@ -841,6 +850,7 @@
             renderStats(res);
             renderEquityCurve(data);
             renderQuickStats(data);
+            renderTopPairs(data);
             renderHeatmap(data);
 
             if (!data || data.length === 0) {
@@ -1033,6 +1043,40 @@
             };
 
             grid.innerHTML = cell('Avg Harian', avgDaily) + cell('Avg Mingguan', avgWeekly) + cell('Avg Bulanan', avgMonthly);
+        }
+
+        function renderTopPairs(history) {
+            const container = document.getElementById('topPairsList');
+            if (!container) return;
+            if (!history || history.length === 0) {
+                container.innerHTML = '<p class="text-[11px] text-[var(--text-faint)] text-center py-2">Belum ada data.</p>';
+                return;
+            }
+            const map = {};
+            history.forEach(item => {
+                const p = parseFloat(item.pnl) || 0;
+                if (!map[item.pair]) map[item.pair] = { total: 0, count: 0 };
+                map[item.pair].total += p;
+                map[item.pair].count += 1;
+            });
+            const arr = Object.keys(map).map(pair => ({ pair, total: map[pair].total, count: map[pair].count }));
+            arr.sort((a, b) => b.total - a.total);
+            const top = arr.slice(0, 5);
+            const maxAbs = Math.max(...top.map(x => Math.abs(x.total)), 1);
+
+            container.innerHTML = top.map(x => {
+                const isProfit = x.total >= 0;
+                const widthPct = Math.min(100, (Math.abs(x.total) / maxAbs) * 100);
+                return `
+                    <div class="flex items-center gap-2">
+                        <div class="w-16 shrink-0 text-[10px] font-bold text-slate-200 truncate">${x.pair}</div>
+                        <div class="flex-1 h-2 rounded-full bg-[var(--bg)] overflow-hidden">
+                            <div class="h-full ${isProfit ? 'bg-emerald-500' : 'bg-rose-500'}" style="width:${widthPct}%"></div>
+                        </div>
+                        <div class="w-16 shrink-0 text-right num text-[10px] font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}">${isProfit ? '+' : ''}${x.total.toFixed(1)}</div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function changeHeatmapMonth(delta) {
