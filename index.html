@@ -311,15 +311,6 @@
                     <div id="quickStatsGrid" class="grid grid-cols-3 gap-2"></div>
                 </div>
 
-                <!-- Trade Terbaik & Terburuk -->
-                <div class="porto-card p-3.5 rounded-2xl">
-                    <div class="flex items-center gap-2 mb-2.5">
-                        <span class="section-dot"></span>
-                        <h2 class="section-label">Terbaik & terburuk</h2>
-                    </div>
-                    <div id="bestWorstGrid" class="grid grid-cols-2 gap-2"></div>
-                </div>
-
                 <!-- Top Pairs -->
                 <div class="porto-card p-3.5 rounded-2xl">
                     <div class="flex items-center gap-2 mb-2.5">
@@ -329,15 +320,6 @@
                     <div id="topPairsList" class="space-y-2"></div>
                 </div>
 
-                <!-- Ringkasan Bulanan -->
-                <div class="porto-card p-3.5 rounded-2xl">
-                    <div class="flex items-center gap-2 mb-2.5">
-                        <span class="section-dot"></span>
-                        <h2 class="section-label">Ringkasan bulanan</h2>
-                    </div>
-                    <div id="monthlyBarChart"></div>
-                </div>
-
                 <!-- Kalender Aktivitas (Heatmap) -->
                 <div class="porto-card p-3.5 rounded-2xl">
                     <div class="flex items-center justify-between mb-2.5">
@@ -345,7 +327,11 @@
                             <span class="section-dot"></span>
                             <h2 class="section-label">Kalender aktivitas</h2>
                         </div>
-                        <span id="heatmapMonthLabel" class="text-[10px] text-[var(--text-faint)]"></span>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="changeHeatmapMonth(-1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-dim)] hover:text-white hover:border-slate-500 transition text-[10px]">‹</button>
+                            <span id="heatmapMonthLabel" class="text-[10px] text-[var(--text-faint)] w-20 text-center"></span>
+                            <button type="button" onclick="changeHeatmapMonth(1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-dim)] hover:text-white hover:border-slate-500 transition text-[10px]">›</button>
+                        </div>
                     </div>
                     <div id="heatmapCalendar"></div>
                 </div>
@@ -463,6 +449,9 @@
         let activeTab = 'rekap'; // tab aktif di mobile: 'rekap' atau 'riwayat'
         let cachedGlobalResponse = { history: [], totalPnl: 0, totalTrades: 0, winRate: 0 };
         let toastTimeout = null;
+        const now_ = new Date();
+        let heatmapYear = now_.getFullYear();
+        let heatmapMonth = now_.getMonth();
 
         function fetchRealtimeKurs() {
             fetch("https://api.binance.com/api/v3/ticker/price?symbol=USDTIDR")
@@ -861,9 +850,7 @@
             renderStats(res);
             renderEquityCurve(data);
             renderQuickStats(data);
-            renderBestWorst(data);
             renderTopPairs(data);
-            renderMonthlyChart(data);
             renderHeatmap(data);
 
             if (!data || data.length === 0) {
@@ -1037,37 +1024,6 @@
             `;
         }
 
-        function renderBestWorst(history) {
-            const grid = document.getElementById('bestWorstGrid');
-            if (!grid) return;
-            if (!history || history.length === 0) {
-                grid.innerHTML = '<p class="text-[11px] text-[var(--text-faint)] col-span-2 text-center py-2">Belum ada data.</p>';
-                return;
-            }
-            let best = history[0], worst = history[0];
-            history.forEach(item => {
-                const p = parseFloat(item.pnl) || 0;
-                if (p > (parseFloat(best.pnl) || 0)) best = item;
-                if (p < (parseFloat(worst.pnl) || 0)) worst = item;
-            });
-            const bestP = parseFloat(best.pnl) || 0;
-            const worstP = parseFloat(worst.pnl) || 0;
-            grid.innerHTML = `
-                <div class="p-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
-                    <div class="text-[9px] text-emerald-500 font-semibold uppercase mb-1">Terbaik</div>
-                    <div class="text-xs font-bold text-white truncate">${best.pair}</div>
-                    <div class="num text-xs font-bold text-emerald-400 mt-0.5">+${bestP.toFixed(2)} USDT</div>
-                    <div class="text-[9px] text-[var(--text-dim)] mt-0.5">${best.closed}</div>
-                </div>
-                <div class="p-2.5 rounded-xl border border-rose-500/20 bg-rose-500/5">
-                    <div class="text-[9px] text-rose-500 font-semibold uppercase mb-1">Terburuk</div>
-                    <div class="text-xs font-bold text-white truncate">${worst.pair}</div>
-                    <div class="num text-xs font-bold text-rose-400 mt-0.5">${worstP.toFixed(2)} USDT</div>
-                    <div class="text-[9px] text-[var(--text-dim)] mt-0.5">${worst.closed}</div>
-                </div>
-            `;
-        }
-
         function renderTopPairs(history) {
             const container = document.getElementById('topPairsList');
             if (!container) return;
@@ -1102,43 +1058,11 @@
             }).join('');
         }
 
-        function renderMonthlyChart(history) {
-            const container = document.getElementById('monthlyBarChart');
-            if (!container) return;
-            if (!history || history.length === 0) {
-                container.innerHTML = '<p class="text-[11px] text-[var(--text-faint)] text-center py-6">Belum ada data.</p>';
-                return;
-            }
-            const map = {};
-            history.forEach(item => {
-                const d = parseClosedDate(item.closed);
-                if (!d) return;
-                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-                if (!map[key]) map[key] = 0;
-                map[key] += parseFloat(item.pnl) || 0;
-            });
-            const keys = Object.keys(map).sort();
-            const last = keys.slice(-6);
-            const maxAbs = Math.max(...last.map(k => Math.abs(map[k])), 1);
-            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-
-            container.innerHTML = `
-                <div class="flex items-end justify-between h-20 gap-1.5">
-                    ${last.map(k => {
-                        const val = map[k];
-                        const isProfit = val >= 0;
-                        const heightPct = Math.max(6, (Math.abs(val) / maxAbs) * 100);
-                        const m = k.split('-')[1];
-                        const label = monthNames[parseInt(m) - 1];
-                        return `
-                            <div class="flex-1 flex flex-col items-center justify-end h-full">
-                                <div class="w-full rounded-t-md ${isProfit ? 'bg-emerald-500/70' : 'bg-rose-500/70'}" style="height:${heightPct}%" title="${label}: ${val.toFixed(2)} USDT"></div>
-                                <div class="text-[9px] text-[var(--text-faint)] mt-1">${label}</div>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            `;
+        function changeHeatmapMonth(delta) {
+            heatmapMonth += delta;
+            if (heatmapMonth > 11) { heatmapMonth = 0; heatmapYear++; }
+            if (heatmapMonth < 0) { heatmapMonth = 11; heatmapYear--; }
+            renderHeatmap(cachedGlobalResponse.history || []);
         }
 
         function renderHeatmap(history) {
@@ -1146,9 +1070,8 @@
             const monthLabel = document.getElementById('heatmapMonthLabel');
             if (!container) return;
 
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth();
+            const year = heatmapYear;
+            const month = heatmapMonth;
             const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
             if (monthLabel) monthLabel.textContent = `${monthNames[month]} ${year}`;
 
