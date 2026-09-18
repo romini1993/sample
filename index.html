@@ -71,7 +71,7 @@
         .custom-scroll::-webkit-scrollbar { width: 0px; height: 0px; background: transparent; }
         .custom-scroll { scrollbar-width: none; -ms-overflow-style: none; }
 
-        @media (max-width: 1023px) {
+        @media (max-width: 767px) {
             #dailySummaryList, #tradeList {
                 max-height: calc(100vh - 300px);
                 overflow-y: auto;
@@ -221,13 +221,13 @@
 
             <!-- HERO: Total PNL + Equity Curve -->
             <div class="porto-card hero-panel rounded-3xl p-4 md:p-5 lg:shrink-0">
-                <div class="relative flex flex-row items-start justify-between gap-3">
-                    <div class="min-w-0">
+                <div class="relative flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+                    <div class="shrink-0">
                         <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1">Total P&amp;L</div>
-                        <div id="statTotal" class="font-display text-2xl sm:text-3xl md:text-3xl font-bold leading-none truncate">–</div>
-                        <div id="statTotalIdr" class="num text-[11px] text-[var(--text-dim)] mt-1.5 truncate">–</div>
+                        <div id="statTotal" class="font-display text-2xl sm:text-3xl md:text-3xl font-bold leading-none">–</div>
+                        <div id="statTotalIdr" class="num text-[11px] text-[var(--text-dim)] mt-1.5">–</div>
                     </div>
-                    <div class="flex gap-4 shrink-0 text-right">
+                    <div class="flex gap-4 shrink-0 text-right ml-auto">
                         <div>
                             <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1">USDT/IDR</div>
                             <div id="headerKursValue" class="font-display text-xs lg:text-sm font-bold text-slate-100 num">–</div>
