@@ -359,7 +359,7 @@
                             <button type="button" onclick="changeHeatmapMonth(1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-dim)] hover:text-white hover:border-slate-500 transition text-[10px]">›</button>
                         </div>
                     </div>
-                    <div id="heatmapCalendar" class="lg:flex-1 lg:flex lg:flex-col lg:justify-center"></div>
+                    <div id="heatmapCalendar" class="lg:flex-1 lg:flex lg:flex-col lg:min-h-0"></div>
                     <div id="heatmapTooltip" class="absolute z-20 px-2 py-1.5 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] shadow-lg text-center whitespace-nowrap"></div>
                 </div>
 
@@ -376,7 +376,7 @@
 
         <!-- KOLOM 2 (TENGAH): Rekap Harian (accordion) -->
         <div id="rekapCardWrap" class="lg:col-span-4 xl:col-span-4 lg:block">
-            <div id="rekapCard" class="porto-card p-3 rounded-2xl space-y-1 lg:flex lg:flex-col lg:h-[840px]">
+            <div id="rekapCard" class="porto-card p-3 rounded-2xl space-y-1 lg:flex lg:flex-col lg:h-[880px]">
 
                 <div class="hidden lg:flex justify-between items-center">
                     <div class="flex items-center gap-2">
@@ -391,7 +391,7 @@
 
         <!-- KOLOM 3 (KANAN): Riwayat Trade (selalu semua, tidak difilter) -->
         <div id="riwayatCardWrap" class="lg:col-span-4 xl:col-span-4 hidden lg:block">
-            <div id="riwayatCard" class="porto-card p-3 rounded-2xl space-y-1 lg:flex lg:flex-col lg:h-[840px]">
+            <div id="riwayatCard" class="porto-card p-3 rounded-2xl space-y-1 lg:flex lg:flex-col lg:h-[880px]">
                 <div class="hidden lg:flex justify-between items-center">
                     <div class="flex items-center gap-2">
                         <span class="section-dot"></span>
@@ -1217,10 +1217,10 @@
                     textColor = '#fff';
                 }
                 const valAttr = val !== undefined ? val : 'null';
-                cellsHtml += `<div class="aspect-square rounded-md flex items-center justify-center text-[9px] font-medium cursor-pointer" style="background:${bg}; color:${textColor}" onclick="showHeatmapDayDetail(event, ${day}, ${valAttr})">${day}</div>`;
+                cellsHtml += `<div class="aspect-square lg:aspect-auto rounded-md flex items-center justify-center text-[9px] font-medium cursor-pointer" style="background:${bg}; color:${textColor}" onclick="showHeatmapDayDetail(event, ${day}, ${valAttr})">${day}</div>`;
             }
 
-            container.innerHTML = `<div class="grid grid-cols-7 gap-1">${cellsHtml}</div>`;
+            container.innerHTML = `<div class="grid grid-cols-7 gap-1 lg:h-full lg:grid-rows-[auto_repeat(6,1fr)]">${cellsHtml}</div>`;
         }
 
         function showHeatmapDayDetail(e, day, val) {
