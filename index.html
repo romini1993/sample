@@ -326,7 +326,7 @@
                 </div>
 
                 <!-- Kalender Aktivitas (Heatmap) -->
-                <div class="porto-card p-3.5 rounded-2xl lg:flex lg:flex-col lg:flex-1 lg:min-h-0">
+                <div class="porto-card p-3.5 rounded-2xl lg:flex lg:flex-col lg:flex-1 lg:min-h-0 relative">
                     <div class="flex items-center justify-between mb-2.5 shrink-0">
                         <div class="flex items-center gap-2">
                             <span class="section-dot"></span>
@@ -339,6 +339,7 @@
                         </div>
                     </div>
                     <div id="heatmapCalendar" class="lg:flex-1 lg:flex lg:flex-col lg:justify-center"></div>
+                    <div id="heatmapTooltip" class="hidden absolute z-20 px-2 py-1.5 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] shadow-lg text-center pointer-events-none whitespace-nowrap"></div>
                 </div>
 
             </div>
@@ -1154,6 +1155,9 @@
             const monthLabel = document.getElementById('heatmapMonthLabel');
             if (!container) return;
 
+            const oldTooltip = document.getElementById('heatmapTooltip');
+            if (oldTooltip) oldTooltip.classList.add('hidden');
+
             const year = heatmapYear;
             const month = heatmapMonth;
             const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -1192,51 +1196,54 @@
                     textColor = '#fff';
                 }
                 const valAttr = val !== undefined ? val : 'null';
-                cellsHtml += `<div class="aspect-square rounded-md flex items-center justify-center text-[9px] font-medium cursor-pointer" style="background:${bg}; color:${textColor}" onclick="showHeatmapDayDetail(${day}, ${valAttr})">${day}</div>`;
+                cellsHtml += `<div class="aspect-square rounded-md flex items-center justify-center text-[9px] font-medium cursor-pointer" style="background:${bg}; color:${textColor}" onclick="showHeatmapDayDetail(event, ${day}, ${valAttr})">${day}</div>`;
             }
 
             container.innerHTML = `<div class="grid grid-cols-7 gap-1">${cellsHtml}</div>`;
         }
 
-        function showHeatmapDayDetail(day, val) {
+        function showHeatmapDayDetail(e, day, val) {
+            const tooltip = document.getElementById('heatmapTooltip');
+            const card = e.currentTarget.closest('.porto-card');
+            if (!tooltip || !card) return;
+
             const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
             const label = `${day} ${monthNames[heatmapMonth]} ${heatmapYear}`;
 
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top',
-                showConfirmButton: false,
-                timer: 2200,
-                timerProgressBar: true
-            });
-
+            let html;
             if (val === null || val === undefined) {
-                Toast.fire({
-                    html: `
-                        <div style="text-align:center">
-                            <div style="font-size:11px;color:#8891a4;margin-bottom:2px;">${label}</div>
-                            <div style="font-size:12px;color:#565e70;">Tidak ada trade</div>
-                        </div>
-                    `,
-                    background: '#161a24'
-                });
-                return;
+                html = `
+                    <div style="font-size:9px;color:#8891a4;margin-bottom:1px;">${label}</div>
+                    <div style="font-size:10px;color:#565e70;">Tidak ada trade</div>
+                `;
+            } else {
+                const isProfit = val >= 0;
+                const color = isProfit ? '#34d399' : '#fb7185';
+                const rp = formatRupiah(val * currentKursIdr);
+                html = `
+                    <div style="font-size:9px;color:#8891a4;margin-bottom:1px;">${label}</div>
+                    <div style="font-size:11px;font-weight:700;color:${color};">${isProfit ? '+' : ''}${val.toFixed(2)} USDT</div>
+                    <div style="font-size:9px;color:#8891a4;margin-top:1px;">${rp}</div>
+                `;
             }
 
-            const isProfit = val >= 0;
-            const color = isProfit ? '#34d399' : '#fb7185';
-            const rp = formatRupiah(val * currentKursIdr);
+            tooltip.innerHTML = html;
+            tooltip.classList.remove('hidden');
 
-            Toast.fire({
-                html: `
-                    <div style="text-align:center">
-                        <div style="font-size:11px;color:#8891a4;margin-bottom:3px;">${label}</div>
-                        <div style="font-size:14px;font-weight:700;color:${color};">${isProfit ? '+' : ''}${val.toFixed(2)} USDT</div>
-                        <div style="font-size:10px;color:#8891a4;margin-top:2px;">${rp}</div>
-                    </div>
-                `,
-                background: '#161a24'
-            });
+            const cellRect = e.currentTarget.getBoundingClientRect();
+            const cardRect = card.getBoundingClientRect();
+
+            const top = cellRect.top - cardRect.top - tooltip.offsetHeight - 6;
+            let left = cellRect.left - cardRect.left + (cellRect.width / 2) - (tooltip.offsetWidth / 2);
+            left = Math.max(4, Math.min(cardRect.width - tooltip.offsetWidth - 4, left));
+
+            tooltip.style.top = `${Math.max(4, top)}px`;
+            tooltip.style.left = `${left}px`;
+
+            clearTimeout(window._heatmapTooltipTimeout);
+            window._heatmapTooltipTimeout = setTimeout(() => {
+                tooltip.classList.add('hidden');
+            }, 2200);
         }
 
         function handleError(err) {
