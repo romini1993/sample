@@ -339,9 +339,6 @@
                         </div>
                     </div>
                     <div id="heatmapCalendar" class="lg:flex-1 lg:flex lg:flex-col lg:justify-center"></div>
-                    <div id="heatmapDayDetail" class="mt-2.5 pt-2.5 border-t border-[var(--border)] shrink-0">
-                        <div class="text-[10px] text-[var(--text-faint)] text-center">Klik tanggal buat lihat detail</div>
-                    </div>
                 </div>
 
             </div>
@@ -1150,8 +1147,6 @@
             if (heatmapMonth > 11) { heatmapMonth = 0; heatmapYear++; }
             if (heatmapMonth < 0) { heatmapMonth = 11; heatmapYear--; }
             renderHeatmap(cachedGlobalResponse.history || []);
-            const detail = document.getElementById('heatmapDayDetail');
-            if (detail) detail.innerHTML = '<div class="text-[10px] text-[var(--text-faint)] text-center">Klik tanggal buat lihat detail</div>';
         }
 
         function renderHeatmap(history) {
@@ -1204,25 +1199,44 @@
         }
 
         function showHeatmapDayDetail(day, val) {
-            const detail = document.getElementById('heatmapDayDetail');
-            if (!detail) return;
             const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
             const label = `${day} ${monthNames[heatmapMonth]} ${heatmapYear}`;
 
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top',
+                showConfirmButton: false,
+                timer: 2200,
+                timerProgressBar: true
+            });
+
             if (val === null || val === undefined) {
-                detail.innerHTML = `
-                    <div class="text-[10px] text-[var(--text-faint)]">${label}</div>
-                    <div class="text-[11px] text-[var(--text-faint)] mt-0.5">Tidak ada trade</div>
-                `;
+                Toast.fire({
+                    html: `
+                        <div style="text-align:center">
+                            <div style="font-size:11px;color:#8891a4;margin-bottom:2px;">${label}</div>
+                            <div style="font-size:12px;color:#565e70;">Tidak ada trade</div>
+                        </div>
+                    `,
+                    background: '#161a24'
+                });
                 return;
             }
 
             const isProfit = val >= 0;
-            detail.innerHTML = `
-                <div class="text-[10px] text-[var(--text-faint)] mb-0.5">${label}</div>
-                <div class="num text-sm font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}">${isProfit ? '+' : ''}${val.toFixed(2)} USDT</div>
-                <div class="num text-[10px] text-[var(--text-dim)] mt-0.5">${formatRupiah(val * currentKursIdr)}</div>
-            `;
+            const color = isProfit ? '#34d399' : '#fb7185';
+            const rp = formatRupiah(val * currentKursIdr);
+
+            Toast.fire({
+                html: `
+                    <div style="text-align:center">
+                        <div style="font-size:11px;color:#8891a4;margin-bottom:3px;">${label}</div>
+                        <div style="font-size:14px;font-weight:700;color:${color};">${isProfit ? '+' : ''}${val.toFixed(2)} USDT</div>
+                        <div style="font-size:10px;color:#8891a4;margin-top:2px;">${rp}</div>
+                    </div>
+                `,
+                background: '#161a24'
+            });
         }
 
         function handleError(err) {
