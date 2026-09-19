@@ -51,7 +51,7 @@
             -webkit-tap-highlight-color: transparent;
         }
         * { box-sizing: border-box; }
-        input, select, textarea, button { : 15px !important; font-family: 'Plus Jakarta Sans', sans-serif; }
+        input, select, textarea, button { font-size: 15px !important; font-family: 'Plus Jakarta Sans', sans-serif; }
         .font-display { font-family: 'Space Grotesk', sans-serif; }
         .num { font-family: 'Space Grotesk', sans-serif; font-variant-numeric: tabular-nums; }
 
@@ -108,7 +108,7 @@
         }
 
         .section-label {
-            : 13px;
+            font-size: 13px;
             font-weight: 600;
             color: #e7eaf1;
             letter-spacing: 0.01em;
@@ -132,7 +132,7 @@
         .expand-in { animation: expandIn .2s ease-out both; }
 
         .swal2-popup.swal2-toast {
-            : 0.72rem !important;
+            font-size: 0.72rem !important;
         }
         .swal2-toast {
             font-family: 'Plus Jakarta Sans', sans-serif !important;
@@ -304,7 +304,7 @@
                 </div>
 
                 <div class="relative">
-                                                <input type="number" step="any" id="pnl" required placeholder="Closing P&L" oninput="updatePnlPreview()" class="w-full porto-input rounded-xl pl-3.5 pr-24 py-2 num font-medium">
+                    <input type="number" step="any" id="pnl" required placeholder="Closing P&L" oninput="updatePnlPreview()" class="w-full porto-input rounded-xl pl-3.5 pr-24 py-2 num font-medium">
                     <span id="pnlPreview" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-[11px] text-[var(--text-faint)] num pointer-events-none text-right">≈ Rp 0</span>
                 </div>
 
@@ -316,11 +316,11 @@
             <!-- WIDGET TAMBAHAN (khusus desktop) -->
             <div class="hidden lg:flex lg:flex-col lg:flex-1 lg:min-h-0 space-y-2.5">
 
-                <!-- Statistik -->
+                <!-- Statistik Cepat -->
                 <div class="porto-card p-3.5 rounded-2xl shrink-0">
                     <div class="flex items-center gap-2 mb-2.5">
                         <span class="section-dot"></span>
-                        <h2 class="section-label">Statistik</h2>
+                        <h2 class="section-label">Statistik cepat</h2>
                     </div>
                     <div id="quickStatsGrid" class="grid grid-cols-3 gap-2"></div>
                 </div>
@@ -339,6 +339,9 @@
                         </div>
                     </div>
                     <div id="heatmapCalendar" class="lg:flex-1 lg:flex lg:flex-col lg:justify-center"></div>
+                    <div id="heatmapDayDetail" class="mt-2.5 pt-2.5 border-t border-[var(--border)] shrink-0">
+                        <div class="text-[10px] text-[var(--text-faint)] text-center">Klik tanggal buat lihat detail</div>
+                    </div>
                 </div>
 
             </div>
@@ -1147,6 +1150,8 @@
             if (heatmapMonth > 11) { heatmapMonth = 0; heatmapYear++; }
             if (heatmapMonth < 0) { heatmapMonth = 11; heatmapYear--; }
             renderHeatmap(cachedGlobalResponse.history || []);
+            const detail = document.getElementById('heatmapDayDetail');
+            if (detail) detail.innerHTML = '<div class="text-[10px] text-[var(--text-faint)] text-center">Klik tanggal buat lihat detail</div>';
         }
 
         function renderHeatmap(history) {
@@ -1191,11 +1196,33 @@
                     bg = val >= 0 ? `rgba(52,211,153,${0.2 + intensity * 0.6})` : `rgba(251,113,133,${0.2 + intensity * 0.6})`;
                     textColor = '#fff';
                 }
-                const tooltip = val !== undefined ? `${day}: ${val.toFixed(2)} USDT` : `${day}: Tidak ada trade`;
-                cellsHtml += `<div class="aspect-square rounded-md flex items-center justify-center text-[9px] font-medium" style="background:${bg}; color:${textColor}" title="${tooltip}">${day}</div>`;
+                const valAttr = val !== undefined ? val : 'null';
+                cellsHtml += `<div class="aspect-square rounded-md flex items-center justify-center text-[9px] font-medium cursor-pointer" style="background:${bg}; color:${textColor}" onclick="showHeatmapDayDetail(${day}, ${valAttr})">${day}</div>`;
             }
 
             container.innerHTML = `<div class="grid grid-cols-7 gap-1">${cellsHtml}</div>`;
+        }
+
+        function showHeatmapDayDetail(day, val) {
+            const detail = document.getElementById('heatmapDayDetail');
+            if (!detail) return;
+            const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+            const label = `${day} ${monthNames[heatmapMonth]} ${heatmapYear}`;
+
+            if (val === null || val === undefined) {
+                detail.innerHTML = `
+                    <div class="text-[10px] text-[var(--text-faint)]">${label}</div>
+                    <div class="text-[11px] text-[var(--text-faint)] mt-0.5">Tidak ada trade</div>
+                `;
+                return;
+            }
+
+            const isProfit = val >= 0;
+            detail.innerHTML = `
+                <div class="text-[10px] text-[var(--text-faint)] mb-0.5">${label}</div>
+                <div class="num text-sm font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}">${isProfit ? '+' : ''}${val.toFixed(2)} USDT</div>
+                <div class="num text-[10px] text-[var(--text-dim)] mt-0.5">${formatRupiah(val * currentKursIdr)}</div>
+            `;
         }
 
         function handleError(err) {
