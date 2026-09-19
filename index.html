@@ -208,17 +208,6 @@
             color: var(--text-faint);
         }
         .chevron.open { transform: rotate(90deg); color: var(--accent); }
-
-        #heatmapTooltip {
-            transform: scale(0.8);
-            opacity: 0;
-            pointer-events: none;
-            transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.18s ease;
-        }
-        #heatmapTooltip.show {
-            opacity: 1;
-            transform: scale(1);
-        }
     </style>
 </head>
 <body class="relative">
@@ -350,7 +339,6 @@
                         </div>
                     </div>
                     <div id="heatmapCalendar" class="lg:flex-1 lg:flex lg:flex-col lg:justify-center"></div>
-                    <div id="heatmapTooltip" class="absolute z-20 px-2 py-1.5 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] shadow-lg text-center whitespace-nowrap"></div>
                 </div>
 
             </div>
@@ -1166,9 +1154,6 @@
             const monthLabel = document.getElementById('heatmapMonthLabel');
             if (!container) return;
 
-            const oldTooltip = document.getElementById('heatmapTooltip');
-            if (oldTooltip) oldTooltip.classList.remove('show');
-
             const year = heatmapYear;
             const month = heatmapMonth;
             const monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -1214,9 +1199,7 @@
         }
 
         function showHeatmapDayDetail(e, day, val) {
-            const tooltip = document.getElementById('heatmapTooltip');
-            const card = e.currentTarget.closest('.porto-card');
-            if (!tooltip || !card) return;
+            const cellRect = e.currentTarget.getBoundingClientRect();
 
             let html;
             if (val === null || val === undefined) {
@@ -1231,23 +1214,26 @@
                 `;
             }
 
-            tooltip.innerHTML = html;
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-start',
+                showConfirmButton: false,
+                timer: 2000,
+                timerProgressBar: true,
+                didOpen: (toastEl) => {
+                    const rect = toastEl.getBoundingClientRect();
+                    let left = cellRect.left + (cellRect.width / 2) - (rect.width / 2);
+                    left = Math.max(4, Math.min(window.innerWidth - rect.width - 4, left));
+                    const top = Math.max(4, cellRect.top - rect.height - 8);
 
-            const cellRect = e.currentTarget.getBoundingClientRect();
-            const cardRect = card.getBoundingClientRect();
+                    toastEl.style.position = 'fixed';
+                    toastEl.style.margin = '0';
+                    toastEl.style.left = `${left}px`;
+                    toastEl.style.top = `${top}px`;
+                }
+            });
 
-            const top = cellRect.top - cardRect.top - tooltip.offsetHeight - 6;
-            let left = cellRect.left - cardRect.left + (cellRect.width / 2) - (tooltip.offsetWidth / 2);
-            left = Math.max(4, Math.min(cardRect.width - tooltip.offsetWidth - 4, left));
-
-            tooltip.style.top = `${Math.max(4, top)}px`;
-            tooltip.style.left = `${left}px`;
-            tooltip.classList.add('show');
-
-            clearTimeout(window._heatmapTooltipTimeout);
-            window._heatmapTooltipTimeout = setTimeout(() => {
-                tooltip.classList.remove('show');
-            }, 2200);
+            Toast.fire({ html, background: '#161a24' });
         }
 
         function handleError(err) {
