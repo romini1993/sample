@@ -132,17 +132,25 @@
         .expand-in { animation: expandIn .2s ease-out both; }
 
         .swal2-popup.swal2-toast {
-            font-size: 0.72rem !important;
+            font-size: 0.9rem !important;
+            display: flex !important;
+            align-items: center !important;
         }
         .swal2-toast {
             font-family: 'Plus Jakarta Sans', sans-serif !important;
-            padding: 0.65em 1em !important;
+            padding: 0.55em 0.9em !important;
             border-radius: 12px !important;
             box-shadow: 0 8px 20px rgba(0,0,0,.35) !important;
+            width: auto !important;
+            max-width: max-content !important;
         }
         .swal2-toast .swal2-title {
             font-weight: 600 !important;
             margin: 0 !important;
+            line-height: 1.3 !important;
+        }
+        .swal2-toast .swal2-icon {
+            margin: 0 0.5em 0 0 !important;
         }
 
         .topbar {
