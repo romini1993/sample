@@ -217,55 +217,11 @@
         }
         .chevron.open { transform: rotate(90deg); color: var(--accent); }
 
-        /* ===== TAB PILL: indikator meluncur + squish ===== */
-        .tabbar {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px;
-            border-radius: 999px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            margin-bottom: 4px;
-            overflow: hidden;
+        #tabIndicator {
+            transition: translate 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        scale 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .tabbar__indicator {
-            position: absolute;
-            top: 4px;
-            left: 0;
-            height: calc(100% - 8px);
-            border-radius: 999px;
-            background: var(--accent);
-            box-shadow: 0 4px 14px rgba(217,164,65,.25);
-            transform-origin: center center;
-            will-change: transform;
-            pointer-events: none;
-            z-index: 0;
-        }
-        .tabbar__btn {
-            position: relative;
-            z-index: 1;
-            flex: 1 1 0;
-            min-width: 0;
-            padding: 8px 4px;
-            border: 0;
-            margin: 0;
-            background: transparent;
-            border-radius: 999px;
-            font-size: 12px !important;
-            font-weight: 600;
-            line-height: 1;
-            color: var(--text-dim);
-            cursor: pointer;
-            transition: color .22s ease;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .tabbar__btn[data-on="true"] { color: #1a1305; }
-        .tabbar__btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-        @media (prefers-reduced-motion: reduce) { .tabbar__btn { transition: none; } }
 
         @keyframes heatmapToastShow {
             0% { transform: translateY(-10px) rotateZ(2deg); opacity: 0; }
@@ -426,10 +382,10 @@
 
         <!-- Tab pill: mobile only, independen dari kedua card -->
         <div class="lg:hidden">
-            <div class="tabbar" id="tabPill">
-                <span class="tabbar__indicator" id="tabIndicator"></span>
-                <button type="button" id="tabBtnRekap" onclick="switchTab('rekap')" class="tabbar__btn">Rekap Harian</button>
-                <button type="button" id="tabBtnRiwayat" onclick="switchTab('riwayat')" class="tabbar__btn">Riwayat Trade</button>
+            <div id="tabSwitcher" class="relative flex items-center gap-1 p-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] mb-1">
+                <div id="tabIndicator" class="absolute rounded-full bg-amber-500 shadow-lg shadow-amber-500/25" style="top:4px; bottom:4px; left:4px; width:0;"></div>
+                <button type="button" id="tabBtnRekap" onclick="switchTab('rekap')" class="relative z-10 flex-1 text-center text-xs font-semibold py-2 rounded-full transition-colors text-[#1a1305]">Rekap Harian</button>
+                <button type="button" id="tabBtnRiwayat" onclick="switchTab('riwayat')" class="relative z-10 flex-1 text-center text-xs font-semibold py-2 rounded-full transition-colors text-slate-400">Riwayat Trade</button>
             </div>
         </div>
 
@@ -542,59 +498,6 @@
         let heatmapYear = now_.getFullYear();
         let heatmapMonth = now_.getMonth();
 
-        // ===== TAB PILL: indikator meluncur + squish =====
-        const TAB_ANIM = { duration: 420, stretch: 0.14, settle: 0.05, easing: 'cubic-bezier(.34,.86,.3,1)' };
-        let tabIndicatorX = 0;
-        let tabIndicatorAnim = null;
-
-        function moveTabIndicator(instant) {
-            const bar = document.getElementById('tabPill');
-            const ind = document.getElementById('tabIndicator');
-            if (!bar || !ind) return;
-            const btn = document.getElementById(activeTab === 'rekap' ? 'tabBtnRekap' : 'tabBtnRiwayat');
-            if (!btn || btn.offsetWidth === 0) return; // ke-skip pas pill lagi disembunyikan (desktop)
-
-            ind.style.width = btn.offsetWidth + 'px';
-            const from = tabIndicatorX;
-            const to = btn.offsetLeft - bar.clientLeft;
-            tabIndicatorX = to;
-
-            const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            if (instant || reduce || from === to) {
-                if (tabIndicatorAnim) { tabIndicatorAnim.cancel(); tabIndicatorAnim = null; }
-                ind.style.transform = `translateX(${to}px)`;
-                return;
-            }
-
-            const s = TAB_ANIM.stretch, b = TAB_ANIM.settle;
-            const mid = from + (to - from) * 0.5;
-            const over = to + (to - from) * 0.03; // lewat dikit, terus balik
-
-            if (tabIndicatorAnim) tabIndicatorAnim.cancel();
-            tabIndicatorAnim = ind.animate([
-                { transform: `translateX(${from}px) scale(1,1)`, offset: 0 },
-                { transform: `translateX(${mid}px) scale(${1 + s},${1 - s * 0.55})`, offset: 0.45 },
-                { transform: `translateX(${over}px) scale(${1 - b},${1 + b})`, offset: 0.78 },
-                { transform: `translateX(${to}px) scale(1,1)`, offset: 1 }
-            ], { duration: TAB_ANIM.duration, easing: TAB_ANIM.easing, fill: 'forwards' });
-
-            tabIndicatorAnim.finished.then(() => {
-                ind.style.transform = `translateX(${to}px)`;
-                if (tabIndicatorAnim) tabIndicatorAnim.cancel();
-                tabIndicatorAnim = null;
-            }).catch(() => {});
-        }
-
-        function initTabIndicator() {
-            const bar = document.getElementById('tabPill');
-            if (!bar) return;
-            const settle = () => moveTabIndicator(true);
-            settle();
-            if (window.ResizeObserver) new ResizeObserver(settle).observe(bar);
-            if (document.fonts && document.fonts.ready) document.fonts.ready.then(settle);
-            window.addEventListener('orientationchange', () => setTimeout(settle, 150));
-        }
-
         function fetchRealtimeKurs() {
             fetch("https://api.binance.com/api/v3/ticker/price?symbol=USDTIDR")
                 .then(res => res.json())
@@ -693,7 +596,32 @@
             }
         }
 
-        function switchTab(tab) {
+        function moveTabIndicator(activeBtn, instant) {
+            const indicator = document.getElementById('tabIndicator');
+            const wrapper = document.getElementById('tabSwitcher');
+            if (!indicator || !wrapper || !activeBtn) return;
+
+            const wrapperRect = wrapper.getBoundingClientRect();
+            const btnRect = activeBtn.getBoundingClientRect();
+            const left = btnRect.left - wrapperRect.left - 4;
+            const width = btnRect.width;
+
+            if (instant) {
+                indicator.style.transition = 'none';
+                indicator.style.width = `${width}px`;
+                indicator.style.translate = `${left}px 0px`;
+                void indicator.offsetWidth;
+                indicator.style.transition = '';
+                return;
+            }
+
+            indicator.style.width = `${width}px`;
+            indicator.style.translate = `${left}px 0px`;
+            indicator.style.scale = '1.15 1';
+            setTimeout(() => { indicator.style.scale = '1 1'; }, 60);
+        }
+
+        function switchTab(tab, instant) {
             activeTab = tab;
             const rekapCard = document.getElementById('rekapCardWrap');
             const riwayatCard = document.getElementById('riwayatCardWrap');
@@ -705,21 +633,29 @@
             if (tab === 'rekap') {
                 rekapCard.classList.remove('hidden');
                 riwayatCard.classList.add('hidden');
+                btnRekap.classList.remove('text-slate-400');
+                btnRekap.classList.add('text-[#1a1305]');
+                btnRiwayat.classList.remove('text-[#1a1305]');
+                btnRiwayat.classList.add('text-slate-400');
+                moveTabIndicator(btnRekap, instant);
             } else {
                 rekapCard.classList.add('hidden');
                 riwayatCard.classList.remove('hidden');
+                btnRiwayat.classList.remove('text-slate-400');
+                btnRiwayat.classList.add('text-[#1a1305]');
+                btnRekap.classList.remove('text-[#1a1305]');
+                btnRekap.classList.add('text-slate-400');
+                moveTabIndicator(btnRiwayat, instant);
             }
-
-            btnRekap.setAttribute('data-on', tab === 'rekap' ? 'true' : 'false');
-            btnRiwayat.setAttribute('data-on', tab === 'riwayat' ? 'true' : 'false');
-
-            moveTabIndicator();
         }
 
         window.onload = function() {
             fetchRealtimeKurs();
-            initTabIndicator();
-            switchTab('rekap');
+            switchTab('rekap', true);
+            window.addEventListener('resize', () => {
+                const activeBtn = activeTab === 'rekap' ? document.getElementById('tabBtnRekap') : document.getElementById('tabBtnRiwayat');
+                moveTabIndicator(activeBtn, true);
+            });
             initCurveInteraction();
             
             const cachedData = localStorage.getItem('tradingDataCache');
