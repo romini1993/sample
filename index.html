@@ -251,8 +251,8 @@
             <!-- HERO: Total PNL + Equity Curve -->
             <div class="porto-card hero-panel rounded-3xl p-4 md:p-5 lg:shrink-0">
                 <div class="relative flex flex-row items-start justify-between gap-2">
-                    <div class="shrink-0 cursor-pointer active:opacity-70 transition" onclick="showNetPnL()">
-                        <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1">Total P&amp;L</div>
+                    <div class="shrink-0 cursor-pointer active:opacity-70 transition" onclick="toggleNetPnL()">
+                        <div id="totalPnlLabel" class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1">Total P&amp;L</div>
                         <div id="statTotal" class="font-display text-xl sm:text-3xl md:text-3xl font-bold leading-none">–</div>
                         <div id="statTotalIdr" class="num text-[11px] text-[var(--text-dim)] mt-1.5">–</div>
                     </div>
@@ -486,6 +486,7 @@
         let toastTimeout = null;
         let curveState = { w: 600, h: 100, data: [] };
         let isCurveDragging = false;
+        let isNetPnlView = false;
         const now_ = new Date();
         let heatmapYear = now_.getFullYear();
         let heatmapMonth = now_.getMonth();
@@ -554,33 +555,6 @@
             const isProfit = val >= 0;
             el.textContent = `≈ ${isProfit ? '' : '-'}${formatRupiah(Math.abs(val) * currentKursIdr)}`;
             el.style.color = val === 0 ? 'var(--text-faint)' : (isProfit ? 'var(--profit)' : 'var(--loss)');
-        }
-
-        function showNetPnL() {
-            const total = parseFloat(cachedGlobalResponse.totalPnl) || 0;
-            const net = total * 0.9;
-            const isProfit = net >= 0;
-            const color = isProfit ? '#34d399' : '#fb7185';
-            const rp = formatRupiah(net * currentKursIdr);
-
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
-            });
-
-            Toast.fire({
-                html: `
-                    <div style="text-align:center">
-                        <div style="font-size:0.72em;color:#8891a4;margin-bottom:3px;">Total Net P&amp;L (setelah potongan 10%)</div>
-                        <div style="font-size:1.1em;font-weight:700;color:${color};">${isProfit ? '+' : ''}${net.toFixed(2)} USDT</div>
-                        <div style="font-size:0.68em;color:#8891a4;margin-top:2px;">${rp}</div>
-                    </div>
-                `,
-                background: '#161a24'
-            });
         }
 
         function showToast(message, type = 'success') {
@@ -992,21 +966,32 @@
         function renderStats(res) {
             const totalEl = document.getElementById('statTotal');
             const totalIdrEl = document.getElementById('statTotalIdr');
+            const totalLabelEl = document.getElementById('totalPnlLabel');
             const countEl = document.getElementById('statCount');
             const winEl = document.getElementById('statWinRate');
 
-            const total = parseFloat(res.totalPnl) || 0;
+            const gross = parseFloat(res.totalPnl) || 0;
+            const total = isNetPnlView ? gross * 0.9 : gross;
             const isProfit = total >= 0;
 
             totalEl.textContent = `${isProfit ? '+' : ''}${total.toFixed(2)} USDT`;
-            totalEl.className = `font-display text-2xl sm:text-3xl font-bold leading-none truncate ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
+            totalEl.className = `font-display text-xl sm:text-3xl md:text-3xl font-bold leading-none ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
 
             if (totalIdrEl) {
                 totalIdrEl.textContent = formatRupiah(total * currentKursIdr);
             }
 
+            if (totalLabelEl) {
+                totalLabelEl.textContent = isNetPnlView ? 'Total Net P&L' : 'Total P&L';
+            }
+
             countEl.textContent = res.totalTrades || 0;
             winEl.textContent = `${res.winRate || 0}%`;
+        }
+
+        function toggleNetPnL() {
+            isNetPnlView = !isNetPnlView;
+            renderStats(cachedGlobalResponse);
         }
 
         function renderEquityCurve(history) {
