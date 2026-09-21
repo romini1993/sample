@@ -622,6 +622,16 @@
             setTimeout(() => { indicator.style.scale = '1 1'; }, 60);
         }
 
+        function replayRiseIn(container) {
+            if (!container) return;
+            const items = container.querySelectorAll('.rise-in');
+            items.forEach(el => {
+                el.classList.remove('rise-in');
+                void el.offsetWidth;
+                el.classList.add('rise-in');
+            });
+        }
+
         function switchTab(tab, instant) {
             activeTab = tab;
             const rekapCard = document.getElementById('rekapCardWrap');
@@ -639,6 +649,7 @@
                 btnRiwayat.classList.remove('text-[#1a1305]');
                 btnRiwayat.classList.add('text-slate-400');
                 moveTabIndicator(btnRekap, instant);
+                if (!instant) replayRiseIn(rekapCard);
             } else {
                 rekapCard.classList.add('hidden');
                 riwayatCard.classList.remove('hidden');
@@ -647,6 +658,7 @@
                 btnRekap.classList.remove('text-[#1a1305]');
                 btnRekap.classList.add('text-slate-400');
                 moveTabIndicator(btnRiwayat, instant);
+                if (!instant) replayRiseIn(riwayatCard);
             }
         }
 
