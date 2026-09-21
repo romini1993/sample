@@ -624,7 +624,7 @@
 
         function replayRiseIn(container) {
             if (!container) return;
-            const items = container.querySelectorAll('.rise-in');
+            const items = container.querySelectorAll('.entrance-item');
             items.forEach(el => {
                 el.classList.remove('rise-in');
                 void el.offsetWidth;
@@ -909,7 +909,7 @@
             const totalIdr = formatRupiah(pnlNum * currentKursIdr);
 
             const div = document.createElement('div');
-            div.className = `row-card ${animateRows ? 'rise-in' : ''} p-2.5 sm:p-3 rounded-xl border ${bgCard} flex items-center justify-between hover:border-slate-700 transition gap-1.5 cursor-pointer select-none`;
+            div.className = `row-card entrance-item ${animateRows ? 'rise-in' : ''} p-2.5 sm:p-3 rounded-xl border ${bgCard} flex items-center justify-between hover:border-slate-700 transition gap-1.5 cursor-pointer select-none`;
             if (animateRows && i !== undefined) div.style.animationDelay = `${i * 15}ms`;
             div.innerHTML = `
                 <div class="w-[38%] min-w-0 text-left">
@@ -983,7 +983,7 @@
                 var totalIdr = formatRupiah(summary.total * currentKursIdr);
 
                 const row = document.createElement('div');
-                row.className = `${animateRows ? 'rise-in' : ''} p-2.5 sm:p-3 rounded-xl border cursor-pointer flex justify-between items-center border-l-2 ${
+                row.className = `entrance-item ${animateRows ? 'rise-in' : ''} p-2.5 sm:p-3 rounded-xl border cursor-pointer flex justify-between items-center border-l-2 ${
                     isExpanded
                     ? 'bg-amber-500/10 border-amber-500 ring-1 ring-amber-500'
                     : 'bg-[var(--bg)] border-[var(--border)] hover:border-slate-600'
