@@ -491,6 +491,7 @@
         let activeTab = 'rekap'; // tab aktif di mobile: 'rekap' atau 'riwayat'
         let cachedGlobalResponse = { history: [], totalPnl: 0, totalTrades: 0, winRate: 0 };
         let toastTimeout = null;
+        let animateRows = true;
         let curveState = { w: 600, h: 100, data: [] };
         let isCurveDragging = false;
         let isNetPnlView = false;
@@ -658,11 +659,13 @@
             });
             initCurveInteraction();
             
+            let hadCachedRender = false;
             const cachedData = localStorage.getItem('tradingDataCache');
             if (cachedData) {
                 try {
                     cachedGlobalResponse = JSON.parse(cachedData);
                     renderDashboard(cachedGlobalResponse);
+                    hadCachedRender = true;
                 } catch(e) {}
             }
             
@@ -671,7 +674,9 @@
                 .then(data => {
                     cachedGlobalResponse = data;
                     localStorage.setItem('tradingDataCache', JSON.stringify(data));
+                    if (hadCachedRender) animateRows = false;
                     renderDashboard(data);
+                    animateRows = true;
                 })
                 .catch(err => console.log(err));
         };
@@ -892,8 +897,8 @@
             const totalIdr = formatRupiah(pnlNum * currentKursIdr);
 
             const div = document.createElement('div');
-            div.className = `row-card rise-in p-2.5 sm:p-3 rounded-xl border ${bgCard} flex items-center justify-between hover:border-slate-700 transition gap-1.5 cursor-pointer select-none`;
-            if (i !== undefined) div.style.animationDelay = `${i * 15}ms`;
+            div.className = `row-card ${animateRows ? 'rise-in' : ''} p-2.5 sm:p-3 rounded-xl border ${bgCard} flex items-center justify-between hover:border-slate-700 transition gap-1.5 cursor-pointer select-none`;
+            if (animateRows && i !== undefined) div.style.animationDelay = `${i * 15}ms`;
             div.innerHTML = `
                 <div class="w-[38%] min-w-0 text-left">
                     <div class="text-[11px] sm:text-xs text-slate-300 font-medium truncate">
@@ -966,13 +971,13 @@
                 var totalIdr = formatRupiah(summary.total * currentKursIdr);
 
                 const row = document.createElement('div');
-                row.className = `rise-in p-2.5 sm:p-3 rounded-xl border cursor-pointer flex justify-between items-center border-l-2 ${
+                row.className = `${animateRows ? 'rise-in' : ''} p-2.5 sm:p-3 rounded-xl border cursor-pointer flex justify-between items-center border-l-2 ${
                     isExpanded
                     ? 'bg-amber-500/10 border-amber-500 ring-1 ring-amber-500'
                     : 'bg-[var(--bg)] border-[var(--border)] hover:border-slate-600'
                 }`;
                 row.style.borderLeftColor = isProf ? 'var(--profit)' : 'var(--loss)';
-                row.style.animationDelay = `${i * 25}ms`;
+                if (animateRows) row.style.animationDelay = `${i * 25}ms`;
                 row.onclick = () => toggleExpand(date);
                 row.innerHTML = `
                     <div class="flex items-center gap-2 min-w-0">
