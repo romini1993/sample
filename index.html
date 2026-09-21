@@ -901,15 +901,16 @@
         }
 
         // Kartu trade dipakai bareng di Riwayat Trade & panel expand Rekap Harian
-        function createTradeCardElement(item, i) {
+        function createTradeCardElement(item, i, forceAnimate) {
             const pnlNum = parseFloat(item.pnl) || 0;
             const isProfit = pnlNum >= 0;
             const pnlColor = isProfit ? 'text-emerald-400' : 'text-rose-400';
             const bgCard = isProfit ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-rose-500/20 bg-rose-500/5';
             const totalIdr = formatRupiah(pnlNum * currentKursIdr);
 
+            const shouldAnimate = forceAnimate || animateRows;
             const div = document.createElement('div');
-            div.className = `row-card entrance-item ${animateRows ? 'rise-in' : ''} p-2.5 sm:p-3 rounded-xl border ${bgCard} flex items-center justify-between hover:border-slate-700 transition gap-1.5 cursor-pointer select-none`;
+            div.className = `row-card entrance-item ${shouldAnimate ? 'rise-in' : ''} p-2.5 sm:p-3 rounded-xl border ${bgCard} flex items-center justify-between hover:border-slate-700 transition gap-1.5 cursor-pointer select-none`;
             if (i !== undefined) div.style.animationDelay = `${i * 15}ms`;
             div.innerHTML = `
                 <div class="w-[38%] min-w-0 text-left">
@@ -933,35 +934,20 @@
 
         function toggleExpand(date) {
             expandedDate = (expandedDate === date) ? null : date;
-            renderDashboard(cachedGlobalResponse);
+            renderDailySummary(cachedGlobalResponse.history || [], false);
         }
 
-        function renderDashboard(res) {
-            const tradeContainer = document.getElementById('tradeList');
+        function renderDailySummary(data, animateDays) {
             const dailyContainer = document.getElementById('dailySummaryList');
+            if (!dailyContainer) return;
 
-            tradeContainer.innerHTML = '';
             dailyContainer.innerHTML = '';
 
-            const data = res.history || [];
-
-            renderStats(res);
-            renderEquityCurve(data);
-            renderQuickStats(data);
-            renderHeatmap(data);
-
             if (!data || data.length === 0) {
-                tradeContainer.innerHTML = '<p class="text-xs text-[var(--text-faint)] text-center py-4">Belum ada data trading.</p>';
                 dailyContainer.innerHTML = '<p class="text-xs text-[var(--text-faint)] text-center py-4">Belum ada rekap.</p>';
                 return;
             }
 
-            // Riwayat Trade: SELALU semua trade, tidak pernah difilter
-            data.forEach((item, i) => {
-                tradeContainer.appendChild(createTradeCardElement(item, i));
-            });
-
-            // Rekap Harian: setiap tanggal bisa di-expand/collapse, tampil inline
             const dailyMap = {};
             data.forEach(item => {
                 const closedDate = item.closed;
@@ -983,7 +969,7 @@
                 var totalIdr = formatRupiah(summary.total * currentKursIdr);
 
                 const row = document.createElement('div');
-                row.className = `entrance-item ${animateRows ? 'rise-in' : ''} p-2.5 sm:p-3 rounded-xl border cursor-pointer flex justify-between items-center border-l-2 ${
+                row.className = `entrance-item ${animateDays ? 'rise-in' : ''} p-2.5 sm:p-3 rounded-xl border cursor-pointer flex justify-between items-center border-l-2 ${
                     isExpanded
                     ? 'bg-amber-500/10 border-amber-500 ring-1 ring-amber-500'
                     : 'bg-[var(--bg)] border-[var(--border)] hover:border-slate-600'
@@ -1015,10 +1001,34 @@
                     panel.className = 'expand-in space-y-2 pl-1 pt-1';
                     const dayTrades = data.filter(item => item.closed === date);
                     dayTrades.forEach((item, idx) => {
-                        panel.appendChild(createTradeCardElement(item, idx));
+                        panel.appendChild(createTradeCardElement(item, idx, true));
                     });
                     dailyContainer.appendChild(panel);
                 }
+            });
+        }
+
+        function renderDashboard(res) {
+            const tradeContainer = document.getElementById('tradeList');
+
+            const data = res.history || [];
+
+            renderStats(res);
+            renderEquityCurve(data);
+            renderQuickStats(data);
+            renderHeatmap(data);
+            renderDailySummary(data, animateRows);
+
+            tradeContainer.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                tradeContainer.innerHTML = '<p class="text-xs text-[var(--text-faint)] text-center py-4">Belum ada data trading.</p>';
+                return;
+            }
+
+            // Riwayat Trade: SELALU semua trade, tidak pernah difilter
+            data.forEach((item, i) => {
+                tradeContainer.appendChild(createTradeCardElement(item, i));
             });
         }
 
