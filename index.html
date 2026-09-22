@@ -352,7 +352,7 @@
             <div class="hidden lg:flex lg:flex-col lg:flex-1 lg:min-h-0 space-y-2.5">
 
                 <!-- Statistik Cepat -->
-                <div class="porto-card p-3.5 rounded-2xl shrink-0">
+                <div class="porto-card p-3.5 rounded-2xl shrink-0 cursor-pointer active:opacity-70 transition" onclick="toggleQuickStatsView()">
                     <div class="flex items-center gap-2 mb-2.5">
                         <span class="section-dot"></span>
                         <h2 class="section-label">Statistik</h2>
@@ -1240,11 +1240,15 @@
             return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         }
 
+        let lastQuickStats = { daily: 0, weekly: 0, monthly: 0 };
+        let isQuickStatsIdrView = false;
+
         function renderQuickStats(history) {
             const grid = document.getElementById('quickStatsGrid');
             if (!grid) return;
             if (!history || history.length === 0) {
                 grid.innerHTML = '<p class="text-[11px] text-[var(--text-faint)] col-span-3 text-center py-2">Belum ada data.</p>';
+                lastQuickStats = { daily: 0, weekly: 0, monthly: 0 };
                 return;
             }
 
@@ -1270,21 +1274,40 @@
                 return vals.reduce((a, b) => a + b, 0) / vals.length;
             };
 
-            const avgDaily = avg(dailyMap);
-            const avgWeekly = avg(weeklyMap);
-            const avgMonthly = avg(monthlyMap);
+            lastQuickStats = {
+                daily: avg(dailyMap),
+                weekly: avg(weeklyMap),
+                monthly: avg(monthlyMap)
+            };
+
+            renderQuickStatsGrid();
+        }
+
+        // Gambar ulang kotak Statistik dari nilai yang udah dihitung (lastQuickStats),
+        // dipanggil pas data berubah maupun pas kotaknya diklik buat toggle USDT/IDR.
+        function renderQuickStatsGrid() {
+            const grid = document.getElementById('quickStatsGrid');
+            if (!grid) return;
 
             const cell = (label, val) => {
                 const isProfit = val >= 0;
+                const text = isQuickStatsIdrView
+                    ? `${isProfit ? '' : '-'}${formatRupiah(Math.abs(val) * currentKursIdr)}`
+                    : `${isProfit ? '+' : ''}${val.toFixed(2)}`;
                 return `
                     <div class="text-center p-2 rounded-xl bg-[var(--bg)] border border-[var(--border)]">
                         <div class="text-[9px] text-[var(--text-faint)] mb-1">${label}</div>
-                        <div class="num text-xs font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}">${isProfit ? '+' : ''}${val.toFixed(2)}</div>
+                        <div class="num text-xs font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}">${text}</div>
                     </div>
                 `;
             };
 
-            grid.innerHTML = cell('Avg Harian', avgDaily) + cell('Avg Mingguan', avgWeekly) + cell('Avg Bulanan', avgMonthly);
+            grid.innerHTML = cell('Avg Harian', lastQuickStats.daily) + cell('Avg Mingguan', lastQuickStats.weekly) + cell('Avg Bulanan', lastQuickStats.monthly);
+        }
+
+        function toggleQuickStatsView() {
+            isQuickStatsIdrView = !isQuickStatsIdrView;
+            renderQuickStatsGrid();
         }
 
         function changeHeatmapMonth(delta) {
