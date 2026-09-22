@@ -530,7 +530,19 @@
             altInput: true,
             altFormat: "d/m/Y",
             defaultDate: "today",
-            disableMobile: true
+            disableMobile: true,
+            onChange: function(selectedDates, dateStr) {
+                if (!dateStr) return;
+                const openedVal = document.getElementById('opened').value;
+                // Kalau Closed digeser jadi lebih awal dari Opened, Opened ikut ketarik
+                // mundur ke tanggal Closed itu (ga masuk akal opened setelah closed).
+                // triggerChange di-set false biar rule di onChange openedPicker (di bawah)
+                // ga ikut reset ulang tanggal Closed yang baru aja dipilih user.
+                if (openedVal && dateStr < openedVal) {
+                    openedPicker.setDate(dateStr, false);
+                    closedPicker.set("minDate", dateStr);
+                }
+            }
         });
 
         const openedPicker = flatpickr("#opened", {
