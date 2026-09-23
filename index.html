@@ -243,6 +243,14 @@
         #heatmapTooltip.hide {
             animation: heatmapToastHide 0.2s ease forwards;
         }
+
+        /* Font khusus buat kartu export (Kartu Hasil & Share PNL per-trade).
+           html2canvas suka salah render web font custom (Space Grotesk) pas
+           di-capture jadi PNG, bikin posisi teks kelihatan geser/turun -> jadi
+           kartu export ini pakai font sistem standar aja biar hasilnya presisi. */
+        .font-card {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+        }
     </style>
 </head>
 <body class="relative">
@@ -255,7 +263,15 @@
         <div class="space-y-2.5 lg:flex lg:flex-col">
 
             <!-- HERO: Total PNL + Equity Curve -->
-            <div class="porto-card hero-panel rounded-3xl p-4 md:p-5 lg:shrink-0">
+            <div class="porto-card hero-panel rounded-3xl p-4 md:p-5 lg:shrink-0"
+                onmousedown="startHeroLongPress(event)"
+                onmousemove="moveHeroLongPress(event)"
+                onmouseup="clearHeroLongPress()"
+                onmouseleave="clearHeroLongPress()"
+                ontouchstart="startHeroLongPress(event)"
+                ontouchmove="moveHeroLongPress(event)"
+                ontouchend="clearHeroLongPress()"
+                oncontextmenu="event.preventDefault()">
                 <div class="relative flex flex-row items-start justify-between gap-2">
                     <div class="shrink-0 cursor-pointer active:opacity-70 transition" onclick="toggleNetPnL()">
                         <div id="totalPnlLabel" class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1">Total P&amp;L</div>
@@ -431,6 +447,9 @@
             <button type="button" id="actionEditBtn" class="w-full text-left px-4 py-3.5 rounded-xl hover:bg-[var(--surface-2)] transition flex items-center gap-3 text-sm font-medium text-slate-200">
                 <span>✏️</span> Edit Trade
             </button>
+            <button type="button" id="actionShareBtn" class="w-full text-left px-4 py-3.5 rounded-xl hover:bg-[var(--surface-2)] transition flex items-center gap-3 text-sm font-medium text-slate-200">
+                <span>📤</span> Share PNL
+            </button>
             <button type="button" id="actionDeleteBtn" class="w-full text-left px-4 py-3.5 rounded-xl hover:bg-rose-500/10 transition flex items-center gap-3 text-sm font-medium text-rose-400">
                 <span>🗑️</span> Hapus Trade
             </button>
@@ -479,6 +498,77 @@
                 </button>
                 <button type="button" id="confirmDeleteBtn" class="w-1/2 bg-rose-600 hover:bg-rose-500 text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-lg shadow-rose-600/20">
                     Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL KARTU HASIL (long-press di kartu Total P&L) -->
+    <div id="resultCardModal" onclick="if(event.target===this) closeResultCardModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="space-y-3 rise-in" style="width: min(380px, 100%);">
+            <div id="resultCardPreview" class="rounded-3xl p-6 relative overflow-hidden font-card" style="background: linear-gradient(160deg, #14110a 0%, #06070b 65%); border: 1px solid var(--border);">
+                <div class="flex items-center gap-2 mb-6">
+                    <div class="logo-mark w-9 h-9 text-base">📈</div>
+                    <div>
+                        <div class="font-bold text-sm text-white leading-none">Trading Log</div>
+                        <div id="resultCardDate" class="text-[10px] text-[var(--text-faint)] mt-1">–</div>
+                    </div>
+                </div>
+                <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1 uppercase" id="resultCardLabel">Total P&amp;L</div>
+                <div id="resultCardTotal" class="text-4xl font-bold leading-none mb-1">–</div>
+                <div id="resultCardTotalIdr" class="text-sm text-[var(--text-dim)] mb-6">–</div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="text-center p-2.5 rounded-xl bg-white/5 border border-white/10">
+                        <div class="text-[9px] text-[var(--text-faint)] mb-1">Trades</div>
+                        <div id="resultCardCount" class="text-sm font-bold text-white">–</div>
+                    </div>
+                    <div class="text-center p-2.5 rounded-xl bg-white/5 border border-white/10">
+                        <div class="text-[9px] text-[var(--text-faint)] mb-1">Win rate</div>
+                        <div id="resultCardWinRate" class="text-sm font-bold text-white">–</div>
+                    </div>
+                    <div class="text-center p-2.5 rounded-xl bg-white/5 border border-white/10">
+                        <div class="text-[9px] text-[var(--text-faint)] mb-1">Avg Harian</div>
+                        <div id="resultCardAvgDaily" class="text-sm font-bold text-white">–</div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button type="button" onclick="closeResultCardModal()" class="w-1/2 bg-[var(--surface-2)] hover:bg-[#1d2230] text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition border border-[var(--border)]">
+                    Tutup
+                </button>
+                <button type="button" id="downloadResultCardBtn" onclick="downloadResultCard()" class="w-1/2 bg-amber-500 hover:bg-amber-400 text-[#1a1305] font-semibold py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/20">
+                    📥 Simpan Gambar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SHARE PNL PER TRADE (dari action sheet Edit/Hapus) -->
+    <div id="tradeShareModal" onclick="if(event.target===this) closeTradeShareModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="space-y-3 rise-in" style="width: min(380px, 100%);">
+            <div id="tradeSharePreview" class="rounded-3xl p-6 relative overflow-hidden font-card" style="background: linear-gradient(160deg, #14110a 0%, #06070b 65%); border: 1px solid var(--border);">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-2">
+                        <div class="logo-mark w-8 h-8 text-sm">📈</div>
+                        <div class="font-bold text-sm text-white leading-none">Trading Log</div>
+                    </div>
+                    <div id="tradeShareBadge" class="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full">–</div>
+                </div>
+                <div id="tradeSharePair" class="text-2xl font-bold text-white mb-4">–</div>
+                <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1 uppercase">Closing P&amp;L</div>
+                <div id="tradeShareTotal" class="text-4xl font-bold leading-none mb-1">–</div>
+                <div id="tradeShareTotalIdr" class="text-sm text-[var(--text-dim)] mb-6">–</div>
+                <div class="text-center p-2.5 rounded-xl bg-white/5 border border-white/10">
+                    <div class="text-[9px] text-[var(--text-faint)] mb-1">Closed</div>
+                    <div id="tradeShareClosed" class="text-sm font-bold text-white">–</div>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button type="button" onclick="closeTradeShareModal()" class="w-1/2 bg-[var(--surface-2)] hover:bg-[#1d2230] text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition border border-[var(--border)]">
+                    Tutup
+                </button>
+                <button type="button" id="downloadTradeShareBtn" onclick="downloadTradeShare()" class="w-1/2 bg-amber-500 hover:bg-amber-400 text-[#1a1305] font-semibold py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/20">
+                    📥 Simpan Gambar
                 </button>
             </div>
         </div>
@@ -845,6 +935,13 @@
             document.getElementById('editModal').classList.remove('hidden');
         };
 
+        document.getElementById('actionShareBtn').onclick = function() {
+            closeActionModal();
+            const item = (cachedGlobalResponse.history || []).find(x => parseInt(x.no) === parseInt(selectedNoForAction));
+            if (!item) return;
+            openTradeShareModal(item);
+        };
+
         function closeEditModal() {
             document.getElementById('editModal').classList.add('hidden');
         }
@@ -1093,8 +1190,368 @@
         }
 
         function toggleNetPnL() {
+            if (heroLongPressFired) { heroLongPressFired = false; return; }
             isNetPnlView = !isNetPnlView;
             renderStats(cachedGlobalResponse);
+        }
+
+        // ══════════════════════════════
+        //  LONG-PRESS DI HERO -> KARTU HASIL
+        // ══════════════════════════════
+        let heroLongPressTimer = null;
+        let heroLongPressFired = false;
+        let heroStartX = 0, heroStartY = 0;
+
+        function startHeroLongPress(e) {
+            // Jangan ganggu interaksi drag di equity curve (buat lihat tooltip tanggal)
+            if (e.target.closest && e.target.closest('#equityCurve')) return;
+            const touch = e.touches ? e.touches[0] : e;
+            heroStartX = touch.clientX;
+            heroStartY = touch.clientY;
+            heroLongPressFired = false;
+            heroLongPressTimer = setTimeout(() => {
+                heroLongPressFired = true;
+                if (navigator.vibrate) navigator.vibrate(50);
+                openResultCardModal();
+            }, 550);
+        }
+
+        function moveHeroLongPress(e) {
+            if (!heroLongPressTimer) return;
+            const touch = e.touches ? e.touches[0] : e;
+            if (Math.abs(touch.clientX - heroStartX) > 15 || Math.abs(touch.clientY - heroStartY) > 15) {
+                clearHeroLongPress();
+            }
+        }
+
+        function clearHeroLongPress() {
+            clearTimeout(heroLongPressTimer);
+            heroLongPressTimer = null;
+        }
+
+        function openResultCardModal() {
+            const res = cachedGlobalResponse;
+            const gross = parseFloat(res.totalPnl) || 0;
+            const total = isNetPnlView ? gross * 0.9 : gross;
+            const isProfit = total >= 0;
+
+            const totalEl = document.getElementById('resultCardTotal');
+            totalEl.textContent = `${isProfit ? '+' : ''}${total.toFixed(2)} USDT`;
+            totalEl.className = `text-4xl font-bold leading-none mb-1 ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
+
+            document.getElementById('resultCardLabel').textContent = isNetPnlView ? 'Total Net P&L' : 'Total P&L';
+            document.getElementById('resultCardTotalIdr').textContent = formatRupiah(total * currentKursIdr);
+            document.getElementById('resultCardCount').textContent = res.totalTrades || 0;
+            document.getElementById('resultCardWinRate').textContent = `${res.winRate || 0}%`;
+
+            const avgDaily = lastQuickStats.daily || 0;
+            const avgDailyEl = document.getElementById('resultCardAvgDaily');
+            avgDailyEl.textContent = `${avgDaily >= 0 ? '+' : ''}${avgDaily.toFixed(2)}`;
+            avgDailyEl.className = `text-sm font-bold ${avgDaily >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+
+            const now = new Date();
+            document.getElementById('resultCardDate').textContent = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            document.getElementById('resultCardModal').classList.remove('hidden');
+        }
+
+        function closeResultCardModal() {
+            document.getElementById('resultCardModal').classList.add('hidden');
+        }
+
+        // ══════════════════════════════
+        //  KARTU EXPORT — digambar manual pakai Canvas API (bukan html2canvas)
+        //  supaya posisi tiap teks & kotak presisi, ga gantung ke akurasi
+        //  html2canvas nge-capture DOM (yang suka meleset buat emoji/badge kecil).
+        // ══════════════════════════════
+        const CARD_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+
+        function drawRoundRectPath(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.arcTo(x + w, y, x + w, y + r, r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+            ctx.lineTo(x + r, y + h);
+            ctx.arcTo(x, y + h, x, y + h - r, r);
+            ctx.lineTo(x, y + r);
+            ctx.arcTo(x, y, x + r, y, r);
+            ctx.closePath();
+        }
+
+        // Ikon garis tren naik + titik ujung, digambar manual (bukan emoji)
+        // biar warnanya bisa dikontrol solid putih, ga nyampur/samar sama
+        // warna latar kotak logo.
+        function drawLogoIcon(ctx, x, y, size, color) {
+            const pad = size * 0.26;
+            const w = size - pad * 2;
+            const h = size - pad * 2;
+            const x0 = x + pad, y0 = y + pad;
+            const pts = [
+                [x0, y0 + h * 0.82],
+                [x0 + w * 0.32, y0 + h * 0.5],
+                [x0 + w * 0.58, y0 + h * 0.68],
+                [x0 + w, y0]
+            ];
+            ctx.strokeStyle = color;
+            ctx.lineWidth = Math.max(2, size * 0.09);
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            pts.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+            ctx.stroke();
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(pts[pts.length - 1][0], pts[pts.length - 1][1], Math.max(3, size * 0.07), 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawCardBackground(ctx, w, h) {
+            // Fill dulu SELURUH canvas pake warna gelap solid -> biar pojok-pojok
+            // di luar area rounded-rect (yang secara teknis ga ke-fill sama
+            // gradient rounded di bawah) ga transparan/muncul putih pas dibuka.
+            ctx.fillStyle = '#06070b';
+            ctx.fillRect(0, 0, w, h);
+
+            const grad = ctx.createLinearGradient(0, 0, w, h);
+            grad.addColorStop(0, '#14110a');
+            grad.addColorStop(0.65, '#06070b');
+            drawRoundRectPath(ctx, 0.5, 0.5, w - 1, h - 1, 28);
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.strokeStyle = '#212635';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        // Kotak label kecil di atas + nilai gede di bawah, semuanya di-center
+        // pakai textBaseline 'middle' -> dijamin pas, ga meleset.
+        function drawStatBox(ctx, x, y, w, h, label, value, valueColor) {
+            drawRoundRectPath(ctx, x, y, w, h, 14);
+            ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            ctx.fill();
+
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#565e70';
+            ctx.font = `600 13px ${CARD_FONT}`;
+            ctx.fillText(label, x + w / 2, y + h * 0.35);
+
+            ctx.fillStyle = valueColor || '#ffffff';
+            ctx.font = `700 20px ${CARD_FONT}`;
+            ctx.fillText(value, x + w / 2, y + h * 0.68);
+        }
+
+        function downloadCanvasCard(canvas, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            showToast('Gambar berhasil disimpan!', 'success');
+        }
+
+        function buildResultCardCanvas() {
+            const res = cachedGlobalResponse;
+            const gross = parseFloat(res.totalPnl) || 0;
+            const total = isNetPnlView ? gross * 0.9 : gross;
+            const isProfit = total >= 0;
+            const totalText = `${isProfit ? '+' : ''}${total.toFixed(2)} USDT`;
+            const idrText = formatRupiah(total * currentKursIdr);
+            const label = isNetPnlView ? 'TOTAL NET P&L' : 'TOTAL P&L';
+            const now = new Date();
+            const dateText = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            const W = 700, PAD = 48;
+            const H = 860;
+            const canvas = document.createElement('canvas');
+            canvas.width = W;
+            canvas.height = H;
+            const ctx = canvas.getContext('2d');
+
+            drawCardBackground(ctx, W, H);
+
+            let cy = PAD;
+            const cx = PAD;
+
+            const logoSize = 48;
+            drawRoundRectPath(ctx, cx, cy, logoSize, logoSize, 14);
+            ctx.fillStyle = 'rgba(217,164,65,0.12)';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(217,164,65,0.35)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            drawLogoIcon(ctx, cx, cy, logoSize, '#ffffff');
+
+            const textX = cx + logoSize + 14;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `700 22px ${CARD_FONT}`;
+            ctx.fillText('Trading Log', textX, cy + logoSize * 0.36);
+            ctx.fillStyle = '#565e70';
+            ctx.font = `400 15px ${CARD_FONT}`;
+            ctx.fillText(dateText, textX, cy + logoSize * 0.76);
+
+            cy += logoSize + 40;
+
+            ctx.textBaseline = 'top';
+            ctx.fillStyle = '#565e70';
+            ctx.font = `700 16px ${CARD_FONT}`;
+            ctx.fillText(label, cx, cy);
+            cy += 16 + 10;
+
+            ctx.fillStyle = isProfit ? '#34d399' : '#fb7185';
+            ctx.font = `700 60px ${CARD_FONT}`;
+            ctx.fillText(totalText, cx, cy);
+            cy += 60 + 14;
+
+            ctx.fillStyle = '#8891a4';
+            ctx.font = `400 22px ${CARD_FONT}`;
+            ctx.fillText(idrText, cx, cy);
+            cy += 22 + 42;
+
+            const avgDaily = lastQuickStats.daily || 0;
+            const avgDailyText = `${avgDaily >= 0 ? '+' : ''}${avgDaily.toFixed(2)}`;
+            const stats = [
+                { label: 'TRADES', value: String(res.totalTrades || 0) },
+                { label: 'WIN RATE', value: `${res.winRate || 0}%` },
+                { label: 'AVG HARIAN', value: avgDailyText, color: avgDaily >= 0 ? '#34d399' : '#fb7185' }
+            ];
+            const boxGap = 16;
+            const boxW = (W - PAD * 2 - boxGap * 2) / 3;
+            const boxH = 100;
+            stats.forEach((s, i) => {
+                drawStatBox(ctx, cx + i * (boxW + boxGap), cy, boxW, boxH, s.label, s.value, s.color);
+            });
+
+            return canvas;
+        }
+
+        function downloadResultCard() {
+            const canvas = buildResultCardCanvas();
+            const now = new Date();
+            const ts = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+            downloadCanvasCard(canvas, `TradingLog_Hasil_${ts}.png`);
+        }
+
+        // ══════════════════════════════
+        //  SHARE PNL PER TRADE (dari action sheet Edit/Hapus)
+        // ══════════════════════════════
+        let tradeShareItem = null;
+
+        function openTradeShareModal(item) {
+            tradeShareItem = item;
+            const pnlNum = parseFloat(item.pnl) || 0;
+            const isProfit = pnlNum >= 0;
+
+            document.getElementById('tradeSharePair').textContent = item.pair;
+
+            const badgeEl = document.getElementById('tradeShareBadge');
+            badgeEl.textContent = isProfit ? 'PROFIT' : 'LOSS';
+            badgeEl.className = `text-[10px] font-bold uppercase px-2.5 py-1 rounded-full ${isProfit ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'}`;
+
+            const totalEl = document.getElementById('tradeShareTotal');
+            totalEl.textContent = `${isProfit ? '+' : ''}${pnlNum.toFixed(2)} USDT`;
+            totalEl.className = `text-4xl font-bold leading-none mb-1 ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
+
+            document.getElementById('tradeShareTotalIdr').textContent = formatRupiah(pnlNum * currentKursIdr);
+            document.getElementById('tradeShareClosed').textContent = item.closed || '-';
+
+            document.getElementById('tradeShareModal').classList.remove('hidden');
+        }
+
+        function closeTradeShareModal() {
+            document.getElementById('tradeShareModal').classList.add('hidden');
+            tradeShareItem = null;
+        }
+
+        function buildTradeShareCanvas(item) {
+            const pnlNum = parseFloat(item.pnl) || 0;
+            const isProfit = pnlNum >= 0;
+            const totalText = `${isProfit ? '+' : ''}${pnlNum.toFixed(2)} USDT`;
+            const idrText = formatRupiah(pnlNum * currentKursIdr);
+            const badgeText = isProfit ? 'PROFIT' : 'LOSS';
+            const badgeColor = isProfit ? '#34d399' : '#fb7185';
+            const badgeBg = isProfit ? 'rgba(52,211,153,0.15)' : 'rgba(251,113,133,0.15)';
+
+            const W = 700, PAD = 48;
+            const H = 760;
+            const canvas = document.createElement('canvas');
+            canvas.width = W;
+            canvas.height = H;
+            const ctx = canvas.getContext('2d');
+
+            drawCardBackground(ctx, W, H);
+
+            let cy = PAD;
+            const cx = PAD;
+
+            const logoSize = 42;
+            drawRoundRectPath(ctx, cx, cy, logoSize, logoSize, 12);
+            ctx.fillStyle = 'rgba(217,164,65,0.12)';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(217,164,65,0.35)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            drawLogoIcon(ctx, cx, cy, logoSize, '#ffffff');
+
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `700 20px ${CARD_FONT}`;
+            ctx.fillText('Trading Log', cx + logoSize + 14, cy + logoSize / 2);
+
+            // Badge PROFIT/LOSS pojok kanan atas, tinggi & lebar dihitung dari
+            // ukuran teksnya sendiri, di-center pakai textBaseline 'middle'.
+            ctx.font = `700 15px ${CARD_FONT}`;
+            const badgeTextW = ctx.measureText(badgeText).width;
+            const badgePadX = 18;
+            const badgeW = badgeTextW + badgePadX * 2;
+            const badgeH = 40;
+            const badgeX = W - PAD - badgeW;
+            const badgeY = cy + logoSize / 2 - badgeH / 2;
+            drawRoundRectPath(ctx, badgeX, badgeY, badgeW, badgeH, badgeH / 2);
+            ctx.fillStyle = badgeBg;
+            ctx.fill();
+            ctx.fillStyle = badgeColor;
+            ctx.textAlign = 'center';
+            ctx.fillText(badgeText, badgeX + badgeW / 2, badgeY + badgeH / 2 + 1);
+            ctx.textAlign = 'left';
+
+            cy += logoSize + 48;
+
+            ctx.textBaseline = 'top';
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `700 40px ${CARD_FONT}`;
+            ctx.fillText(item.pair, cx, cy);
+            cy += 40 + 30;
+
+            ctx.fillStyle = '#565e70';
+            ctx.font = `700 16px ${CARD_FONT}`;
+            ctx.fillText('CLOSING P&L', cx, cy);
+            cy += 16 + 10;
+
+            ctx.fillStyle = badgeColor;
+            ctx.font = `700 60px ${CARD_FONT}`;
+            ctx.fillText(totalText, cx, cy);
+            cy += 60 + 14;
+
+            ctx.fillStyle = '#8891a4';
+            ctx.font = `400 22px ${CARD_FONT}`;
+            ctx.fillText(idrText, cx, cy);
+            cy += 22 + 42;
+
+            drawStatBox(ctx, cx, cy, W - PAD * 2, 100, 'CLOSED', item.closed || '-');
+
+            return canvas;
+        }
+
+        function downloadTradeShare() {
+            if (!tradeShareItem) return;
+            const canvas = buildTradeShareCanvas(tradeShareItem);
+            const pairName = (tradeShareItem.pair || 'trade').replace(/[^A-Z0-9]/gi, '');
+            downloadCanvasCard(canvas, `TradingLog_${pairName}_PNL.png`);
         }
 
         function renderEquityCurve(history) {
