@@ -506,33 +506,9 @@
     <!-- MODAL KARTU HASIL (long-press di kartu Total P&L) -->
     <div id="resultCardModal" onclick="if(event.target===this) closeResultCardModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="space-y-3 rise-in" style="width: min(640px, 100%);">
-            <div id="resultCardPreview" class="rounded-3xl p-5 sm:p-6 relative overflow-hidden font-card bg-cover bg-center" style="aspect-ratio: 1200 / 750; border: 1px solid var(--border);">
-                <div class="max-w-[55%]">
-                    <div class="flex items-center gap-2 mb-4">
-                        <div class="logo-mark w-9 h-9 text-base">📈</div>
-                        <div>
-                            <div class="font-bold text-sm text-white leading-none">Trading Log</div>
-                            <div id="resultCardDate" class="text-[10px] text-[var(--text-faint)] mt-1">–</div>
-                        </div>
-                    </div>
-                    <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1 uppercase" id="resultCardLabel">Total P&amp;L</div>
-                    <div id="resultCardTotal" class="text-3xl sm:text-4xl font-bold leading-none mb-1">–</div>
-                    <div id="resultCardTotalIdr" class="text-sm text-[var(--text-dim)] mb-4">–</div>
-                    <div class="grid grid-cols-3 gap-1.5">
-                        <div class="text-center p-2 rounded-xl bg-white/5 border border-white/10">
-                            <div class="text-[8px] text-[var(--text-faint)] mb-1">Trades</div>
-                            <div id="resultCardCount" class="text-xs sm:text-sm font-bold text-white">–</div>
-                        </div>
-                        <div class="text-center p-2 rounded-xl bg-white/5 border border-white/10">
-                            <div class="text-[8px] text-[var(--text-faint)] mb-1">Win rate</div>
-                            <div id="resultCardWinRate" class="text-xs sm:text-sm font-bold text-white">–</div>
-                        </div>
-                        <div class="text-center p-2 rounded-xl bg-white/5 border border-white/10">
-                            <div class="text-[8px] text-[var(--text-faint)] mb-1">Avg Harian</div>
-                            <div id="resultCardAvgDaily" class="text-xs sm:text-sm font-bold text-white">–</div>
-                        </div>
-                    </div>
-                </div>
+            <div id="resultCardPreviewWrap" class="rounded-3xl overflow-hidden relative bg-[var(--surface)] flex items-center justify-center" style="aspect-ratio: 1200 / 750; border: 1px solid var(--border);">
+                <div id="resultCardLoading" class="text-xs text-[var(--text-faint)]">Menyiapkan preview...</div>
+                <img id="resultCardImg" class="w-full h-full object-cover hidden" alt="Kartu hasil trading">
             </div>
             <div class="flex gap-2">
                 <button type="button" onclick="closeResultCardModal()" class="w-1/2 bg-[var(--surface-2)] hover:bg-[#1d2230] text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition border border-[var(--border)]">
@@ -548,24 +524,9 @@
     <!-- MODAL SHARE PNL PER TRADE (dari action sheet Edit/Hapus) -->
     <div id="tradeShareModal" onclick="if(event.target===this) closeTradeShareModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="space-y-3 rise-in" style="width: min(640px, 100%);">
-            <div id="tradeSharePreview" class="rounded-3xl p-5 sm:p-6 relative overflow-hidden font-card bg-cover bg-center" style="aspect-ratio: 1200 / 750; border: 1px solid var(--border);">
-                <div class="max-w-[55%]">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-2">
-                            <div class="logo-mark w-8 h-8 text-sm">📈</div>
-                            <div class="font-bold text-sm text-white leading-none">Trading Log</div>
-                        </div>
-                        <div id="tradeShareBadge" class="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full">–</div>
-                    </div>
-                    <div id="tradeSharePair" class="text-xl sm:text-2xl font-bold text-white mb-3">–</div>
-                    <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1 uppercase">Closing P&amp;L</div>
-                    <div id="tradeShareTotal" class="text-3xl sm:text-4xl font-bold leading-none mb-1">–</div>
-                    <div id="tradeShareTotalIdr" class="text-sm text-[var(--text-dim)] mb-4">–</div>
-                    <div class="text-center p-2 rounded-xl bg-white/5 border border-white/10">
-                        <div class="text-[8px] text-[var(--text-faint)] mb-1">Closed</div>
-                        <div id="tradeShareClosed" class="text-xs sm:text-sm font-bold text-white">–</div>
-                    </div>
-                </div>
+            <div id="tradeSharePreviewWrap" class="rounded-3xl overflow-hidden relative bg-[var(--surface)] flex items-center justify-center" style="aspect-ratio: 1200 / 750; border: 1px solid var(--border);">
+                <div id="tradeShareLoading" class="text-xs text-[var(--text-faint)]">Menyiapkan preview...</div>
+                <img id="tradeShareImg" class="w-full h-full object-cover hidden" alt="Kartu PNL trade">
             </div>
             <div class="flex gap-2">
                 <button type="button" onclick="closeTradeShareModal()" class="w-1/2 bg-[var(--surface-2)] hover:bg-[#1d2230] text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition border border-[var(--border)]">
@@ -1233,32 +1194,35 @@
             heroLongPressTimer = null;
         }
 
-        function openResultCardModal() {
-            const res = cachedGlobalResponse;
-            const gross = parseFloat(res.totalPnl) || 0;
-            const total = isNetPnlView ? gross * 0.9 : gross;
-            const isProfit = total >= 0;
+        // Kartu hasil (Canvas) yang sedang tampil di preview modal. Disimpan
+        // di sini supaya tombol download tinggal ambil canvas yang SAMA PERSIS
+        // dengan yang lagi dipreview -> preview dan file yang tersimpan
+        // dijamin identik, ga ada lagi versi render yang beda-beda.
+        let lastResultCanvas = null;
 
-            document.getElementById('resultCardPreview').style.backgroundImage = `url('${isProfit ? CARD_BG_PROFIT : CARD_BG_LOSS}')`;
+        async function openResultCardModal() {
+            const modal = document.getElementById('resultCardModal');
+            const img = document.getElementById('resultCardImg');
+            const loading = document.getElementById('resultCardLoading');
 
-            const totalEl = document.getElementById('resultCardTotal');
-            totalEl.textContent = `${isProfit ? '+' : ''}${total.toFixed(2)} USDT`;
-            totalEl.className = `text-3xl sm:text-4xl font-bold leading-none mb-1 ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
+            modal.classList.remove('hidden');
+            img.classList.add('hidden');
+            loading.classList.remove('hidden');
+            loading.textContent = 'Menyiapkan preview...';
 
-            document.getElementById('resultCardLabel').textContent = isNetPnlView ? 'Total Net P&L' : 'Total P&L';
-            document.getElementById('resultCardTotalIdr').textContent = formatRupiah(total * currentKursIdr);
-            document.getElementById('resultCardCount').textContent = res.totalTrades || 0;
-            document.getElementById('resultCardWinRate').textContent = `${res.winRate || 0}%`;
-
-            const avgDaily = lastQuickStats.daily || 0;
-            const avgDailyEl = document.getElementById('resultCardAvgDaily');
-            avgDailyEl.textContent = `${avgDaily >= 0 ? '+' : ''}${avgDaily.toFixed(2)}`;
-            avgDailyEl.className = `text-xs sm:text-sm font-bold ${avgDaily >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-
-            const now = new Date();
-            document.getElementById('resultCardDate').textContent = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-
-            document.getElementById('resultCardModal').classList.remove('hidden');
+            try {
+                const canvas = await buildResultCardCanvas();
+                lastResultCanvas = canvas;
+                img.src = canvas.toDataURL('image/png');
+                img.onload = () => {
+                    loading.classList.add('hidden');
+                    img.classList.remove('hidden');
+                };
+            } catch (err) {
+                console.log(err);
+                loading.textContent = 'Gagal memuat preview';
+                showToast('Gagal memuat preview', 'error');
+            }
         }
 
         function closeResultCardModal() {
@@ -1269,6 +1233,9 @@
         //  KARTU EXPORT — digambar manual pakai Canvas API (bukan html2canvas)
         //  supaya posisi tiap teks & kotak presisi, ga gantung ke akurasi
         //  html2canvas nge-capture DOM (yang suka meleset buat emoji/badge kecil).
+        //  Canvas yang dihasilkan di sini JUGA dipakai buat preview di modal
+        //  (lihat openResultCardModal/openTradeShareModal), jadi apa yang
+        //  keliatan di preview = persis apa yang ke-download.
         // ══════════════════════════════
         const CARD_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
         // Background karakter custom punya user, satu folder sama index.html.
@@ -1450,7 +1417,9 @@
 
         async function downloadResultCard() {
             try {
-                const canvas = await buildResultCardCanvas();
+                // Pakai canvas yang lagi dipreview kalau ada (biar 100% match),
+                // baru bikin baru kalau entah kenapa belum ke-generate.
+                const canvas = lastResultCanvas || await buildResultCardCanvas();
                 const now = new Date();
                 const ts = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
                 downloadCanvasCard(canvas, `TradingLog_Hasil_${ts}.png`);
@@ -1464,28 +1433,34 @@
         //  SHARE PNL PER TRADE (dari action sheet Edit/Hapus)
         // ══════════════════════════════
         let tradeShareItem = null;
+        // Canvas kartu share yang lagi dipreview - sama seperti lastResultCanvas,
+        // dipakai lagi pas download biar preview = hasil.
+        let lastTradeShareCanvas = null;
 
-        function openTradeShareModal(item) {
+        async function openTradeShareModal(item) {
             tradeShareItem = item;
-            const pnlNum = parseFloat(item.pnl) || 0;
-            const isProfit = pnlNum >= 0;
+            const modal = document.getElementById('tradeShareModal');
+            const img = document.getElementById('tradeShareImg');
+            const loading = document.getElementById('tradeShareLoading');
 
-            document.getElementById('tradeSharePreview').style.backgroundImage = `url('${isProfit ? CARD_BG_PROFIT : CARD_BG_LOSS}')`;
+            modal.classList.remove('hidden');
+            img.classList.add('hidden');
+            loading.classList.remove('hidden');
+            loading.textContent = 'Menyiapkan preview...';
 
-            document.getElementById('tradeSharePair').textContent = item.pair;
-
-            const badgeEl = document.getElementById('tradeShareBadge');
-            badgeEl.textContent = isProfit ? 'PROFIT' : 'LOSS';
-            badgeEl.className = `text-[10px] font-bold uppercase px-2.5 py-1 rounded-full ${isProfit ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'}`;
-
-            const totalEl = document.getElementById('tradeShareTotal');
-            totalEl.textContent = `${isProfit ? '+' : ''}${pnlNum.toFixed(2)} USDT`;
-            totalEl.className = `text-3xl sm:text-4xl font-bold leading-none mb-1 ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
-
-            document.getElementById('tradeShareTotalIdr').textContent = formatRupiah(pnlNum * currentKursIdr);
-            document.getElementById('tradeShareClosed').textContent = item.closed || '-';
-
-            document.getElementById('tradeShareModal').classList.remove('hidden');
+            try {
+                const canvas = await buildTradeShareCanvas(item);
+                lastTradeShareCanvas = canvas;
+                img.src = canvas.toDataURL('image/png');
+                img.onload = () => {
+                    loading.classList.add('hidden');
+                    img.classList.remove('hidden');
+                };
+            } catch (err) {
+                console.log(err);
+                loading.textContent = 'Gagal memuat preview';
+                showToast('Gagal memuat preview', 'error');
+            }
         }
 
         function closeTradeShareModal() {
@@ -1585,7 +1560,8 @@
         async function downloadTradeShare() {
             if (!tradeShareItem) return;
             try {
-                const canvas = await buildTradeShareCanvas(tradeShareItem);
+                // Sama kayak downloadResultCard: pakai canvas yang lagi dipreview.
+                const canvas = lastTradeShareCanvas || await buildTradeShareCanvas(tradeShareItem);
                 const pairName = (tradeShareItem.pair || 'trade').replace(/[^A-Z0-9]/gi, '');
                 downloadCanvasCard(canvas, `TradingLog_${pairName}_PNL.png`);
             } catch (err) {
