@@ -1380,6 +1380,11 @@
             canvas.height = H;
             const ctx = canvas.getContext('2d');
 
+            // Fill hitam solid dulu -> gambar background lu punya area transparan
+            // di pojok bundernya, kalau ga di-fill dulu bakal muncul checkered/putih
+            // pas dibuka di viewer PNG biasa.
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, W, H);
             ctx.drawImage(bgImg, 0, 0, W, H);
 
             // Teks cuma ditaruh di kolom kiri (area kosong di gambar), biar
@@ -1506,6 +1511,10 @@
             canvas.height = H;
             const ctx = canvas.getContext('2d');
 
+            // Fill hitam solid dulu -> sama kayak di kartu hasil, biar pojok
+            // transparan gambar ga muncul checkered/putih pas di-export.
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, W, H);
             ctx.drawImage(bgImg, 0, 0, W, H);
 
             const PAD = 56;
