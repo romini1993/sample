@@ -656,21 +656,21 @@
                             <div id="resultCardDate" class="text-[10px] text-[var(--text-faint)] mt-1">–</div>
                         </div>
                     </div>
-                    <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1 uppercase" id="resultCardLabel">Total P&amp;L</div>
-                    <div id="resultCardTotal" class="text-3xl sm:text-4xl font-bold leading-none mb-1">–</div>
-                    <div id="resultCardTotalIdr" class="text-sm text-[var(--text-dim)] mb-4">–</div>
-                    <div class="grid grid-cols-3 gap-1.5">
-                        <div class="text-center p-2 rounded-xl bg-white/5 border border-white/10">
-                            <div class="text-[8px] text-[var(--text-faint)] mb-1">Trades</div>
-                            <div id="resultCardCount" class="text-xs sm:text-sm font-bold text-white">–</div>
+                    <div class="text-xs sm:text-sm font-semibold tracking-wide text-[var(--text-faint)] mb-1 uppercase" id="resultCardLabel">Total P&amp;L</div>
+                    <div id="resultCardTotal" class="text-4xl sm:text-5xl font-bold leading-none mb-1">–</div>
+                    <div id="resultCardTotalIdr" class="text-base sm:text-lg text-[var(--text-dim)] mb-7">–</div>
+                    <div class="grid grid-cols-3 gap-1">
+                        <div class="text-center p-1.5 sm:p-2 rounded-xl bg-white/5 border border-white/10">
+                            <div class="text-[9px] sm:text-[10px] text-[var(--text-faint)] mb-1">Trades</div>
+                            <div id="resultCardCount" class="text-sm sm:text-base font-bold text-white">–</div>
                         </div>
-                        <div class="text-center p-2 rounded-xl bg-white/5 border border-white/10">
-                            <div class="text-[8px] text-[var(--text-faint)] mb-1">Win rate</div>
-                            <div id="resultCardWinRate" class="text-xs sm:text-sm font-bold text-white">–</div>
+                        <div class="text-center p-1.5 sm:p-2 rounded-xl bg-white/5 border border-white/10">
+                            <div class="text-[9px] sm:text-[10px] text-[var(--text-faint)] mb-1">Win rate</div>
+                            <div id="resultCardWinRate" class="text-sm sm:text-base font-bold text-white">–</div>
                         </div>
-                        <div class="text-center p-2 rounded-xl bg-white/5 border border-white/10">
-                            <div class="text-[8px] text-[var(--text-faint)] mb-1">Avg Harian</div>
-                            <div id="resultCardAvgDaily" class="text-xs sm:text-sm font-bold text-white">–</div>
+                        <div class="text-center p-1.5 sm:p-2 rounded-xl bg-white/5 border border-white/10">
+                            <div class="text-[9px] sm:text-[10px] text-[var(--text-faint)] mb-1">Avg Harian</div>
+                            <div id="resultCardAvgDaily" class="text-sm sm:text-base font-bold text-white">–</div>
                         </div>
                     </div>
                 </div>
@@ -699,12 +699,12 @@
                         <div id="tradeShareBadge" class="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full">–</div>
                     </div>
                     <div id="tradeSharePair" class="text-xl sm:text-2xl font-bold text-white mb-3">–</div>
-                    <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1 uppercase">Closing P&amp;L</div>
-                    <div id="tradeShareTotal" class="text-3xl sm:text-4xl font-bold leading-none mb-1">–</div>
-                    <div id="tradeShareTotalIdr" class="text-sm text-[var(--text-dim)] mb-4">–</div>
-                    <div class="text-center p-2 rounded-xl bg-white/5 border border-white/10">
-                        <div class="text-[8px] text-[var(--text-faint)] mb-1">Closed</div>
-                        <div id="tradeShareClosed" class="text-xs sm:text-sm font-bold text-white">–</div>
+                    <div class="text-xs sm:text-sm font-semibold tracking-wide text-[var(--text-faint)] mb-1 uppercase">Closing P&amp;L</div>
+                    <div id="tradeShareTotal" class="text-4xl sm:text-5xl font-bold leading-none mb-1">–</div>
+                    <div id="tradeShareTotalIdr" class="text-base sm:text-lg text-[var(--text-dim)] mb-7">–</div>
+                    <div class="text-center p-1.5 sm:p-2 rounded-xl bg-white/5 border border-white/10">
+                        <div class="text-[9px] sm:text-[10px] text-[var(--text-faint)] mb-1">Closed</div>
+                        <div id="tradeShareClosed" class="text-sm sm:text-base font-bold text-white">–</div>
                     </div>
                 </div>
             </div>
@@ -1384,7 +1384,7 @@
 
             const totalEl = document.getElementById('resultCardTotal');
             totalEl.textContent = `${isProfit ? '+' : ''}${total.toFixed(2)} USDT`;
-            totalEl.className = `text-3xl sm:text-4xl font-bold leading-none mb-1 ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
+            totalEl.className = `text-4xl sm:text-5xl font-bold leading-none mb-1 ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
 
             document.getElementById('resultCardLabel').textContent = isNetPnlView ? 'Total Net P&L' : 'Total P&L';
             document.getElementById('resultCardTotalIdr').textContent = formatRupiah(total * currentKursIdr);
@@ -1394,7 +1394,7 @@
             const avgDaily = lastQuickStats.daily || 0;
             const avgDailyEl = document.getElementById('resultCardAvgDaily');
             avgDailyEl.textContent = `${avgDaily >= 0 ? '+' : ''}${avgDaily.toFixed(2)}`;
-            avgDailyEl.className = `text-xs sm:text-sm font-bold ${avgDaily >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            avgDailyEl.className = `text-sm sm:text-base font-bold ${avgDaily >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
 
             const now = new Date();
             document.getElementById('resultCardDate').textContent = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -1558,19 +1558,19 @@
 
             ctx.textBaseline = 'top';
             ctx.fillStyle = '#c9cdd6';
-            ctx.font = `700 16px ${CARD_FONT}`;
+            ctx.font = `700 24px ${CARD_FONT}`;
             ctx.fillText(label, cx, cy);
-            cy += 16 + 10;
+            cy += 24 + 10;
 
             ctx.fillStyle = isProfit ? '#34d399' : '#fb7185';
-            ctx.font = `700 56px ${CARD_FONT}`;
+            ctx.font = `700 84px ${CARD_FONT}`;
             ctx.fillText(totalText, cx, cy);
-            cy += 56 + 14;
+            cy += 84 + 14;
 
             ctx.fillStyle = '#dfe2e8';
-            ctx.font = `400 22px ${CARD_FONT}`;
+            ctx.font = `400 33px ${CARD_FONT}`;
             ctx.fillText(idrText, cx, cy);
-            cy += 22 + Math.round(H * 0.07) + 16;
+            cy += 33 + Math.round(H * 0.10) + 18;
 
             const avgDaily = lastQuickStats.daily || 0;
             const avgDailyText = `${avgDaily >= 0 ? '+' : ''}${avgDaily.toFixed(2)}`;
@@ -1579,9 +1579,9 @@
                 { label: 'WIN RATE', value: `${res.winRate || 0}%` },
                 { label: 'AVG HARIAN', value: avgDailyText, color: avgDaily >= 0 ? '#34d399' : '#fb7185' }
             ];
-            const boxGap = 12;
+            const boxGap = 8;
             const boxW = (colW - boxGap * 2) / 3;
-            const boxH = 92;
+            const boxH = 86;
             stats.forEach((s, i) => {
                 drawStatBox(ctx, cx + i * (boxW + boxGap), cy, boxW, boxH, s.label, s.value, s.color);
             });
@@ -1593,8 +1593,9 @@
             try {
                 const canvas = await buildResultCardCanvas();
                 const now = new Date();
-                const ts = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
-                downloadCanvasCard(canvas, `TradingLog_Hasil_${ts}.png`);
+                const ts = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+                const prefix = isNetPnlView ? 'TradingLog_Net' : 'TradingLog_Total';
+                downloadCanvasCard(canvas, `${prefix}_${ts}.png`);
             } catch (err) {
                 console.log(err);
                 showToast('Gagal muat gambar background', 'error');
@@ -1621,7 +1622,7 @@
 
             const totalEl = document.getElementById('tradeShareTotal');
             totalEl.textContent = `${isProfit ? '+' : ''}${pnlNum.toFixed(2)} USDT`;
-            totalEl.className = `text-3xl sm:text-4xl font-bold leading-none mb-1 ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
+            totalEl.className = `text-4xl sm:text-5xl font-bold leading-none mb-1 ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
 
             document.getElementById('tradeShareTotalIdr').textContent = formatRupiah(pnlNum * currentKursIdr);
             document.getElementById('tradeShareClosed').textContent = item.closed || '-';
@@ -1704,21 +1705,21 @@
             cy += 38 + 26;
 
             ctx.fillStyle = '#c9cdd6';
-            ctx.font = `700 16px ${CARD_FONT}`;
+            ctx.font = `700 24px ${CARD_FONT}`;
             ctx.fillText('CLOSING P&L', cx, cy);
-            cy += 16 + 10;
+            cy += 24 + 10;
 
             ctx.fillStyle = badgeColor;
-            ctx.font = `700 56px ${CARD_FONT}`;
+            ctx.font = `700 84px ${CARD_FONT}`;
             ctx.fillText(totalText, cx, cy);
-            cy += 56 + 14;
+            cy += 84 + 14;
 
             ctx.fillStyle = '#dfe2e8';
-            ctx.font = `400 22px ${CARD_FONT}`;
+            ctx.font = `400 33px ${CARD_FONT}`;
             ctx.fillText(idrText, cx, cy);
-            cy += 22 + Math.round(H * 0.07) + 16;
+            cy += 33 + Math.round(H * 0.10) + 18;
 
-            drawStatBox(ctx, cx, cy, colW, 92, 'CLOSED', item.closed || '-');
+            drawStatBox(ctx, cx, cy, colW, 86, 'CLOSED', item.closed || '-');
 
             return canvas;
         }
@@ -1728,7 +1729,9 @@
             try {
                 const canvas = await buildTradeShareCanvas(tradeShareItem);
                 const pairName = (tradeShareItem.pair || 'trade').replace(/[^A-Z0-9]/gi, '');
-                downloadCanvasCard(canvas, `TradingLog_${pairName}_PNL.png`);
+                const now = new Date();
+                const ts = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${String(now.getSeconds()).padStart(2, '0')}`;
+                downloadCanvasCard(canvas, `TradingLog_${pairName}_${ts}.png`);
             } catch (err) {
                 console.log(err);
                 showToast('Gagal muat gambar background', 'error');
