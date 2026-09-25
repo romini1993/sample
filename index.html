@@ -251,7 +251,148 @@
         .font-card {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
         }
-    </style>
+    
+<style>
+/* ===== PROFESSIONAL P&L HERO — visual upgrade only ===== */
+.hero-panel {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 88% 8%, rgba(217,164,65,.13), transparent 30%),
+        linear-gradient(145deg, #121722 0%, #0d1017 58%, #0a0d13 100%);
+    border: 1px solid rgba(217,164,65,.20) !important;
+    box-shadow:
+        0 18px 45px rgba(0,0,0,.42),
+        inset 0 1px 0 rgba(255,255,255,.055);
+}
+
+.hero-panel::before {
+    background:
+        linear-gradient(135deg, rgba(217,164,65,.10), transparent 42%),
+        linear-gradient(315deg, rgba(52,211,153,.035), transparent 38%);
+}
+
+.hero-panel::after {
+    content: "";
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(240,189,99,.75), transparent);
+    opacity: .7;
+    pointer-events: none;
+}
+
+.hero-panel > .relative:first-child {
+    padding-bottom: 2px;
+}
+
+.hero-panel #totalPnlLabel {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #9aa3b5 !important;
+    letter-spacing: .12em !important;
+    text-transform: uppercase;
+}
+
+.hero-panel #totalPnlLabel::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--accent-bright);
+    box-shadow: 0 0 10px rgba(240,189,99,.45);
+}
+
+.hero-panel #statTotal {
+    margin-top: 7px;
+    font-size: clamp(2rem, 5vw, 3rem) !important;
+    letter-spacing: -.045em;
+    line-height: .98 !important;
+    text-shadow: 0 5px 24px rgba(0,0,0,.35);
+}
+
+.hero-panel #statTotalIdr {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 9px !important;
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: rgba(255,255,255,.045);
+    border: 1px solid rgba(255,255,255,.065);
+    color: #9aa3b5 !important;
+}
+
+.hero-panel .flex.lg\:hidden.xl\:flex {
+    padding-top: 3px;
+}
+
+.hero-panel .flex.lg\:hidden.xl\:flex > div {
+    padding-left: 10px;
+    border-left: 1px solid rgba(255,255,255,.075);
+}
+
+.hero-panel .flex.lg\:hidden.xl\:flex > div:first-child {
+    border-left: 0;
+}
+
+.hero-panel .flex.lg\:hidden.xl\:flex > div > div:first-child {
+    color: #687286 !important;
+    font-size: 9px !important;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.hero-panel .flex.lg\:hidden.xl\:flex > div > div:last-child {
+    margin-top: 4px;
+    color: #e7eaf1 !important;
+}
+
+.hero-panel #equityCurve {
+    margin-top: 10px;
+    height: 78px !important;
+    border-radius: 14px;
+    background: linear-gradient(
+        180deg,
+        rgba(255,255,255,.025),
+        rgba(255,255,255,0)
+    );
+    border: 1px solid rgba(255,255,255,.045);
+    padding: 4px;
+}
+
+/* Make the whole hero feel more intentional on mobile */
+@media (max-width: 767px) {
+    .hero-panel {
+        border-radius: 22px !important;
+        padding: 16px !important;
+    }
+
+    .hero-panel #statTotal {
+        font-size: 2.35rem !important;
+    }
+
+    .hero-panel #equityCurve {
+        height: 74px !important;
+    }
+}
+
+/* Keep the existing dynamic profit/loss colors intact */
+.hero-panel #statTotal.text-emerald-400,
+.hero-panel #statTotal.text-emerald-500 {
+    color: #34d399 !important;
+}
+
+.hero-panel #statTotal.text-rose-400,
+.hero-panel #statTotal.text-rose-500 {
+    color: #fb7185 !important;
+}
+</style>
+
+</style>
 </head>
 <body class="relative">
     <div class="bg-glow"></div>
