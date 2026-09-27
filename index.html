@@ -131,6 +131,14 @@
         @keyframes expandIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
         .expand-in { animation: expandIn .2s ease-out both; }
 
+        /* Animasi collapse (kebalikan dari expand-in), dipicu manual lewat JS
+           di toggleExpand() karena elemen panel bakal dihapus/di-render ulang
+           setelah animasinya kelar. */
+        .collapsing {
+            overflow: hidden;
+            transition: max-height .22s ease, opacity .18s ease, transform .18s ease;
+        }
+
         .swal2-popup.swal2-toast {
             font-size: 0.9rem !important;
             display: flex !important;
@@ -536,10 +544,10 @@
             </div>
             <div class="flex gap-2">
                 <button type="button" onclick="closeResultCardModal()" class="w-1/2 bg-[var(--surface-2)] hover:bg-[#1d2230] text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition border border-[var(--border)]">
-                    Tutup
+                    Batal
                 </button>
                 <button type="button" id="downloadResultCardBtn" onclick="downloadResultCard()" class="w-1/2 bg-amber-500 hover:bg-amber-400 text-[#1a1305] font-semibold py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/20">
-                    📥 Simpan Gambar
+                    📤 Bagikan
                 </button>
             </div>
         </div>
@@ -569,10 +577,10 @@
             </div>
             <div class="flex gap-2">
                 <button type="button" onclick="closeTradeShareModal()" class="w-1/2 bg-[var(--surface-2)] hover:bg-[#1d2230] text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition border border-[var(--border)]">
-                    Tutup
+                    Batal
                 </button>
                 <button type="button" id="downloadTradeShareBtn" onclick="downloadTradeShare()" class="w-1/2 bg-amber-500 hover:bg-amber-400 text-[#1a1305] font-semibold py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/20">
-                    📥 Simpan Gambar
+                    📤 Bagikan
                 </button>
             </div>
         </div>
@@ -1067,8 +1075,61 @@
             return div;
         }
 
+        function getDayPanelId(date) {
+            return 'dayPanel-' + String(date).replace(/[^A-Za-z0-9]/g, '');
+        }
+
+        // Toggle expand/collapse rekap harian. Kalau lagi nutup (klik ulang tanggal
+        // yang sudah expand), animasikan dulu panelnya mengecil & memudar sebelum
+        // benar-benar dihapus dari DOM lewat render ulang -> collapse jadi smooth,
+        // bukan langsung "ilang" instan kayak sebelumnya.
         function toggleExpand(date) {
-            expandedDate = (expandedDate === date) ? null : date;
+            if (expandedDate === date) {
+                const panel = document.getElementById(getDayPanelId(date));
+                if (panel) {
+                    const startHeight = panel.scrollHeight;
+                    panel.classList.remove('expand-in');
+                    panel.style.maxHeight = startHeight + 'px';
+                    panel.style.opacity = '1';
+                    panel.style.transform = 'translateY(0)';
+                    panel.classList.add('collapsing');
+                    void panel.offsetHeight; // force reflow biar transisi ke-trigger
+                    requestAnimationFrame(() => {
+                        panel.style.maxHeight = '0px';
+                        panel.style.opacity = '0';
+                        panel.style.transform = 'translateY(-4px)';
+                    });
+
+                    // Update tampilan baris & chevron duluan biar responsif,
+                    // ga nunggu render ulang yang baru jalan setelah animasi kelar.
+                    const row = panel.previousElementSibling;
+                    if (row) {
+                        const chevron = row.querySelector('.chevron');
+                        if (chevron) chevron.classList.remove('open');
+                        row.classList.remove('bg-amber-500/10', 'border-amber-500', 'ring-1', 'ring-amber-500');
+                        row.classList.add('bg-[var(--bg)]', 'border-[var(--border)]', 'hover:border-slate-600');
+                    }
+
+                    let finished = false;
+                    const finish = () => {
+                        if (finished) return;
+                        finished = true;
+                        expandedDate = null;
+                        renderDailySummary(cachedGlobalResponse.history || [], false);
+                    };
+                    panel.addEventListener('transitionend', function handler(e) {
+                        if (e.propertyName !== 'max-height') return;
+                        panel.removeEventListener('transitionend', handler);
+                        finish();
+                    });
+                    // Jaga-jaga kalau transitionend ga kepanggil (misal panel dilepas duluan)
+                    setTimeout(finish, 300);
+                    return;
+                }
+                expandedDate = null;
+            } else {
+                expandedDate = date;
+            }
             renderDailySummary(cachedGlobalResponse.history || [], false);
         }
 
@@ -1133,6 +1194,7 @@
 
                 if (isExpanded) {
                     const panel = document.createElement('div');
+                    panel.id = getDayPanelId(date);
                     panel.className = 'expand-in space-y-2 pl-1 pt-1';
                     const dayTrades = data.filter(item => item.closed === date);
                     dayTrades.forEach((item, idx) => {
@@ -1358,6 +1420,28 @@
             showToast('Gambar berhasil disimpan!', 'success');
         }
 
+        // Coba pakai native share sheet HP (langsung ke WA/Instagram/dll tanpa
+        // harus masuk galeri dulu). Kalau device/browser-nya ga support fitur
+        // ini (kebanyakan browser desktop), turun otomatis ke download biasa.
+        async function shareOrDownloadCanvas(canvas, filename) {
+            if (navigator.share && navigator.canShare) {
+                try {
+                    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                    if (blob) {
+                        const file = new File([blob], filename, { type: 'image/png' });
+                        if (navigator.canShare({ files: [file] })) {
+                            await navigator.share({ files: [file], title: 'Trading Log' });
+                            return;
+                        }
+                    }
+                } catch (err) {
+                    if (err && err.name === 'AbortError') return; // user batal di share sheet
+                    console.log(err);
+                }
+            }
+            downloadCanvasCard(canvas, filename);
+        }
+
         async function buildResultCardCanvas() {
             const res = cachedGlobalResponse;
             const gross = parseFloat(res.totalPnl) || 0;
@@ -1464,7 +1548,7 @@
                 const p = n => String(n).padStart(2, '0');
                 const ts = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}_${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`;
                 const kind = isNetPnlView ? 'Net' : 'Total';
-                downloadCanvasCard(canvas, `TradingLog_${kind}_${ts}.png`);
+                shareOrDownloadCanvas(canvas, `TradingLog_${kind}_${ts}.png`);
             } catch (err) {
                 console.log(err);
                 showToast('Gagal muat gambar background', 'error');
@@ -1597,6 +1681,8 @@
             return canvas;
         }
 
+        // Sekarang pakai shareOrDownloadCanvas (coba share sheet HP dulu) -
+        // sebelumnya fungsi ini langsung download paksa ke galeri.
         async function downloadTradeShare() {
             if (!tradeShareItem) return;
             try {
@@ -1605,7 +1691,7 @@
                 const now = new Date();
                 const p = n => String(n).padStart(2, '0');
                 const ts = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}_${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`;
-                downloadCanvasCard(canvas, `TradingLog_${pairName}_${ts}.png`);
+                shareOrDownloadCanvas(canvas, `TradingLog_${pairName}_${ts}.png`);
             } catch (err) {
                 console.log(err);
                 showToast('Gagal muat gambar background', 'error');
