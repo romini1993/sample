@@ -259,6 +259,154 @@
         .font-card {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
         }
+
+        /* ═══════════════ ANIMASI TAHAN LAMA (isian) ═══════════════ */
+        .hold-target {
+            position: relative;
+            overflow: hidden;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .hold-target::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(217,164,65,0.26), rgba(217,164,65,0.08));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform .25s ease;          /* balik ke 0 saat dilepas */
+            pointer-events: none;
+            border-radius: inherit;
+        }
+        .hold-target.holding::after {
+            transform: scaleX(1);
+            transition: transform var(--hold-ms, 500ms) linear;   /* isi selama ditahan */
+        }
+        .hold-target.holding { transform: scale(0.985); }
+
+        /* ═══════════════ POPUP PREMIUM ═══════════════
+           Modal tetap pakai class "hidden", tapi "hidden" diganti dari
+           display:none -> transparan + tak bisa diklik, supaya bisa fade in/out. */
+        #actionModal, #editModal, #deleteModal, #resultCardModal, #tradeShareModal {
+            opacity: 1;
+            visibility: visible;
+            transition: opacity .28s ease, visibility 0s linear 0s;
+            background:
+                radial-gradient(ellipse 70% 50% at 50% 100%, rgba(217,164,65,0.10), transparent 70%),
+                rgba(4,5,8,0.74);
+            -webkit-backdrop-filter: blur(14px) saturate(125%);
+            backdrop-filter: blur(14px) saturate(125%);
+        }
+        #actionModal.hidden, #editModal.hidden, #deleteModal.hidden, #resultCardModal.hidden, #tradeShareModal.hidden {
+            display: flex !important;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity .22s ease, visibility 0s linear .22s;
+        }
+
+        /* kartu di dalam popup: masuk dengan scale + naik sedikit (pegas) */
+        #actionModal > *, #editModal > *, #deleteModal > *, #resultCardModal > *, #tradeShareModal > * {
+            animation: none !important;
+            transition: transform .42s cubic-bezier(0.34, 1.45, 0.64, 1), opacity .26s ease;
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+        #actionModal.hidden > *, #editModal.hidden > *, #deleteModal.hidden > *, #resultCardModal.hidden > *, #tradeShareModal.hidden > * {
+            transform: translateY(18px) scale(0.94);
+            opacity: 0;
+        }
+        #actionModal.hidden > * { transform: translateY(46px) scale(0.98); }
+
+        /* tampilan kaca + garis emas tipis di atas */
+        #actionModal .porto-card, #editModal .porto-card, #deleteModal .porto-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 26px;
+            background: linear-gradient(180deg, rgba(26,30,43,0.97), rgba(12,15,23,0.98));
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow:
+                0 40px 90px rgba(0,0,0,0.7),
+                0 0 0 1px rgba(217,164,65,0.05),
+                inset 0 1px 0 rgba(255,255,255,0.07);
+        }
+        #actionModal .porto-card::before, #editModal .porto-card::before, #deleteModal .porto-card::before {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; top: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent) 50%, transparent);
+            opacity: .7;
+            pointer-events: none;
+        }
+        #deleteModal .porto-card { border-color: rgba(251,113,133,0.28); }
+        #deleteModal .porto-card::before { background: linear-gradient(90deg, transparent, #fb7185 50%, transparent); }
+
+        /* pegangan (handle) di action sheet */
+        #actionModal .porto-card { padding-top: 22px; }
+        #actionModal .porto-card::after {
+            content: '';
+            position: absolute;
+            top: 8px; left: 50%;
+            width: 38px; height: 4px;
+            margin-left: -19px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.18);
+        }
+
+        /* tombol di action sheet: ikon dalam kotak kecil */
+        #actionModal button { border-radius: 16px; transition: background .18s ease, transform .12s ease; }
+        #actionModal button:active { transform: scale(0.98); }
+        #actionModal button > span:first-child {
+            width: 36px; height: 36px;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 11px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.06);
+            font-size: 16px;
+        }
+        #actionDeleteBtn > span:first-child { background: rgba(251,113,133,0.12) !important; border-color: rgba(251,113,133,0.22) !important; }
+
+        /* tombol utama: gradasi emas / gradasi merah untuk hapus */
+        #confirmEditBtn, #downloadResultCardBtn, #downloadTradeShareBtn {
+            background: linear-gradient(180deg, #f5c877, #d9a441) !important;
+            color: #1a1305 !important;
+            box-shadow: 0 12px 26px rgba(217,164,65,0.28), inset 0 1px 0 rgba(255,255,255,0.35) !important;
+            transition: transform .12s ease, filter .18s ease !important;
+        }
+        #confirmDeleteBtn {
+            background: linear-gradient(180deg, #fb7185, #e11d48) !important;
+            box-shadow: 0 12px 26px rgba(225,29,72,0.32), inset 0 1px 0 rgba(255,255,255,0.25) !important;
+            transition: transform .12s ease, filter .18s ease !important;
+        }
+        #confirmEditBtn:hover, #downloadResultCardBtn:hover, #downloadTradeShareBtn:hover, #confirmDeleteBtn:hover { filter: brightness(1.08); }
+        #confirmEditBtn:active, #downloadResultCardBtn:active, #downloadTradeShareBtn:active, #confirmDeleteBtn:active { transform: scale(0.97); }
+
+        /* kartu preview (hasil & share) dapat bayangan lebih dalam */
+        #resultCardPreview, #tradeSharePreview {
+            box-shadow: 0 30px 80px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.06);
+        }
+
+        /* ═══════════════ TOAST PREMIUM ═══════════════ */
+        .swal2-popup.premium-toast {
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.09) !important;
+            border-left: 3px solid #34d399 !important;
+            border-radius: 14px !important;
+            box-shadow: 0 16px 44px rgba(0,0,0,0.55) !important;
+        }
+        .swal2-popup.premium-toast.is-err { border-left-color: #fb7185 !important; }
+        .premium-toast .swal2-timer-progress-bar { background: #34d399; height: 2px; }
+        .premium-toast.is-err .swal2-timer-progress-bar { background: #fb7185; }
+
+        /* ═══════════════ HORMATI "KURANGI ANIMASI" ═══════════════ */
+        @media (prefers-reduced-motion: reduce) {
+            #actionModal, #editModal, #deleteModal, #resultCardModal, #tradeShareModal,
+            #actionModal > *, #editModal > *, #deleteModal > *, #resultCardModal > *, #tradeShareModal > *,
+            .hold-target::after { transition-duration: .01ms !important; }
+        }
     </style>
 </head>
 <body class="relative">
@@ -604,6 +752,11 @@
         let heatmapYear = now_.getFullYear();
         let heatmapMonth = now_.getMonth();
 
+        // Lama tahan (ms) sebelum popup muncul; isian animasi ngikutin durasi ini
+        const HOLD_ROW_MS = 500;   // baris trade -> action sheet
+        const HOLD_HERO_MS = 550;  // kartu Total P&L -> kartu hasil
+        document.documentElement.style.setProperty('--hold-ms', HOLD_ROW_MS + 'ms');
+
         function fetchRealtimeKurs() {
             fetch("https://api.binance.com/api/v3/ticker/price?symbol=USDTIDR")
                 .then(res => res.json())
@@ -682,36 +835,29 @@
             el.style.color = val === 0 ? 'var(--text-faint)' : (isProfit ? 'var(--profit)' : 'var(--loss)');
         }
 
+        // Toast premium: gelap elegan + garis warna di kiri (hijau = sukses, merah = error)
         function showToast(message, type = 'success') {
+            const ok = type === 'success';
             const Toast = Swal.mixin({
                 toast: true,
                 position: 'top',
                 showConfirmButton: false,
-                timer: 3000,
+                timer: 2600,
                 timerProgressBar: true,
+                customClass: { popup: 'premium-toast ' + (ok ? 'is-ok' : 'is-err') },
                 didOpen: (toast) => {
                     toast.addEventListener('mouseenter', Swal.stopTimer);
                     toast.addEventListener('mouseleave', Swal.resumeTimer);
                 }
             });
 
-            if (type === 'success') {
-                Toast.fire({
-                    icon: 'success',
-                    title: message,
-                    background: 'linear-gradient(to right, #00b09b, #96c93d)',
-                    color: '#ffffff',
-                    iconColor: '#ffffff'
-                });
-            } else {
-                Toast.fire({
-                    icon: 'error',
-                    title: message,
-                    background: 'linear-gradient(to right, #ff416c, #ff4b2b)',
-                    color: '#ffffff',
-                    iconColor: '#ffffff'
-                });
-            }
+            Toast.fire({
+                icon: ok ? 'success' : 'error',
+                title: message,
+                background: 'rgba(18,21,30,0.92)',
+                color: '#eef1f7',
+                iconColor: ok ? '#34d399' : '#fb7185'
+            });
         }
 
         function moveTabIndicator(activeBtn, instant) {
@@ -1013,31 +1159,34 @@
                 });
         };
 
+        // Tahan lama pada baris -> isian terisi -> action sheet muncul.
+        // Dilepas / digeser sebelum penuh = batal.
         function bindLongPress(element, no) {
+            element.classList.add('hold-target');
             let pressTimer = null;
 
-            const startPress = (e) => {
-                if (e.type === 'click') return;
+            const clear = () => {
+                clearTimeout(pressTimer);
+                pressTimer = null;
+                element.classList.remove('holding');
+            };
+
+            const start = (e) => {
+                if (e.type === 'mousedown' && e.button !== 0) return; // klik kiri saja
+                clear();
+                element.classList.add('holding');
                 pressTimer = setTimeout(() => {
+                    pressTimer = null;
+                    element.classList.remove('holding');
                     if (navigator.vibrate) navigator.vibrate(50);
                     handleHapus(no);
-                }, 500);
+                }, HOLD_ROW_MS);
             };
 
-            const cancelPress = () => {
-                if (pressTimer) {
-                    clearTimeout(pressTimer);
-                    pressTimer = null;
-                }
-            };
+            element.addEventListener('mousedown', start);
+            element.addEventListener('touchstart', start, { passive: true });
 
-            element.addEventListener('mousedown', startPress);
-            element.addEventListener('touchstart', startPress, { passive: true });
-
-            element.addEventListener('mouseup', cancelPress);
-            element.addEventListener('mouseleave', cancelPress);
-            element.addEventListener('touchend', cancelPress);
-            element.addEventListener('touchmove', cancelPress);
+            ['mouseup', 'mouseleave', 'touchend', 'touchmove', 'touchcancel'].forEach(ev => element.addEventListener(ev, clear));
             element.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
             });
@@ -1267,19 +1416,29 @@
         let heroLongPressTimer = null;
         let heroLongPressFired = false;
         let heroStartX = 0, heroStartY = 0;
+        let heroPressEl = null;
 
         function startHeroLongPress(e) {
             // Jangan ganggu interaksi drag di equity curve (buat lihat tooltip tanggal)
             if (e.target.closest && e.target.closest('#equityCurve')) return;
+            clearHeroLongPress();
+
             const touch = e.touches ? e.touches[0] : e;
             heroStartX = touch.clientX;
             heroStartY = touch.clientY;
             heroLongPressFired = false;
+
+            // isian animasi di kartu selama ditahan
+            heroPressEl = e.currentTarget;
+            heroPressEl.classList.add('hold-target', 'holding');
+            heroPressEl.style.setProperty('--hold-ms', HOLD_HERO_MS + 'ms');
+
             heroLongPressTimer = setTimeout(() => {
                 heroLongPressFired = true;
+                if (heroPressEl) heroPressEl.classList.remove('holding');
                 if (navigator.vibrate) navigator.vibrate(50);
                 openResultCardModal();
-            }, 550);
+            }, HOLD_HERO_MS);
         }
 
         function moveHeroLongPress(e) {
@@ -1293,6 +1452,7 @@
         function clearHeroLongPress() {
             clearTimeout(heroLongPressTimer);
             heroLongPressTimer = null;
+            if (heroPressEl) heroPressEl.classList.remove('holding');
         }
 
         function openResultCardModal() {
