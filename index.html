@@ -452,6 +452,31 @@
             .cardpv-box .v { font-size: 3.1cqw; }
         }
 
+        /* Preview kartu: font HP diperbesar (kecuali .cardpv-total) */
+        @media (max-width: 767px) {
+            .cardpv-logo { width: 8.4cqw; height: 8.4cqw; border-radius: 2cqw; }
+            .cardpv-logo.sm { width: 7cqw; height: 7cqw; border-radius: 1.8cqw; }
+            .cardpv-head { gap: 2cqw; }
+            .cardpv-title { font-size: 4.2cqw; }
+            .cardpv-title.sm { font-size: 3.8cqw; }
+            .cardpv-date { font-size: 3cqw; margin-top: .9cqw; }
+            .cardpv-badge { font-size: 2.8cqw; height: 5.6cqw; padding: 0 2.6cqw; }
+            .cardpv-pair { font-size: 6.6cqw; }
+            .cardpv-label { font-size: 3cqw; }
+            .cardpv-idr { font-size: 4.4cqw; }
+            .cardpv-stats { gap: 1.2cqw; }
+            .cardpv-box { height: 14cqw; border-radius: 1.8cqw; }
+            .cardpv-box .k { font-size: 2.1cqw; }
+            .cardpv-box .v { font-size: 3.2cqw; }
+        }
+
+        /* Spasi: blok tengah (label, total, Rp) dilonggarkan dan diposisikan di tengah kolom */
+        .cardpv-label:not(.tight) { margin-top: auto; }
+        .cardpv-pair { margin-top: auto; }
+        .cardpv-label.tight { margin-top: 2.4cqw; }
+        .cardpv-total { margin-top: 1.8cqw; }
+        .cardpv-idr { margin-top: 2.4cqw; }
+
         /* ═══════════════ HORMATI "KURANGI ANIMASI" ═══════════════ */
         @media (prefers-reduced-motion: reduce) {
             #actionModal, #editModal, #deleteModal, #resultCardModal, #tradeShareModal,
