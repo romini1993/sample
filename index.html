@@ -401,6 +401,57 @@
         .premium-toast .swal2-timer-progress-bar { background: #34d399; height: 2px; }
         .premium-toast.is-err .swal2-timer-progress-bar { background: #fb7185; }
 
+        /* ═══════════════ PREVIEW KARTU (hanya tampilan di layar) ═══════════════
+           Ukuran memakai satuan cqw (persen lebar kartu) dan angkanya diturunkan dari
+           kanvas 1200px (mis. 88px -> 7.33cqw), jadi preview proporsinya sama dengan
+           gambar hasil. Gambar yang disimpan digambar terpisah di kanvas -> tidak terpengaruh. */
+        .cardpv { container-type: inline-size; }
+        .cardpv-inner { position: absolute; inset: 0; padding: 4.67cqw; }
+        .cardpv-col { width: 46cqw; height: 100%; display: flex; flex-direction: column; }
+        .cardpv-head { display: flex; align-items: center; gap: 1.5cqw; }
+        .cardpv-head.between { justify-content: space-between; }
+        .cardpv-logo { width: 6.33cqw; height: 6.33cqw; flex-shrink: 0; border-radius: 1.5cqw;
+            background: rgba(217,164,65,0.18); border: 1px solid rgba(217,164,65,0.45);
+            display: flex; align-items: center; justify-content: center; }
+        .cardpv-logo.sm { width: 5.33cqw; height: 5.33cqw; border-radius: 1.33cqw; }
+        .cardpv-logo svg { width: 100%; height: 100%; }
+        .cardpv-title { font-size: 2.75cqw; font-weight: 700; color: #fff; line-height: 1.15; white-space: nowrap; }
+        .cardpv-title.sm { font-size: 2.5cqw; }
+        .cardpv-date { font-size: 1.92cqw; color: #c9cdd6; line-height: 1.15; margin-top: .67cqw; white-space: nowrap; }
+        .cardpv-badge { font-size: 1.92cqw; font-weight: 700; text-transform: uppercase; height: 4cqw; padding: 0 1.83cqw;
+            border-radius: 999px; display: flex; align-items: center; line-height: 1; }
+        .cardpv-pair { font-size: 4.75cqw; font-weight: 700; color: #fff; line-height: 1; margin-top: 2.33cqw; white-space: nowrap; }
+        .cardpv-label { font-size: 2cqw; font-weight: 700; color: #c9cdd6; line-height: 1; margin-top: 2.33cqw; text-transform: uppercase; white-space: nowrap; }
+        .cardpv-label.tight { margin-top: 1.83cqw; }
+        .cardpv-total { font-size: 7.33cqw; font-weight: 700; line-height: 1; margin-top: .83cqw; white-space: nowrap; }
+        .cardpv-idr { font-size: 2.75cqw; color: #dfe2e8; line-height: 1; margin-top: 1.33cqw; white-space: nowrap; }
+        .cardpv-stats { margin-top: auto; display: flex; gap: .83cqw; }
+        .cardpv-box { flex: 1; position: relative; height: 10.33cqw; border-radius: 1.33cqw; background: rgba(255,255,255,0.05); }
+        .cardpv-box .k, .cardpv-box .v { position: absolute; left: 0; right: 0; text-align: center; line-height: 1; transform: translateY(-50%); white-space: nowrap; }
+        .cardpv-box .k { top: 35%; font-size: 1.67cqw; font-weight: 600; color: #565e70; text-transform: uppercase; }
+        .cardpv-box .v { top: 68%; font-size: 2.5cqw; font-weight: 700; color: #fff; }
+        .modal-hint { text-align: center; font-size: 10px; color: var(--text-faint); }
+
+        /* Preview kartu: diperbesar khusus desktop (HP tetap pakai ukuran di atas) */
+        @media (min-width: 768px) {
+            .cardpv-logo { width: 7.6cqw; height: 7.6cqw; border-radius: 1.8cqw; }
+            .cardpv-logo.sm { width: 6.4cqw; height: 6.4cqw; border-radius: 1.6cqw; }
+            .cardpv-head { gap: 1.9cqw; }
+            .cardpv-title { font-size: 3.4cqw; }
+            .cardpv-title.sm { font-size: 3.1cqw; }
+            .cardpv-date { font-size: 2.4cqw; margin-top: .8cqw; }
+            .cardpv-badge { font-size: 2.3cqw; height: 4.8cqw; padding: 0 2.2cqw; }
+            .cardpv-pair { font-size: 5.8cqw; margin-top: 3cqw; }
+            .cardpv-label { font-size: 2.5cqw; margin-top: 3.2cqw; }
+            .cardpv-label.tight { margin-top: 2.6cqw; }
+            .cardpv-total { font-size: 8.2cqw; margin-top: 1.3cqw; }
+            .cardpv-idr { font-size: 3.4cqw; margin-top: 2cqw; }
+            .cardpv-stats { gap: 1.2cqw; }
+            .cardpv-box { height: 12.5cqw; border-radius: 1.6cqw; }
+            .cardpv-box .k { font-size: 2.1cqw; }
+            .cardpv-box .v { font-size: 3.1cqw; }
+        }
+
         /* ═══════════════ HORMATI "KURANGI ANIMASI" ═══════════════ */
         @media (prefers-reduced-motion: reduce) {
             #actionModal, #editModal, #deleteModal, #resultCardModal, #tradeShareModal,
@@ -662,75 +713,71 @@
     <!-- MODAL KARTU HASIL (long-press di kartu Total P&L) -->
     <div id="resultCardModal" onclick="if(event.target===this) closeResultCardModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="space-y-3 rise-in" style="width: min(640px, 100%);">
-            <div id="resultCardPreview" class="rounded-3xl p-5 sm:p-6 relative overflow-hidden font-card bg-cover bg-center" style="aspect-ratio: 1200 / 750; border: 1px solid var(--border);">
-                <div class="max-w-[48%]">
-                    <div class="flex items-center gap-2 mb-4">
-                        <div class="logo-mark w-9 h-9 text-base">📈</div>
-                        <div>
-                            <div class="font-bold text-sm text-white leading-none">Trading Log</div>
-                            <div id="resultCardDate" class="text-[10px] text-[var(--text-faint)] mt-1">–</div>
+            <div id="resultCardPreview" class="cardpv rounded-3xl relative overflow-hidden font-card bg-cover bg-center" style="aspect-ratio: 1200 / 750; border: 1px solid var(--border);">
+                <div class="cardpv-inner">
+                    <div class="cardpv-col">
+                        <div class="cardpv-head">
+                            <div class="cardpv-logo"><svg viewBox="0 0 1 1" fill="none" stroke="#fff" stroke-width="0.09" stroke-linecap="round" stroke-linejoin="round"><polyline points="0.26,0.6536 0.4136,0.5 0.5384,0.5864 0.74,0.26"/><circle cx="0.74" cy="0.26" r="0.07" fill="#fff" stroke="none"/></svg></div>
+                            <div>
+                                <div class="cardpv-title">Trading Log</div>
+                                <div id="resultCardDate" class="cardpv-date">–</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1 uppercase" id="resultCardLabel">Total P&amp;L</div>
-                    <div id="resultCardTotal" class="text-3xl sm:text-4xl font-bold leading-none mb-1">–</div>
-                    <div id="resultCardTotalIdr" class="text-sm text-[var(--text-dim)] mb-4">–</div>
-                    <div class="grid grid-cols-3 gap-1.5">
-                        <div class="text-center p-2 rounded-xl bg-white/5 border border-white/10">
-                            <div class="text-[8px] text-[var(--text-faint)] mb-1">Trades</div>
-                            <div id="resultCardCount" class="text-xs sm:text-sm font-bold text-white">–</div>
-                        </div>
-                        <div class="text-center p-2 rounded-xl bg-white/5 border border-white/10">
-                            <div class="text-[8px] text-[var(--text-faint)] mb-1">Win rate</div>
-                            <div id="resultCardWinRate" class="text-xs sm:text-sm font-bold text-white">–</div>
-                        </div>
-                        <div class="text-center p-2 rounded-xl bg-white/5 border border-white/10">
-                            <div class="text-[8px] text-[var(--text-faint)] mb-1">Avg Harian</div>
-                            <div id="resultCardAvgDaily" class="text-xs sm:text-sm font-bold text-white">–</div>
+                        <div class="cardpv-label" id="resultCardLabel">Total P&amp;L</div>
+                        <div id="resultCardTotal" class="cardpv-total">–</div>
+                        <div id="resultCardTotalIdr" class="cardpv-idr">–</div>
+                        <div class="cardpv-stats">
+                            <div class="cardpv-box"><div class="k">Trades</div><div id="resultCardCount" class="v">–</div></div>
+                            <div class="cardpv-box"><div class="k">Win rate</div><div id="resultCardWinRate" class="v">–</div></div>
+                            <div class="cardpv-box"><div class="k">Avg Harian</div><div id="resultCardAvgDaily" class="v">–</div></div>
                         </div>
                     </div>
                 </div>
             </div>
             <div class="flex gap-2">
-                <button type="button" onclick="closeResultCardModal()" class="w-1/2 bg-[var(--surface-2)] hover:bg-[#1d2230] text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition border border-[var(--border)]">
-                    Batal
+                <button type="button" id="saveResultCardBtn" onclick="downloadResultCard(true)" class="w-1/2 bg-[var(--surface-2)] hover:bg-[#1d2230] text-slate-200 font-semibold py-2.5 rounded-xl text-xs transition border border-[var(--border)]">
+                    💾 Simpan
                 </button>
                 <button type="button" id="downloadResultCardBtn" onclick="downloadResultCard()" class="w-1/2 bg-amber-500 hover:bg-amber-400 text-[#1a1305] font-semibold py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/20">
                     📤 Bagikan
                 </button>
             </div>
+            <p class="modal-hint">Ketuk di luar kartu untuk menutup</p>
         </div>
     </div>
 
     <!-- MODAL SHARE PNL PER TRADE (dari action sheet Edit/Hapus) -->
     <div id="tradeShareModal" onclick="if(event.target===this) closeTradeShareModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="space-y-3 rise-in" style="width: min(640px, 100%);">
-            <div id="tradeSharePreview" class="rounded-3xl p-5 sm:p-6 relative overflow-hidden font-card bg-cover bg-center" style="aspect-ratio: 1200 / 750; border: 1px solid var(--border);">
-                <div class="max-w-[48%]">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-2">
-                            <div class="logo-mark w-8 h-8 text-sm">📈</div>
-                            <div class="font-bold text-sm text-white leading-none">Trading Log</div>
+            <div id="tradeSharePreview" class="cardpv rounded-3xl relative overflow-hidden font-card bg-cover bg-center" style="aspect-ratio: 1200 / 750; border: 1px solid var(--border);">
+                <div class="cardpv-inner">
+                    <div class="cardpv-col">
+                        <div class="cardpv-head between">
+                            <div class="cardpv-head">
+                                <div class="cardpv-logo sm"><svg viewBox="0 0 1 1" fill="none" stroke="#fff" stroke-width="0.09" stroke-linecap="round" stroke-linejoin="round"><polyline points="0.26,0.6536 0.4136,0.5 0.5384,0.5864 0.74,0.26"/><circle cx="0.74" cy="0.26" r="0.07" fill="#fff" stroke="none"/></svg></div>
+                                <div class="cardpv-title sm">Trading Log</div>
+                            </div>
+                            <div id="tradeShareBadge" class="cardpv-badge">–</div>
                         </div>
-                        <div id="tradeShareBadge" class="text-[10px] font-bold uppercase px-2.5 py-1 rounded-full">–</div>
-                    </div>
-                    <div id="tradeSharePair" class="text-xl sm:text-2xl font-bold text-white mb-3">–</div>
-                    <div class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1 uppercase">Closing P&amp;L</div>
-                    <div id="tradeShareTotal" class="text-3xl sm:text-4xl font-bold leading-none mb-1">–</div>
-                    <div id="tradeShareTotalIdr" class="text-sm text-[var(--text-dim)] mb-4">–</div>
-                    <div class="text-center p-2 rounded-xl bg-white/5 border border-white/10">
-                        <div class="text-[8px] text-[var(--text-faint)] mb-1">Closed</div>
-                        <div id="tradeShareClosed" class="text-xs sm:text-sm font-bold text-white">–</div>
+                        <div id="tradeSharePair" class="cardpv-pair">–</div>
+                        <div class="cardpv-label tight">Closing P&amp;L</div>
+                        <div id="tradeShareTotal" class="cardpv-total">–</div>
+                        <div id="tradeShareTotalIdr" class="cardpv-idr">–</div>
+                        <div class="cardpv-stats">
+                            <div class="cardpv-box"><div class="k">Closed</div><div id="tradeShareClosed" class="v">–</div></div>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="flex gap-2">
-                <button type="button" onclick="closeTradeShareModal()" class="w-1/2 bg-[var(--surface-2)] hover:bg-[#1d2230] text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition border border-[var(--border)]">
-                    Batal
+                <button type="button" id="saveTradeShareBtn" onclick="downloadTradeShare(true)" class="w-1/2 bg-[var(--surface-2)] hover:bg-[#1d2230] text-slate-200 font-semibold py-2.5 rounded-xl text-xs transition border border-[var(--border)]">
+                    💾 Simpan
                 </button>
                 <button type="button" id="downloadTradeShareBtn" onclick="downloadTradeShare()" class="w-1/2 bg-amber-500 hover:bg-amber-400 text-[#1a1305] font-semibold py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/20">
                     📤 Bagikan
                 </button>
             </div>
+            <p class="modal-hint">Ketuk di luar kartu untuk menutup</p>
         </div>
     </div>
 
@@ -1465,7 +1512,7 @@
 
             const totalEl = document.getElementById('resultCardTotal');
             totalEl.textContent = `${isProfit ? '+' : ''}${total.toFixed(2)} USDT`;
-            totalEl.className = `text-3xl sm:text-4xl font-bold leading-none mb-1 ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
+            totalEl.className = `cardpv-total ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
 
             document.getElementById('resultCardLabel').textContent = isNetPnlView ? 'Total Net P&L' : 'Total P&L';
             document.getElementById('resultCardTotalIdr').textContent = formatRupiah(total * currentKursIdr);
@@ -1475,16 +1522,18 @@
             const avgDaily = lastQuickStats.daily || 0;
             const avgDailyEl = document.getElementById('resultCardAvgDaily');
             avgDailyEl.textContent = `${avgDaily >= 0 ? '+' : ''}${avgDaily.toFixed(2)}`;
-            avgDailyEl.className = `text-xs sm:text-sm font-bold ${avgDaily >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+            avgDailyEl.style.color = avgDaily >= 0 ? '#34d399' : '#fb7185';
 
             const now = new Date();
             document.getElementById('resultCardDate').textContent = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
             document.getElementById('resultCardModal').classList.remove('hidden');
+            previewModalOpened();
         }
 
         function closeResultCardModal() {
             document.getElementById('resultCardModal').classList.add('hidden');
+            previewModalClosed();
         }
 
         // ══════════════════════════════
@@ -1701,14 +1750,15 @@
             return canvas;
         }
 
-        async function downloadResultCard() {
+        async function downloadResultCard(saveOnly) {
             try {
                 const canvas = await buildResultCardCanvas();
                 const now = new Date();
                 const p = n => String(n).padStart(2, '0');
                 const ts = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}_${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`;
                 const kind = isNetPnlView ? 'Net' : 'Total';
-                shareOrDownloadCanvas(canvas, `TradingLog_${kind}_${ts}.png`);
+                const fname = `TradingLog_${kind}_${ts}.png`;
+                if (saveOnly) downloadCanvasCard(canvas, fname); else shareOrDownloadCanvas(canvas, fname);
             } catch (err) {
                 console.log(err);
                 showToast('Gagal muat gambar background', 'error');
@@ -1731,21 +1781,23 @@
 
             const badgeEl = document.getElementById('tradeShareBadge');
             badgeEl.textContent = isProfit ? 'PROFIT' : 'LOSS';
-            badgeEl.className = `text-[10px] font-bold uppercase px-2.5 py-1 rounded-full ${isProfit ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'}`;
+            badgeEl.className = `cardpv-badge ${isProfit ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rose-500/15 text-rose-400'}`;
 
             const totalEl = document.getElementById('tradeShareTotal');
             totalEl.textContent = `${isProfit ? '+' : ''}${pnlNum.toFixed(2)} USDT`;
-            totalEl.className = `text-3xl sm:text-4xl font-bold leading-none mb-1 ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
+            totalEl.className = `cardpv-total ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
 
             document.getElementById('tradeShareTotalIdr').textContent = formatRupiah(pnlNum * currentKursIdr);
             document.getElementById('tradeShareClosed').textContent = item.closed || '-';
 
             document.getElementById('tradeShareModal').classList.remove('hidden');
+            previewModalOpened();
         }
 
         function closeTradeShareModal() {
             document.getElementById('tradeShareModal').classList.add('hidden');
             tradeShareItem = null;
+            previewModalClosed();
         }
 
         async function buildTradeShareCanvas(item) {
@@ -1843,7 +1895,7 @@
 
         // Sekarang pakai shareOrDownloadCanvas (coba share sheet HP dulu) -
         // sebelumnya fungsi ini langsung download paksa ke galeri.
-        async function downloadTradeShare() {
+        async function downloadTradeShare(saveOnly) {
             if (!tradeShareItem) return;
             try {
                 const canvas = await buildTradeShareCanvas(tradeShareItem);
@@ -1851,7 +1903,8 @@
                 const now = new Date();
                 const p = n => String(n).padStart(2, '0');
                 const ts = `${now.getFullYear()}${p(now.getMonth() + 1)}${p(now.getDate())}_${p(now.getHours())}${p(now.getMinutes())}${p(now.getSeconds())}`;
-                shareOrDownloadCanvas(canvas, `TradingLog_${pairName}_${ts}.png`);
+                const fname = `TradingLog_${pairName}_${ts}.png`;
+                if (saveOnly) downloadCanvasCard(canvas, fname); else shareOrDownloadCanvas(canvas, fname);
             } catch (err) {
                 console.log(err);
                 showToast('Gagal muat gambar background', 'error');
@@ -2170,6 +2223,58 @@
                 tooltip.classList.add('hide');
             }, 2000);
         }
+
+        // ══════════════════════════════
+        //  TUTUP POPUP: klik di luar kartu, tombol Kembali (HP), Esc (PC)
+        //  Tombol Kembali: saat preview kartu dibuka kita "titip" 1 entri riwayat,
+        //  jadi Kembali menutup popup dulu (bukan keluar dari aplikasi).
+        // ══════════════════════════════
+        let previewHistoryPushed = false;
+        let previewIgnoreNextPop = false;
+        let previewPendingPush = false;
+
+        function previewPushState() {
+            try {
+                history.pushState({ previewModal: true }, '');
+                previewHistoryPushed = true;
+            } catch (err) { console.log(err); }
+        }
+
+        function previewModalOpened() {
+            if (previewHistoryPushed) return;
+            if (previewIgnoreNextPop) { previewPendingPush = true; return; }
+            previewPushState();
+        }
+
+        function previewModalClosed() {
+            if (!previewHistoryPushed) { previewPendingPush = false; return; }
+            previewHistoryPushed = false;
+            previewIgnoreNextPop = true;
+            history.back();
+        }
+
+        window.addEventListener('popstate', () => {
+            if (previewIgnoreNextPop) {
+                previewIgnoreNextPop = false;
+                if (previewPendingPush) { previewPendingPush = false; previewPushState(); }
+                return;
+            }
+            if (previewHistoryPushed) {
+                previewHistoryPushed = false;   // entri sudah dibuang oleh tombol Kembali
+                closeResultCardModal();
+                closeTradeShareModal();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            const isOpen = (id) => !document.getElementById(id).classList.contains('hidden');
+            if (isOpen('resultCardModal')) closeResultCardModal();
+            else if (isOpen('tradeShareModal')) closeTradeShareModal();
+            else if (isOpen('deleteModal')) closeDeleteModal();
+            else if (isOpen('editModal')) closeEditModal();
+            else if (isOpen('actionModal')) closeActionModal();
+        });
 
         function handleError(err) {
             console.error(err);
