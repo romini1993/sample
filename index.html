@@ -99,6 +99,39 @@
             text-transform: none;
         }
 
+        /* Label yang duduk di garis border input */
+        .field { position: relative; }
+        .field-label {
+            position: absolute;
+            top: -7px;
+            left: 14px;
+            height: 14px;
+            padding: 0 6px;
+            line-height: 14px;
+            /* atas = warna kartu, bawah = warna isi input, dipotong pas di garis */
+            background: linear-gradient(to bottom, var(--surface) 50%, var(--bg) 50%);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            z-index: 2;
+            pointer-events: none; /* klik tembus ke input, kalender flatpickr tetap muncul */
+        }
+
+        /* Font input disamain: Plus Jakarta Sans, weight normal */
+        .field .porto-input {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 500;
+            padding-top: 12px;
+            padding-bottom: 12px;
+        }
+        .field #pnlPreview {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-variant-numeric: tabular-nums;
+        }
+
         .row-card {
             transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
         }
@@ -531,9 +564,10 @@
                 </div>
             </div>
 
-            <form id="tradeForm" onsubmit="handleSubmit(event)" class="porto-card p-3.5 rounded-2xl space-y-2 lg:shrink-0">
-                <div>
-                    <input type="text" id="pair" list="pairList" required placeholder="Pairs" onblur="formatPairInput(this)" class="w-full porto-input rounded-xl px-3.5 py-2 text-sm uppercase font-display font-medium">
+            <form id="tradeForm" onsubmit="handleSubmit(event)" class="porto-card p-3.5 rounded-2xl space-y-3.5 lg:shrink-0">
+                <div class="field">
+                    <span class="field-label">Pairs</span>
+                    <input type="text" id="pair" list="pairList" required placeholder="BTCUSDT" onblur="formatPairInput(this)" class="w-full porto-input rounded-xl px-3.5 text-sm uppercase">
                     <datalist id="pairList">
                         <option value="ADAUSDT">
                         <option value="ALGOUSDT">
@@ -575,20 +609,21 @@
                     </datalist>
                 </div>
 
-                <div class="grid grid-cols-2 gap-1.5">
-                    <div>
-                        <label class="block text-xs font-medium text-[var(--text-dim)] mb-1">Opened date</label>
-                        <input type="text" id="opened" required placeholder="dd/mm/yyyy" class="w-full porto-input rounded-xl px-3.5 py-2 text-sm font-display">
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div class="field">
+                        <span class="field-label">Opened</span>
+                        <input type="text" id="opened" required placeholder="dd/mm/yyyy" class="w-full porto-input rounded-xl px-3.5 text-sm">
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-[var(--text-dim)] mb-1">Closed date</label>
-                        <input type="text" id="closed" required placeholder="dd/mm/yyyy" class="w-full porto-input rounded-xl px-3.5 py-2 text-sm font-display">
+                    <div class="field">
+                        <span class="field-label">Closed</span>
+                        <input type="text" id="closed" required placeholder="dd/mm/yyyy" class="w-full porto-input rounded-xl px-3.5 text-sm">
                     </div>
                 </div>
 
-                <div class="relative">
-                    <input type="number" step="any" id="pnl" required placeholder="Closing P&L" oninput="updatePnlPreview()" class="w-full porto-input rounded-xl pl-3.5 pr-24 py-2 num font-medium">
-                    <span id="pnlPreview" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-[11px] text-[var(--text-faint)] num pointer-events-none text-right">≈ Rp 0</span>
+                <div class="field">
+                    <span class="field-label">Closing P&amp;L</span>
+                    <input type="number" step="any" id="pnl" required placeholder="0.00" oninput="updatePnlPreview()" class="w-full porto-input rounded-xl pl-3.5 pr-24 text-sm font-medium">
+                    <span id="pnlPreview" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-[11px] text-[var(--text-faint)] pointer-events-none text-right">≈ Rp 0</span>
                 </div>
 
                 <button type="submit" id="submitBtn" class="w-full bg-amber-500 hover:bg-amber-400 active:scale-[0.98] text-[#1a1305] font-semibold py-2.5 rounded-xl transition shadow-lg shadow-amber-500/20">
