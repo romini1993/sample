@@ -984,8 +984,8 @@
         let heatmapMonth = now_.getMonth();
 
         // Long / Short: leverage selalu 20x (tidak ada input).
-        // Sheet belum punya kolom Side, jadi Side disimpan di perangkat ini (localStorage)
-        // dan tetap dikirim ke API lewat parameter &side= supaya siap kalau Apps Script diupdate.
+        // Side disimpan di Sheet (kolom Side) lewat parameter &side= dan dibaca balik dari
+        // respons API, jadi sama di semua perangkat. Trade lama yang Side-nya kosong dianggap Long.
         let formSide = 'Long';
         let editSide = 'Long';
         let tradeSideMap = {};
@@ -994,7 +994,7 @@
             try { localStorage.setItem('tradeSideMap', JSON.stringify(tradeSideMap)); } catch (e) {}
         }
         function getTradeSide(item) {
-            const s = (item && (item.side || tradeSideMap[item.no])) || 'Long';
+            const s = (item && item.side) || 'Long';
             return String(s).toLowerCase() === 'short' ? 'Short' : 'Long';
         }
         function paintSide(longBtn, shortBtn, side) {
