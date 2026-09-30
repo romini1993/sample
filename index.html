@@ -134,7 +134,7 @@
 
         /* Toggle Long / Short (form & modal edit) */
         .side-toggle { display: flex; gap: 4px; padding: 4px; }
-        .field .side-toggle { padding: 4px; }
+        .field .side-toggle { padding: 4px; height: 100%; }
         .side-btn {
             flex: 1;
             border: 0;
@@ -640,6 +640,7 @@
             </div>
 
             <form id="tradeForm" onsubmit="handleSubmit(event)" class="porto-card p-3.5 rounded-2xl space-y-3.5 lg:shrink-0">
+                <div class="grid grid-cols-2 gap-2.5">
                 <div class="field">
                     <span class="field-label">Pairs</span>
                     <input type="text" id="pair" list="pairList" required placeholder="BTCUSDT" onblur="formatPairInput(this)" class="w-full porto-input rounded-xl px-3.5 text-sm uppercase">
@@ -690,6 +691,7 @@
                         <button type="button" id="sideLongBtn" class="side-btn on-long" onclick="setFormSide('Long')">Long</button>
                         <button type="button" id="sideShortBtn" class="side-btn" onclick="setFormSide('Short')">Short</button>
                     </div>
+                </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2.5">
@@ -2286,13 +2288,12 @@
             const t = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Math.abs(v));
             return (v >= 0 ? '+' : '-') + t;
         }
-        // Angka Rupiah di kartu: titik = ribuan, koma = desimal -> Rp 1.250.000,59
+        // Angka Rupiah di kartu: titik = ribuan, tanpa desimal -> Rp 1.250.000
         function formatRupiahCard(amount) {
             return new Intl.NumberFormat('id-ID', {
                 style: 'currency',
                 currency: 'IDR',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+                maximumFractionDigits: 0
             }).format(amount);
         }
 
