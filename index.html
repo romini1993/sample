@@ -782,7 +782,7 @@
                             <span class="section-dot"></span>
                             <h2 class="section-label">Rekap harian</h2>
                         </div>
-                        <span class="text-[10px] text-[var(--text-faint)]">Klik untuk buka</span>
+                        <span class="text-[10px] text-[var(--text-faint)]">Klik untuk buka • Tahan untuk share</span>
                     </div>
                     <div id="dailySummaryList" class="space-y-1.5 overflow-y-auto pr-1 custom-scroll lg:flex-1 lg:min-h-0"></div>
                 </div>
@@ -814,7 +814,7 @@
                 <span>✏️</span> Edit Trade
             </button>
             <button type="button" id="actionShareBtn" class="w-full text-left px-4 py-3.5 rounded-xl hover:bg-[var(--surface-2)] transition flex items-center gap-3 text-sm font-medium text-slate-200">
-                <span>📤</span> Share PNL
+                <span>📤</span> <span id="actionShareLabel">Share PNL</span>
             </button>
             <button type="button" id="actionDeleteBtn" class="w-full text-left px-4 py-3.5 rounded-xl hover:bg-rose-500/10 transition flex items-center gap-3 text-sm font-medium text-rose-400">
                 <span>🗑️</span> Hapus Trade
@@ -1040,6 +1040,8 @@
         let currentKursIdr = 17550;
         let selectedNoForAction = null; // trade # yang sedang dipilih lewat long-press
         let selectedNoToDelete = null;
+        let selectedDateForAction = null; // tanggal yang dipilih lewat klik-tahan di Rekap Harian
+        let actionMode = 'trade';         // 'trade' (Riwayat / isi rekap) atau 'day' (baris Rekap Harian)
         let expandedDate = null; // tanggal yang sedang di-expand di Rekap Harian
         let activeTab = 'rekap'; // tab aktif: 'rekap' atau 'riwayat'
         let cachedGlobalResponse = { history: [], totalPnl: 0, totalTrades: 0, winRate: 0 };
@@ -1403,6 +1405,20 @@
         // Dipanggil dari long-press: buka action sheet (Edit / Hapus), bukan langsung hapus
         function handleHapus(no) {
             selectedNoForAction = no;
+            actionMode = 'trade';
+            document.getElementById('actionEditBtn').style.display = '';
+            document.getElementById('actionDeleteBtn').style.display = '';
+            document.getElementById('actionShareLabel').textContent = 'Share PNL';
+            document.getElementById('actionModal').classList.remove('hidden');
+        }
+
+        // Klik-tahan di baris Rekap Harian: popup yang sama, isinya cuma Share Rekap
+        function handleDayHold(date) {
+            actionMode = 'day';
+            selectedDateForAction = date;
+            document.getElementById('actionEditBtn').style.display = 'none';
+            document.getElementById('actionDeleteBtn').style.display = 'none';
+            document.getElementById('actionShareLabel').textContent = 'Share Rekap';
             document.getElementById('actionModal').classList.remove('hidden');
         }
 
@@ -1430,6 +1446,7 @@
 
         document.getElementById('actionShareBtn').onclick = function() {
             closeActionModal();
+            if (actionMode === 'day') { openDailyShareModal(selectedDateForAction); return; }
             const item = (cachedGlobalResponse.history || []).find(x => parseInt(x.no) === parseInt(selectedNoForAction));
             if (!item) return;
             openTradeShareModal(item);
@@ -1565,6 +1582,39 @@
             return div;
         }
 
+        // Tahan lama pada baris Rekap Harian -> isian terisi -> popup (Share Rekap).
+        // Klik biasa tetap buka/tutup daftar trade hari itu.
+        function bindDayHold(element, date) {
+            element.classList.add('hold-target');
+            let pressTimer = null;
+
+            const clear = () => {
+                clearTimeout(pressTimer);
+                pressTimer = null;
+                element.classList.remove('holding');
+            };
+
+            const start = (e) => {
+                if (e.type === 'mousedown' && e.button !== 0) return;
+                if (e.target.closest && e.target.closest('.day-share-btn')) return; // tombol ikon punya klik sendiri
+                clear();
+                element._holdFired = false;
+                element.classList.add('holding');
+                pressTimer = setTimeout(() => {
+                    pressTimer = null;
+                    element.classList.remove('holding');
+                    element._holdFired = true;
+                    if (navigator.vibrate) navigator.vibrate(50);
+                    handleDayHold(date);
+                }, HOLD_ROW_MS);
+            };
+
+            element.addEventListener('mousedown', start);
+            element.addEventListener('touchstart', start, { passive: true });
+            ['mouseup', 'mouseleave', 'touchend', 'touchmove', 'touchcancel'].forEach(ev => element.addEventListener(ev, clear));
+            element.addEventListener('contextmenu', (e) => e.preventDefault());
+        }
+
         function getDayPanelId(date) {
             return 'dayPanel-' + String(date).replace(/[^A-Za-z0-9]/g, '');
         }
@@ -1662,7 +1712,11 @@
                 }`;
                 row.style.borderLeftColor = isProf ? 'var(--profit)' : 'var(--loss)';
                 row.style.animationDelay = `${i * 25}ms`;
-                row.onclick = () => toggleExpand(date);
+                row.onclick = () => {
+                    if (row._holdFired) { row._holdFired = false; return; } // habis klik-tahan, jangan ikut buka/tutup
+                    toggleExpand(date);
+                };
+                bindDayHold(row, date);
                 row.innerHTML = `
                     <div class="flex items-center gap-2 min-w-0">
                         <svg class="chevron ${isExpanded ? 'open' : ''} shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
@@ -2457,8 +2511,8 @@
                 ctx.fillRect(sepX - 1, PL.metaY - 12, 2, 24);
                 pcDraw(ctx, `Win rate ${d.winRate}%`, sepX + 21, PL.metaY, 500, szMeta, PC.gray);
 
-                label1 = 'Trade terbaik'; value1 = fmtNumUS(d.best); value1Color = d.best >= 0 ? PC.green : PC.red;
-                label2 = 'Setara IDR'; value2 = d.idr; value2Color = PC.white;
+                label1 = 'Setara IDR'; value1 = d.idr; value1Color = PC.white;
+                label2 = 'Trade terbaik'; value2 = fmtNumUS(d.best); value2Color = d.best >= 0 ? PC.green : PC.red;
             } else {
                 pcDraw(ctx, d.isNet ? 'Total Net P&L' : 'Total P&L', PL.padX, PL.titleY, 700, szTitle, PC.white, PL.maxW);
 
@@ -2468,8 +2522,8 @@
                 ctx.fillRect(sepX - 1, PL.metaY - 12, 2, 24);
                 pcDraw(ctx, `Win rate ${d.winRate}%`, sepX + 21, PL.metaY, 500, szMeta, PC.gray);
 
-                label1 = 'Avg Harian'; value1 = fmtNumUS(d.avgDaily); value1Color = d.avgDaily >= 0 ? PC.green : PC.red;
-                label2 = 'Setara IDR'; value2 = d.idr; value2Color = PC.white;
+                label1 = 'Setara IDR'; value1 = d.idr; value1Color = PC.white;
+                label2 = 'Avg Harian'; value2 = fmtNumUS(d.avgDaily); value2Color = d.avgDaily >= 0 ? PC.green : PC.red;
             }
 
             // Angka P&L besar + USDT, sejajar di baseline yang sama
@@ -2494,6 +2548,63 @@
             pcDraw(ctx, value1, PL.padX, PL.valueY, 700, szValue, value1Color, PL.col2X - PL.padX - 24);
             pcDraw(ctx, label2, PL.col2X, PL.labelY, 400, szLabel, PC.gray);
             pcDraw(ctx, value2, PL.col2X, PL.valueY, 700, szValue, value2Color, PL.maxW - (PL.col2X - PL.padX));
+
+            // Rekap harian: daftar trade hari itu (maks 5 baris), pair di kiri, USDT rata kanan
+            if (kind === 'daily' && d.trades && d.trades.length) {
+                const rightX = PORTRAIT_REF_W - PL.padX;
+                const maxLines = 5;
+                const many = d.trades.length > maxLines;
+                const shown = many ? d.trades.slice(0, maxLines - 1) : d.trades;
+                const lineCount = shown.length + (many ? 1 : 0);
+                // sedikit baris -> huruf & jarak dibesarkan biar tetap seimbang
+                const scale = lineCount <= 3 ? 1.12 : 1;
+                const rowH = lineCount <= 3 ? 54 : 48;
+                const firstY = 896;
+
+                ctx.fillStyle = PC.sep;
+                ctx.fillRect(PL.padX, 852, PORTRAIT_REF_W - PL.padX * 2, 1.5);
+
+                const numSize = szValue * scale;
+                const unitSize = szValue * 0.8 * scale;
+                const pairSize = szValue * 0.95 * scale;
+                ctx.font = pcFont(500, unitSize);
+                const wUnit = ctx.measureText('USDT').width;
+
+                shown.forEach((t, i) => {
+                    const cy = firstY + i * rowH;
+                    // baseline dihitung dari tinggi angka, biar pair / angka / USDT sejajar
+                    ctx.font = pcFont(700, numSize);
+                    const asc = ctx.measureText('H').actualBoundingBoxAscent || numSize * 0.72;
+                    const base = cy + asc / 2;
+                    const numStr = fmtNumUS(t.pnl);
+                    const col = t.pnl >= 0 ? PC.green : PC.red;
+
+                    ctx.textBaseline = 'alphabetic';
+                    ctx.textAlign = 'right';
+                    ctx.fillStyle = PC.gray;
+                    ctx.font = pcFont(500, unitSize);
+                    ctx.fillText('USDT', rightX, base);
+
+                    const numRight = rightX - wUnit - 10;
+                    ctx.fillStyle = col;
+                    ctx.font = pcFont(700, numSize);
+                    ctx.fillText(numStr, numRight, base);
+                    const wNum = ctx.measureText(numStr).width;
+
+                    const maxPairW = numRight - wNum - 28 - PL.padX;
+                    let ps = pairSize;
+                    ctx.font = pcFont(600, ps);
+                    const wPair0 = ctx.measureText(t.pair).width;
+                    if (wPair0 > maxPairW) { ps = ps * maxPairW / wPair0; ctx.font = pcFont(600, ps); }
+                    ctx.textAlign = 'left';
+                    ctx.fillStyle = PC.white;
+                    ctx.fillText(t.pair, PL.padX, base);
+                });
+
+                if (many) {
+                    pcDraw(ctx, `+${d.trades.length - shown.length} trade lainnya`, PL.padX, firstY + shown.length * rowH, 500, szLabel * scale, PC.gray);
+                }
+            }
 
             return canvas;
         }
@@ -2545,6 +2656,7 @@
                 count: trades.length,
                 winRate: Math.round((wins / trades.length) * 100),
                 best,
+                trades: trades.map(t => ({ pair: String(t.pair || '').trim(), pnl: parseFloat(t.pnl) || 0 })),
                 dateDMY: formatDateDMY(date),
                 dateLong,
                 idr: formatRupiahCard(total * currentKursIdr)
