@@ -339,7 +339,7 @@
         /* ═══════════════ POPUP PREMIUM ═══════════════
            Modal tetap pakai class "hidden", tapi "hidden" diganti dari
            display:none -> transparan + tak bisa diklik, supaya bisa fade in/out. */
-        #actionModal, #editModal, #deleteModal, #resultCardModal, #tradeShareModal {
+        #actionModal, #editModal, #deleteModal, #resultCardModal, #tradeShareModal, #dailyShareModal {
             opacity: 1;
             visibility: visible;
             transition: opacity .28s ease, visibility 0s linear 0s;
@@ -349,7 +349,7 @@
             -webkit-backdrop-filter: blur(14px) saturate(125%);
             backdrop-filter: blur(14px) saturate(125%);
         }
-        #actionModal.hidden, #editModal.hidden, #deleteModal.hidden, #resultCardModal.hidden, #tradeShareModal.hidden {
+        #actionModal.hidden, #editModal.hidden, #deleteModal.hidden, #resultCardModal.hidden, #tradeShareModal.hidden, #dailyShareModal.hidden {
             display: flex !important;
             opacity: 0;
             visibility: hidden;
@@ -358,13 +358,13 @@
         }
 
         /* kartu di dalam popup: masuk dengan scale + naik sedikit (pegas) */
-        #actionModal > *, #editModal > *, #deleteModal > *, #resultCardModal > *, #tradeShareModal > * {
+        #actionModal > *, #editModal > *, #deleteModal > *, #resultCardModal > *, #tradeShareModal > *, #dailyShareModal > * {
             animation: none !important;
             transition: transform .42s cubic-bezier(0.34, 1.45, 0.64, 1), opacity .26s ease;
             transform: translateY(0) scale(1);
             opacity: 1;
         }
-        #actionModal.hidden > *, #editModal.hidden > *, #deleteModal.hidden > *, #resultCardModal.hidden > *, #tradeShareModal.hidden > * {
+        #actionModal.hidden > *, #editModal.hidden > *, #deleteModal.hidden > *, #resultCardModal.hidden > *, #tradeShareModal.hidden > *, #dailyShareModal.hidden > * {
             transform: translateY(18px) scale(0.94);
             opacity: 0;
         }
@@ -420,7 +420,7 @@
         #actionDeleteBtn > span:first-child { background: rgba(251,113,133,0.12) !important; border-color: rgba(251,113,133,0.22) !important; }
 
         /* tombol utama: gradasi emas / gradasi merah untuk hapus */
-        #confirmEditBtn, #downloadResultCardBtn, #downloadTradeShareBtn {
+        #confirmEditBtn, #downloadResultCardBtn, #downloadTradeShareBtn, #downloadDailyShareBtn {
             background: linear-gradient(180deg, #f5c877, #d9a441) !important;
             color: #1a1305 !important;
             box-shadow: 0 12px 26px rgba(217,164,65,0.28), inset 0 1px 0 rgba(255,255,255,0.35) !important;
@@ -431,11 +431,11 @@
             box-shadow: 0 12px 26px rgba(225,29,72,0.32), inset 0 1px 0 rgba(255,255,255,0.25) !important;
             transition: transform .12s ease, filter .18s ease !important;
         }
-        #confirmEditBtn:hover, #downloadResultCardBtn:hover, #downloadTradeShareBtn:hover, #confirmDeleteBtn:hover { filter: brightness(1.08); }
-        #confirmEditBtn:active, #downloadResultCardBtn:active, #downloadTradeShareBtn:active, #confirmDeleteBtn:active { transform: scale(0.97); }
+        #confirmEditBtn:hover, #downloadResultCardBtn:hover, #downloadTradeShareBtn:hover, #downloadDailyShareBtn:hover, #confirmDeleteBtn:hover { filter: brightness(1.08); }
+        #confirmEditBtn:active, #downloadResultCardBtn:active, #downloadTradeShareBtn:active, #downloadDailyShareBtn:active, #confirmDeleteBtn:active { transform: scale(0.97); }
 
         /* kartu preview (hasil & share) dapat bayangan lebih dalam */
-        #resultCardPreview, #tradeSharePreview {
+        #resultCardPreview, #tradeSharePreview, #dailyCardPreview {
             box-shadow: 0 30px 80px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.06);
         }
 
@@ -585,10 +585,24 @@
         }
         .carousel-dots span.active { width: 18px; background: var(--accent); }
 
+        /* Tombol share kecil di tiap baris Rekap Harian */
+        .day-share-btn {
+            width: 28px; height: 28px;
+            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 9px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            transition: color .15s ease, border-color .15s ease, transform .1s ease;
+        }
+        .day-share-btn:hover { color: var(--accent-bright); border-color: rgba(217,164,65,0.5); }
+        .day-share-btn:active { transform: scale(0.92); }
+
         /* ═══════════════ HORMATI "KURANGI ANIMASI" ═══════════════ */
         @media (prefers-reduced-motion: reduce) {
-            #actionModal, #editModal, #deleteModal, #resultCardModal, #tradeShareModal,
-            #actionModal > *, #editModal > *, #deleteModal > *, #resultCardModal > *, #tradeShareModal > *,
+            #actionModal, #editModal, #deleteModal, #resultCardModal, #tradeShareModal, #dailyShareModal,
+            #actionModal > *, #editModal > *, #deleteModal > *, #resultCardModal > *, #tradeShareModal > *, #dailyShareModal > *,
             .hold-target::after { transition-duration: .01ms !important; }
         }
     </style>
@@ -960,6 +974,59 @@
                     💾 Simpan
                 </button>
                 <button type="button" id="downloadTradeShareBtn" onclick="downloadTradeShare()" class="w-1/2 bg-amber-500 hover:bg-amber-400 text-[#1a1305] font-semibold py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/20">
+                    📤 Bagikan
+                </button>
+            </div>
+            <p class="modal-hint">Geser untuk ganti tampilan • Ketuk di luar kartu untuk menutup</p>
+        </div>
+    </div>
+
+    <!-- MODAL SHARE REKAP HARIAN (tombol share di tiap baris Rekap Harian) -->
+    <div id="dailyShareModal" onclick="if(event.target===this) closeDailyShareModal()" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="space-y-3 rise-in" style="width: min(640px, 100%);">
+            <div class="carousel-wrap">
+                <div id="dailyCarousel" class="card-carousel custom-scroll" onscroll="onCarouselScroll('daily')">
+                    <div class="card-slide" id="dailySlide1"></div>
+                    <div class="card-slide" id="dailySlide2"></div>
+                    <div class="card-slide" id="dailySlide3"></div>
+                    <div class="card-slide">
+                        <div id="dailyCardPreview" class="cardpv rounded-3xl relative overflow-hidden font-card bg-cover bg-center" style="aspect-ratio: 1200 / 750; border: 1px solid var(--border);">
+                            <div class="cardpv-inner">
+                                <div class="cardpv-col">
+                                    <div class="cardpv-head">
+                                        <div class="cardpv-logo"><svg viewBox="0 0 1 1" fill="none" stroke="#fff" stroke-width="0.09" stroke-linecap="round" stroke-linejoin="round"><polyline points="0.26,0.6536 0.4136,0.5 0.5384,0.5864 0.74,0.26"/><circle cx="0.74" cy="0.26" r="0.07" fill="#fff" stroke="none"/></svg></div>
+                                        <div>
+                                            <div class="cardpv-title">Trading Log</div>
+                                            <div id="dailyCardDate" class="cardpv-date">–</div>
+                                        </div>
+                                    </div>
+                                    <div class="cardpv-label">Rekap Harian</div>
+                                    <div id="dailyCardTotal" class="cardpv-total">–</div>
+                                    <div id="dailyCardTotalIdr" class="cardpv-idr">–</div>
+                                    <div class="cardpv-stats">
+                                        <div class="cardpv-box"><div class="k">Trades</div><div id="dailyCardCount" class="v">–</div></div>
+                                        <div class="cardpv-box"><div class="k">Win rate</div><div id="dailyCardWinRate" class="v">–</div></div>
+                                        <div class="cardpv-box"><div class="k">Terbaik</div><div id="dailyCardBest" class="v">–</div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="carousel-arrow left" onclick="slideCarousel('daily', -1)">‹</button>
+                <button type="button" class="carousel-arrow right" onclick="slideCarousel('daily', 1)">›</button>
+            </div>
+            <div id="dailyDots" class="carousel-dots">
+                <span class="active" onclick="goSlide('daily', 0)"></span>
+                <span onclick="goSlide('daily', 1)"></span>
+                <span onclick="goSlide('daily', 2)"></span>
+                <span onclick="goSlide('daily', 3)"></span>
+            </div>
+            <div class="flex gap-2">
+                <button type="button" id="saveDailyShareBtn" onclick="downloadDailyShare(true)" class="w-1/2 bg-[var(--surface-2)] hover:bg-[#1d2230] text-slate-200 font-semibold py-2.5 rounded-xl text-xs transition border border-[var(--border)]">
+                    💾 Simpan
+                </button>
+                <button type="button" id="downloadDailyShareBtn" onclick="downloadDailyShare()" class="w-1/2 bg-amber-500 hover:bg-amber-400 text-[#1a1305] font-semibold py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/20">
                     📤 Bagikan
                 </button>
             </div>
@@ -1604,14 +1671,14 @@
                             <div class="text-[9px] sm:text-[10px] text-[var(--text-dim)] mt-0.5">${summary.count} trade tertutup</div>
                         </div>
                     </div>
-                    <div class="text-right shrink-0 pl-2">
+                    <div class="flex items-center gap-2 shrink-0 pl-2"><div class="text-right">
                         <div class="num font-bold text-xs sm:text-sm ${color} whitespace-nowrap">
                             ${isProf ? '+' : ''}${summary.total.toFixed(2)} USDT
                         </div>
                         <div class="num text-[9px] sm:text-[10px] text-[var(--text-dim)] font-medium num mt-0.5 whitespace-nowrap">
                             ${totalIdr}
                         </div>
-                    </div>
+                    </div><button type="button" class="day-share-btn" aria-label="Share rekap harian" onclick="event.stopPropagation(); openDailyShareModal('${date}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M8 8l4-4 4 4"/><path d="M5 14v4a2 2 0 002 2h10a2 2 0 002-2v-4"/></svg></button></div>
                 `;
                 dailyContainer.appendChild(row);
 
@@ -2163,9 +2230,9 @@
         // ══════════════════════════════════════════════════════════
         //  SLIDER KARTU: slide 0 = landscape lama, slide 1-3 = portrait
         // ══════════════════════════════════════════════════════════
-        let slideState = { result: 0, trade: 0 };
+        let slideState = { result: 0, trade: 0, daily: 0 };
         const LANDSCAPE_SLIDE = 3; // urutan slide: portrait 1, 2, 3, lalu landscape di paling belakang
-        const portraitToken = { result: 0, trade: 0 };
+        const portraitToken = { result: 0, trade: 0, daily: 0 };
 
         function updateDots(prefix, idx) {
             document.querySelectorAll(`#${prefix}Dots span`).forEach((d, i) => d.classList.toggle('active', i === idx));
@@ -2381,6 +2448,17 @@
 
                 label1 = 'Opened'; value1 = d.opened; value1Color = PC.white;
                 label2 = 'Closed'; value2 = d.closed; value2Color = PC.white;
+            } else if (kind === 'daily') {
+                pcDraw(ctx, `Rekap ${d.dateDMY}`, PL.padX, PL.titleY, 700, szTitle, PC.white, PL.maxW);
+
+                const wCount = pcDraw(ctx, `${d.count} Trades`, PL.padX, PL.metaY, 500, szMeta, PC.soft);
+                const sepX = PL.padX + wCount + 20;
+                ctx.fillStyle = PC.sep;
+                ctx.fillRect(sepX - 1, PL.metaY - 12, 2, 24);
+                pcDraw(ctx, `Win rate ${d.winRate}%`, sepX + 21, PL.metaY, 500, szMeta, PC.gray);
+
+                label1 = 'Trade terbaik'; value1 = fmtNumUS(d.best); value1Color = d.best >= 0 ? PC.green : PC.red;
+                label2 = 'Setara IDR'; value2 = d.idr; value2Color = PC.white;
             } else {
                 pcDraw(ctx, d.isNet ? 'Total Net P&L' : 'Total P&L', PL.padX, PL.titleY, 700, szTitle, PC.white, PL.maxW);
 
@@ -2439,6 +2517,169 @@
                     slides[i].innerHTML = `<span class="slide-msg">Gambar ${name} belum ketemu (taruh satu folder sama index.html)</span>`;
                 }
             }));
+        }
+
+        // ══════════════════════════════════════════════════════════
+        //  SHARE REKAP HARIAN (tombol share di tiap baris Rekap Harian)
+        //  Slider sama kayak kartu lain: portrait 1-3, landscape paling belakang.
+        // ══════════════════════════════════════════════════════════
+        let dailyShareDate = null;
+
+        function getDailyCardData(date) {
+            const trades = (cachedGlobalResponse.history || []).filter(t => t.closed === date);
+            if (trades.length === 0) return null;
+            let total = 0, wins = 0, best = -Infinity;
+            trades.forEach(t => {
+                const p = parseFloat(t.pnl) || 0;
+                total += p;
+                if (p > 0) wins++;
+                if (p > best) best = p;
+            });
+            const dObj = parseClosedDate(date);
+            const dateLong = dObj
+                ? dObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+                : date;
+            return {
+                isProfit: total >= 0,
+                pnl: total,
+                count: trades.length,
+                winRate: Math.round((wins / trades.length) * 100),
+                best,
+                dateDMY: formatDateDMY(date),
+                dateLong,
+                idr: formatRupiahCard(total * currentKursIdr)
+            };
+        }
+
+        function openDailyShareModal(date) {
+            const d = getDailyCardData(date);
+            if (!d) return;
+            dailyShareDate = date;
+
+            document.getElementById('dailyCardPreview').style.backgroundImage = `url('${d.isProfit ? CARD_BG_PROFIT : CARD_BG_LOSS}')`;
+            document.getElementById('dailyCardDate').textContent = d.dateLong;
+
+            const totalEl = document.getElementById('dailyCardTotal');
+            totalEl.textContent = `${fmtNumUS(d.pnl)} USDT`;
+            totalEl.className = `cardpv-total ${d.isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
+
+            document.getElementById('dailyCardTotalIdr').textContent = d.idr;
+            document.getElementById('dailyCardCount').textContent = d.count;
+            document.getElementById('dailyCardWinRate').textContent = `${d.winRate}%`;
+            const bestEl = document.getElementById('dailyCardBest');
+            bestEl.textContent = fmtNumUS(d.best);
+            bestEl.style.color = d.best >= 0 ? '#34d399' : '#fb7185';
+
+            resetCarousel('daily');
+            renderPortraitSlides('daily', 'daily', d);
+
+            document.getElementById('dailyShareModal').classList.remove('hidden');
+            previewModalOpened();
+        }
+
+        function closeDailyShareModal() {
+            document.getElementById('dailyShareModal').classList.add('hidden');
+            dailyShareDate = null;
+            previewModalClosed();
+        }
+
+        // Landscape rekap harian: gaya sama persis dengan kartu Total P&L
+        async function buildDailyShareCanvas(d) {
+            const totalText = `${fmtNumUS(d.pnl)} USDT`;
+            const bgImg = await loadCardBgImage(d.isProfit ? CARD_BG_PROFIT : CARD_BG_LOSS);
+
+            const W = 1200;
+            const H = Math.round(W * (bgImg.naturalHeight / bgImg.naturalWidth));
+            const canvas = document.createElement('canvas');
+            canvas.width = W;
+            canvas.height = H;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, W, H);
+            ctx.drawImage(bgImg, 0, 0, W, H);
+
+            const PAD = 56;
+            const cx = PAD;
+            let cy = PAD;
+            const colW = W * 0.46;
+
+            const logoSize = 76;
+            drawRoundRectPath(ctx, cx, cy, logoSize, logoSize, 18);
+            ctx.fillStyle = 'rgba(217,164,65,0.18)';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(217,164,65,0.45)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            drawLogoIcon(ctx, cx, cy, logoSize, '#ffffff');
+
+            const textX = cx + logoSize + 18;
+            const titleFont = 33, dateFont = 23;
+            const titleLineH = titleFont * 1.15, dateLineH = dateFont * 1.15, lineGap = 8;
+            const headerTextH = titleLineH + lineGap + dateLineH;
+            const headerTextTop = cy + (logoSize - headerTextH) / 2;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `700 ${titleFont}px ${CARD_FONT}`;
+            ctx.fillText('Trading Log', textX, headerTextTop);
+            ctx.fillStyle = '#c9cdd6';
+            ctx.font = `400 ${dateFont}px ${CARD_FONT}`;
+            ctx.fillText(d.dateLong, textX, headerTextTop + titleLineH + lineGap);
+
+            cy += logoSize + 28;
+
+            ctx.fillStyle = '#c9cdd6';
+            ctx.font = `700 24px ${CARD_FONT}`;
+            ctx.fillText('REKAP HARIAN', cx, cy);
+            cy += 24 + 10;
+
+            ctx.fillStyle = d.isProfit ? '#34d399' : '#fb7185';
+            ctx.font = `700 88px ${CARD_FONT}`;
+            ctx.fillText(totalText, cx, cy);
+            cy += 88 + 16;
+
+            ctx.fillStyle = '#dfe2e8';
+            ctx.font = `400 33px ${CARD_FONT}`;
+            ctx.fillText(d.idr, cx, cy);
+
+            const stats = [
+                { label: 'TRADES', value: String(d.count) },
+                { label: 'WIN RATE', value: `${d.winRate}%` },
+                { label: 'TERBAIK', value: fmtNumUS(d.best), color: d.best >= 0 ? '#34d399' : '#fb7185' }
+            ];
+            const boxGap = 10;
+            const boxW = (colW - boxGap * 2) / 3;
+            const boxH = 124;
+            const statRowY = H - PAD - boxH;
+            stats.forEach((st, i) => {
+                drawStatBox(ctx, cx + i * (boxW + boxGap), statRowY, boxW, boxH, st.label, st.value, st.color);
+            });
+
+            return canvas;
+        }
+
+        async function downloadDailyShare(saveOnly) {
+            if (!dailyShareDate) return;
+            try {
+                const d = getDailyCardData(dailyShareDate);
+                if (!d) return;
+                const idx = slideState.daily;
+                const dateTag = String(dailyShareDate).replace(/\//g, '-');
+                const ts = fileStamp(new Date());
+                let canvas, fname;
+                if (idx === LANDSCAPE_SLIDE) {
+                    canvas = await buildDailyShareCanvas(d);
+                    fname = `TradingLog_Rekap_${dateTag}_${ts}.png`;
+                } else {
+                    canvas = await buildPortraitCanvas('daily', idx + 1, d);
+                    fname = `TradingLog_Rekap_${dateTag}_P${idx + 1}_${ts}.png`;
+                }
+                if (saveOnly) downloadCanvasCard(canvas, fname); else shareOrDownloadCanvas(canvas, fname);
+            } catch (err) {
+                console.log(err);
+                showToast('Gagal muat gambar background', 'error');
+            }
         }
 
         function renderEquityCurve(history) {
@@ -2793,6 +3034,7 @@
                 previewHistoryPushed = false;   // entri sudah dibuang oleh tombol Kembali
                 closeResultCardModal();
                 closeTradeShareModal();
+                closeDailyShareModal();
             }
         });
 
@@ -2801,6 +3043,7 @@
             const isOpen = (id) => !document.getElementById(id).classList.contains('hidden');
             if (isOpen('resultCardModal')) closeResultCardModal();
             else if (isOpen('tradeShareModal')) closeTradeShareModal();
+            else if (isOpen('dailyShareModal')) closeDailyShareModal();
             else if (isOpen('deleteModal')) closeDeleteModal();
             else if (isOpen('editModal')) closeEditModal();
             else if (isOpen('actionModal')) closeActionModal();
