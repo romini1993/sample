@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#06070b">
     <title>Trading Log</title>
     <link rel="manifest" href="./manifest.json">
+    <script src="./Database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -826,6 +827,16 @@
                     <button type="button" id="editSideShortBtn" class="side-btn" onclick="setEditSide('Short')">Short</button>
                 </div>
             </div>
+            <div class="grid grid-cols-2 gap-2.5">
+                <div>
+                    <label class="block text-xs font-medium text-[var(--text-dim)] mb-1.5">Opened</label>
+                    <input type="text" id="editOpened" placeholder="dd/mm/yyyy" class="w-full porto-input rounded-xl px-3.5 py-2.5 font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-[var(--text-dim)] mb-1.5">Closed</label>
+                    <input type="text" id="editClosed" placeholder="dd/mm/yyyy" class="w-full porto-input rounded-xl px-3.5 py-2.5 font-medium">
+                </div>
+            </div>
             <div>
                 <label class="block text-xs font-medium text-[var(--text-dim)] mb-1.5">Closing PNL (USDT)</label>
                 <input type="number" step="any" id="editPnl" class="w-full porto-input rounded-xl px-3.5 py-2.5 num font-medium">
@@ -1022,7 +1033,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxXyZd1pekC0tZRdwuY-aQzJb7veINYpp_sheoxMemO9sSrduj26QRhR4kHokR5iqJq/exec"; 
+        const API_URL = (window.APP_CONFIG && window.APP_CONFIG.API_URL) || "";
         let currentKursIdr = 17550;
         let selectedNoForAction = null; // trade # yang sedang dipilih lewat long-press
         let selectedNoToDelete = null;
@@ -1131,6 +1142,63 @@
             }
         });
 
+        // ─────────── Edit tanggal Opened / Closed (modal Edit) ───────────
+        function toISODate(v) {
+            const dmy = formatDateDMY(v);
+            const m = String(dmy).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+            return m ? `${m[3]}-${m[2]}-${m[1]}` : '';
+        }
+        function isoToDMY(iso) {
+            const [y, m, d] = String(iso).split('-');
+            return `${d}/${m}/${y}`;
+        }
+
+        const editOpenedPicker = flatpickr("#editOpened", {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "d/m/Y",
+            disableMobile: true,
+            onChange: function(selectedDates, dateStr) {
+                if (!dateStr) return;
+                editClosedPicker.set("minDate", dateStr);
+                const c = document.getElementById('editClosed').value;
+                if (c && c < dateStr) editClosedPicker.setDate(dateStr, false);
+            }
+        });
+
+        const editClosedPicker = flatpickr("#editClosed", {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "d/m/Y",
+            disableMobile: true,
+            onChange: function(selectedDates, dateStr) {
+                if (!dateStr) return;
+                const o = document.getElementById('editOpened').value;
+                if (o && dateStr < o) {
+                    editOpenedPicker.setDate(dateStr, false);
+                    editClosedPicker.set("minDate", dateStr);
+                }
+            }
+        });
+
+        // Ambil ulang data dari Sheet (dipakai setelah edit tanggal Closed, karena
+        // baris di Sheet pindah posisi & nomornya ikut berubah).
+        function syncFromSheet() {
+            if (!API_URL) return Promise.resolve();
+            return fetch(`${API_URL}?_ts=${Date.now()}`, { cache: 'no-store' })
+                .then(res => res.json())
+                .then(data => {
+                    if (!data || !data.history) return;
+                    cachedGlobalResponse = data;
+                    sortHistoryByClosedDate();
+                    localStorage.setItem('tradingDataCache', JSON.stringify(data));
+                    animateRows = false;
+                    renderDashboard(data);
+                    animateRows = true;
+                })
+                .catch(err => console.log(err));
+        }
+
         function formatPairInput(input) {
             let val = input.value.trim().toUpperCase();
             if (val && !val.includes("USDT")) {
@@ -1238,6 +1306,15 @@
         }
 
         window.onload = function() {
+            // Kalau link sheet diganti, buang cache data dari sheet sebelumnya
+            try {
+                if (localStorage.getItem('tradingDataCacheUrl') !== API_URL) {
+                    localStorage.removeItem('tradingDataCache');
+                    localStorage.setItem('tradingDataCacheUrl', API_URL);
+                }
+            } catch (e) {}
+            if (!API_URL) showToast('API_URL kosong, cek file Database.js', 'error');
+
             fetchRealtimeKurs();
             switchTab('rekap', true);
             setFormSide('Long');
@@ -1258,7 +1335,7 @@
                 } catch(e) {}
             }
             
-            fetch(`${API_URL}?_ts=${Date.now()}`, { cache: 'no-store' })
+            (API_URL ? fetch(`${API_URL}?_ts=${Date.now()}`, { cache: 'no-store' }) : Promise.reject(new Error('API_URL kosong - cek Database.js')))
                 .then(res => res.json())
                 .then(data => {
                     cachedGlobalResponse = data;
@@ -1411,6 +1488,12 @@
             document.getElementById('editPair').value = item.pair;
             document.getElementById('editPnl').value = item.pnl;
             setEditSide(getTradeSide(item));
+            const openedISO = toISODate(item.opened);
+            const closedISO = toISODate(item.closed);
+            editClosedPicker.set('minDate', '1970-01-01');
+            if (openedISO) editOpenedPicker.setDate(openedISO, false); else editOpenedPicker.clear(false);
+            if (closedISO) editClosedPicker.setDate(closedISO, false); else editClosedPicker.clear(false);
+            if (openedISO && closedISO && closedISO >= openedISO) editClosedPicker.set('minDate', openedISO);
             document.getElementById('editModal').classList.remove('hidden');
         };
 
@@ -1434,23 +1517,38 @@
             if (newPair && !newPair.includes('USDT')) newPair += 'USDT';
             const newPnl = parseFloat(document.getElementById('editPnl').value) || 0;
             const newSide = editSide;
+            const newOpenedISO = document.getElementById('editOpened').value; // yyyy-mm-dd, atau kosong
+            const newClosedISO = document.getElementById('editClosed').value;
 
             closeEditModal();
 
             const idx = cachedGlobalResponse.history.findIndex(x => parseInt(x.no) === parseInt(no));
             if (idx === -1) return;
-            cachedGlobalResponse.history[idx].pair = newPair;
-            cachedGlobalResponse.history[idx].pnl = newPnl;
-            cachedGlobalResponse.history[idx].side = newSide;
+            const item = cachedGlobalResponse.history[idx];
+            const oldClosedDMY = formatDateDMY(item.closed);
+
+            item.pair = newPair;
+            item.pnl = newPnl;
+            item.side = newSide;
+            if (newOpenedISO) item.opened = isoToDMY(newOpenedISO);
+            if (newClosedISO) item.closed = isoToDMY(newClosedISO);
+            const closedChanged = !!newClosedISO && isoToDMY(newClosedISO) !== oldClosedDMY;
+
             tradeSideMap[no] = newSide;
             saveSideMap();
+            sortHistoryByClosedDate();
             recalcTotals();
 
             localStorage.setItem('tradingDataCache', JSON.stringify(cachedGlobalResponse));
             renderDashboard(cachedGlobalResponse);
             showToast("Trade diupdate", "success");
 
-            fetch(`${API_URL}?action=edit&no=${encodeURIComponent(no)}&pair=${encodeURIComponent(newPair)}&pnl=${encodeURIComponent(newPnl)}&side=${encodeURIComponent(newSide)}`, { cache: 'no-store' })
+            let url = `${API_URL}?action=edit&no=${encodeURIComponent(no)}&pair=${encodeURIComponent(newPair)}&pnl=${encodeURIComponent(newPnl)}&side=${encodeURIComponent(newSide)}`;
+            if (newOpenedISO) url += `&opened=${encodeURIComponent(newOpenedISO)}`;
+            if (newClosedISO) url += `&closed=${encodeURIComponent(newClosedISO)}`;
+
+            fetch(url, { cache: 'no-store' })
+                .then(() => { if (closedChanged) return syncFromSheet(); })
                 .catch(err => {
                     console.log(err);
                     showToast("Gagal sync edit ke Sheet", "error");
