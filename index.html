@@ -1625,6 +1625,11 @@
             const bgCard = isProfit ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-rose-500/20 bg-rose-500/5';
             const totalIdr = formatRupiah(pnlNum * currentKursIdr);
 
+            // Badge posisi di samping nama koin: S merah = Short, L hijau = Long
+            const sideName = getTradeSide(item);
+            const sideLetter = sideName === 'Short' ? 'S' : 'L';
+            const sideBg = sideName === 'Short' ? '#F6465D' : '#2EBD85';
+
             const shouldAnimate = forceAnimate || animateRows;
             const div = document.createElement('div');
             div.className = `row-card entrance-item ${shouldAnimate ? 'rise-in' : ''} p-2.5 sm:p-3 rounded-xl border ${bgCard} flex items-center justify-between hover:border-slate-700 transition gap-1.5 cursor-pointer select-none`;
@@ -1636,8 +1641,11 @@
                     </div>
                     <div class="text-[9px] sm:text-[10px] font-semibold ${isProfit ? 'text-emerald-500' : 'text-rose-500'} uppercase mt-0.5">${isProfit ? 'PROFIT' : 'LOSS'}</div>
                 </div>
-                <div class="w-[28%] text-center px-1">
-                    <div class="font-display font-bold text-xs sm:text-sm text-white truncate">${item.pair}</div>
+                <div class="w-[28%] px-1">
+                    <div class="flex items-center justify-center gap-1.5 min-w-0">
+                        <span class="shrink-0 inline-flex items-center justify-center rounded-[4px] text-white font-bold text-[9px] sm:text-[10px] w-[15px] h-[15px] sm:w-4 sm:h-4" style="background:${sideBg}" title="${sideName}">${sideLetter}</span>
+                        <span class="font-display font-bold text-xs sm:text-sm text-white truncate">${item.pair}</span>
+                    </div>
                 </div>
                 <div class="w-[34%] text-right min-w-0">
                     <div class="num font-bold text-xs sm:text-sm ${pnlColor} whitespace-nowrap">${isProfit ? '+' : ''}${pnlNum.toFixed(2)} USDT</div>
