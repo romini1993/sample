@@ -714,6 +714,63 @@
             #actionModal > *, #editModal > *, #deleteModal > *, #resultCardModal > *, #tradeShareModal > *, #dailyShareModal > *,
             .hold-target::after { transition-duration: .01ms !important; }
         }
+
+        /* ═══════════════ PAGER TAB (geser kiri-kanan) + LAYOUT FULL LEBAR (HP) ═══════════════ */
+        #tabPager { display: block; }
+        @media (max-width: 767px) {
+            /* pager: dua halaman berjajar, snap per halaman kayak kalender */
+            #tabPager {
+                display: flex;
+                overflow-x: auto;
+                overflow-y: hidden;
+                scroll-snap-type: x mandatory;
+                overscroll-behavior-x: contain;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+            #tabPager::-webkit-scrollbar { width: 0; height: 0; display: none; }
+            #tabPager > #rekapCardWrap,
+            #tabPager > #riwayatCardWrap {
+                display: flex !important;           /* override class "hidden": dua-duanya selalu ada */
+                flex-direction: column;
+                flex: 0 0 100%;
+                min-width: 0;
+                scroll-snap-align: start;
+                scroll-snap-stop: always;
+            }
+            #rekapCard, #riwayatCard { flex: 1; }
+
+            /* halaman utama: nol jarak kiri-kanan */
+            main.relative { padding-left: 0 !important; padding-right: 0 !important; padding-top: 4px !important; }
+            main.relative > div { gap: 6px; }
+
+            /* kartu nempel ke tepi layar */
+            .hero-panel, #tradeForm, #rekapCard, #riwayatCard {
+                border-radius: 0 !important;
+                border-left-width: 0 !important;
+                border-right-width: 0 !important;
+            }
+
+            /* hero: kurva bablas sampai ujung kiri-kanan & dasar kartu */
+            .hero-panel { padding: 14px 12px 0 12px !important; }
+            .hero-panel #equityCurve {
+                height: 88px;
+                margin-left: -12px;
+                margin-right: -12px;
+                width: calc(100% + 24px);
+            }
+
+            /* form input */
+            #tradeForm { padding: 14px 10px !important; }
+
+            /* rekap & riwayat */
+            #rekapCard, #riwayatCard { padding: 8px 6px !important; }
+            #dailySummaryList, #tradeList { padding-right: 0 !important; }
+
+            /* pill tab: tipis aja di kiri-kanan */
+            #tabSwitcher { margin-left: 6px; margin-right: 6px; }
+        }
     </style>
 </head>
 <body class="relative">
@@ -883,6 +940,7 @@
                 </div>
             </div>
 
+            <div id="tabPager">
             <div id="rekapCardWrap">
                 <div id="rekapCard" class="porto-card p-3 rounded-2xl space-y-1 lg:flex lg:flex-col lg:h-[880px]">
 
@@ -910,6 +968,7 @@
                     <div id="tradeList" class="space-y-1.5 overflow-y-auto pr-1 custom-scroll lg:flex-1 lg:min-h-0"></div>
                 </div>
             </div>
+            </div><!-- /#tabPager -->
 
         </div>
 
@@ -1434,32 +1493,102 @@
             });
         }
 
-        function switchTab(tab, instant) {
+        const isMobileTabs = () => window.matchMedia('(max-width: 767px)').matches;
+        let tabScrollLock = false;   // true selama pager lagi di-scroll lewat klik tab
+        let tabLockTimer = null;
+
+        // Sinkron state tab: activeTab, class hidden (desktop), warna tombol
+        function syncTabState(tab) {
             activeTab = tab;
             const rekapCard = document.getElementById('rekapCardWrap');
             const riwayatCard = document.getElementById('riwayatCardWrap');
             const btnRekap = document.getElementById('tabBtnRekap');
             const btnRiwayat = document.getElementById('tabBtnRiwayat');
+            const isRekap = tab === 'rekap';
+            rekapCard.classList.toggle('hidden', !isRekap);
+            riwayatCard.classList.toggle('hidden', isRekap);
+            btnRekap.classList.toggle('text-[#1a1305]', isRekap);
+            btnRekap.classList.toggle('text-slate-400', !isRekap);
+            btnRiwayat.classList.toggle('text-[#1a1305]', !isRekap);
+            btnRiwayat.classList.toggle('text-slate-400', isRekap);
+        }
 
-            if (tab === 'rekap') {
-                rekapCard.classList.remove('hidden');
-                riwayatCard.classList.add('hidden');
-                btnRekap.classList.remove('text-slate-400');
-                btnRekap.classList.add('text-[#1a1305]');
-                btnRiwayat.classList.remove('text-[#1a1305]');
-                btnRiwayat.classList.add('text-slate-400');
-                moveTabIndicator(btnRekap, instant);
-                if (!instant) replayRiseIn(rekapCard);
+        // Indikator emas ngikutin posisi geser pager secara real-time
+        function updateIndicatorFromScroll() {
+            const pager = document.getElementById('tabPager');
+            const indicator = document.getElementById('tabIndicator');
+            const wrapper = document.getElementById('tabSwitcher');
+            const btnA = document.getElementById('tabBtnRekap');
+            const btnB = document.getElementById('tabBtnRiwayat');
+            if (!pager || !indicator || !wrapper || !btnA || !btnB) return 0;
+            const w = pager.clientWidth || 1;
+            const p = Math.max(0, Math.min(1, pager.scrollLeft / w));
+            const wr = wrapper.getBoundingClientRect();
+            const a = btnA.getBoundingClientRect();
+            const b = btnB.getBoundingClientRect();
+            const leftA = a.left - wr.left - 4;
+            const leftB = b.left - wr.left - 4;
+            indicator.style.transition = 'none';
+            indicator.style.scale = '1 1';
+            indicator.style.width = `${a.width + (b.width - a.width) * p}px`;
+            indicator.style.translate = `${leftA + (leftB - leftA) * p}px 0px`;
+            return p;
+        }
+
+        function switchTab(tab, instant) {
+            syncTabState(tab);
+            const btn = document.getElementById(tab === 'rekap' ? 'tabBtnRekap' : 'tabBtnRiwayat');
+            const wrap = document.getElementById(tab === 'rekap' ? 'rekapCardWrap' : 'riwayatCardWrap');
+
+            if (isMobileTabs()) {
+                const pager = document.getElementById('tabPager');
+                const left = (tab === 'rekap' ? 0 : 1) * pager.clientWidth;
+                if (instant) {
+                    pager.style.scrollSnapType = 'none';
+                    pager.scrollLeft = left;
+                    updateIndicatorFromScroll();
+                    requestAnimationFrame(() => {
+                        pager.style.scrollSnapType = '';
+                        document.getElementById('tabIndicator').style.transition = '';
+                    });
+                } else {
+                    tabScrollLock = true;
+                    clearTimeout(tabLockTimer);
+                    tabLockTimer = setTimeout(() => { tabScrollLock = false; }, 700);
+                    pager.scrollTo({ left, behavior: 'smooth' });
+                }
             } else {
-                rekapCard.classList.add('hidden');
-                riwayatCard.classList.remove('hidden');
-                btnRiwayat.classList.remove('text-slate-400');
-                btnRiwayat.classList.add('text-[#1a1305]');
-                btnRekap.classList.remove('text-[#1a1305]');
-                btnRekap.classList.add('text-slate-400');
-                moveTabIndicator(btnRiwayat, instant);
-                if (!instant) replayRiseIn(riwayatCard);
+                document.getElementById('tabIndicator').style.transition = '';
+                moveTabIndicator(btn, instant);
+                if (!instant) replayRiseIn(wrap);
             }
+        }
+
+        // Geser kiri-kanan (native scroll-snap): tab ikut pindah di tengah geseran
+        function initTabPager() {
+            const pager = document.getElementById('tabPager');
+            const indicator = document.getElementById('tabIndicator');
+            if (!pager || !indicator) return;
+            let raf = 0, settleTimer = null;
+
+            pager.addEventListener('scroll', () => {
+                if (!isMobileTabs()) return;
+                if (!raf) {
+                    raf = requestAnimationFrame(() => {
+                        raf = 0;
+                        const p = updateIndicatorFromScroll();
+                        if (!tabScrollLock) {
+                            const tab = p >= 0.5 ? 'riwayat' : 'rekap';
+                            if (tab !== activeTab) syncTabState(tab);
+                        }
+                    });
+                }
+                clearTimeout(settleTimer);
+                settleTimer = setTimeout(() => {
+                    tabScrollLock = false;
+                    indicator.style.transition = '';
+                }, 150);
+            }, { passive: true });
         }
 
         window.onload = function() {
@@ -1475,10 +1604,23 @@
             fetchRealtimeKurs();
             switchTab('rekap', true);
             setFormSide('Long');
+            let lastTabW = window.innerWidth;
             window.addEventListener('resize', () => {
-                const activeBtn = activeTab === 'rekap' ? document.getElementById('tabBtnRekap') : document.getElementById('tabBtnRiwayat');
-                moveTabIndicator(activeBtn, true);
+                if (window.innerWidth === lastTabW) return;   // keyboard HP (tinggi doang) diabaikan
+                lastTabW = window.innerWidth;
+                if (isMobileTabs()) {
+                    const pager = document.getElementById('tabPager');
+                    pager.scrollLeft = (activeTab === 'riwayat' ? 1 : 0) * pager.clientWidth;
+                    updateIndicatorFromScroll();
+                    document.getElementById('tabIndicator').style.transition = '';
+                } else {
+                    const activeBtn = activeTab === 'rekap' ? document.getElementById('tabBtnRekap') : document.getElementById('tabBtnRiwayat');
+                    document.getElementById('tabIndicator').style.transition = '';
+                    syncTabState(activeTab);
+                    moveTabIndicator(activeBtn, true);
+                }
             });
+            initTabPager();
             initCurveInteraction();
             initStatsSheet();
             initHeatmapSwipe();
@@ -3640,4 +3782,4 @@
         }
     </script>
 </body>
-</html>                        
+</html>
