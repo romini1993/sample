@@ -595,18 +595,19 @@
 
         /* ═══════════════ LACI STATISTIK & KALENDER (khusus HP) ═══════════════ */
         .stats-handle, .stats-backdrop, .stats-sheet { display: none; }
+        
         @keyframes dockGlow {
-            0%, 100% { box-shadow: 0 -14px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.09); }
-            50% { box-shadow: 0 -14px 40px rgba(0,0,0,0.6), 0 -4px 22px rgba(217,164,65,0.18), inset 0 1px 0 rgba(217,164,65,0.35); }
+            0%, 100% { box-shadow: 0 18px 44px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.09); }
+            50% { box-shadow: 0 18px 44px rgba(0,0,0,0.6), 0 0 22px rgba(217,164,65,0.20), 0 0 0 1px rgba(217,164,65,0.22), inset 0 1px 0 rgba(255,255,255,0.09); }
         }
         @keyframes chevFloat {
             0%, 100% { transform: translateY(1px); opacity: .7; }
             50% { transform: translateY(-3px); opacity: 1; }
         }
-        @media (prefers-reduced-motion: reduce) { .stats-handle { animation: none; } }
+
         @media (max-width: 767px) {
             /* sedikit ruang kosong di ujung halaman supaya panah nggak menutupi baris terakhir */
-            main.relative { padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px)); }
+            main.relative { padding-bottom: calc(118px + env(safe-area-inset-bottom, 0px)); }
 
             .stats-handle {
                 display: flex;
@@ -615,28 +616,30 @@
                 justify-content: center;
                 gap: 4px;
                 position: fixed;
-                left: 0; right: 0; bottom: 0;
-                /* panel nempel di dasar layar; area aman (gesture bar) ikut ketutup */
-                height: calc(62px + env(safe-area-inset-bottom, 0px));
-                padding: 0 0 env(safe-area-inset-bottom, 0px);
+                left: 14px; right: 14px;
+                /* jarak dari tepi bawah: naikin 34px kalau masih kena gesture navigasi */
+                bottom: calc(34px + env(safe-area-inset-bottom, 0px));
+                height: 56px;
+                padding: 0;
                 z-index: 30;
                 color: var(--accent-bright);
-                background: linear-gradient(180deg, rgba(30,34,48,0.97), rgba(12,15,23,0.99));
+                background: linear-gradient(180deg, rgba(34,39,56,0.80), rgba(14,17,26,0.88));
                 -webkit-backdrop-filter: blur(18px) saturate(140%);
                 backdrop-filter: blur(18px) saturate(140%);
-                border: 1px solid rgba(255,255,255,0.08);
-                border-bottom: 0;
-                border-radius: 24px 24px 0 0;
-                box-shadow: 0 -14px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.09);
+                border: 1px solid rgba(255,255,255,0.09);
+                border-radius: 22px;
+                box-shadow: 0 18px 44px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.09);
                 touch-action: none;
                 -webkit-tap-highlight-color: transparent;
                 animation: dockGlow 3.6s ease-in-out infinite;
                 transition: opacity .2s ease, transform .25s ease;
             }
+            /* zona sentuh diperpanjang sampai tepi bawah layar */
+            .stats-handle::after { content: ''; position: absolute; left: -14px; right: -14px; top: 100%; height: 80px; }
             .stats-handle svg { animation: chevFloat 1.9s ease-in-out infinite; }
             .stats-handle .dock-label { font-size: 11px; font-weight: 600; letter-spacing: .02em; color: var(--text-dim); line-height: 1; }
             body.stats-open .stats-handle,
-            body.kb-open .stats-handle { opacity: 0; pointer-events: none; transform: translateY(100%); }
+            body.kb-open .stats-handle { opacity: 0; pointer-events: none; transform: translateY(18px); }
 
             .stats-backdrop {
                 display: block;
@@ -703,6 +706,7 @@
             }
         }
         @media (prefers-reduced-motion: reduce) {
+            .stats-handle { animation: none; }
             .stats-handle svg { animation: none; }
             .heat-anim-next > div, .heat-anim-prev > div { animation: none; }
             .stats-handle, .stats-backdrop, .stats-sheet { transition-duration: .01ms !important; }
@@ -3456,7 +3460,6 @@
         //  Panah tumpul mengambang di paling bawah layar. Ketuk atau tarik ke atas ->
         //  laci naik berisi Statistik + Kalender aktivitas (isi sama dengan versi desktop).
         //  Tutup: tarik ke bawah, ketuk area gelap, tombol Kembali, atau Esc.
-        //  Angka-angka tuning ada di bagian "keputusan buka/tutup" di bawah.
         // ══════════════════════════════════════════════════════════
         let statsSheetOpen = false;
         let sheetProg = 0, sheetProgRaf = 0;
@@ -3518,7 +3521,7 @@
                 sheet.style.transform = `translateY(${offset}px)`;
                 backdrop.style.opacity = String(Math.max(0, Math.min(1, p)));
                 dock.style.opacity = String(Math.max(0, 1 - p * 2));
-                dock.style.transform = `translateY(${Math.min(1, p) * 100}%)`;
+                dock.style.transform = `translateY(${Math.min(1, p) * 14}px)`;
                 cancelAnimationFrame(sheetProgRaf);
                 paintSheetProgress(p);
             };
@@ -3627,7 +3630,6 @@
             });
             document.addEventListener('focusout', () => document.body.classList.remove('kb-open'));
 
-            // Kalau layar dilebarkan ke ukuran desktop saat laci kebuka, tutup otomatis
             window.addEventListener('resize', () => {
                 if (statsSheetOpen && !window.matchMedia('(max-width: 767px)').matches) closeStatsSheet();
             });
