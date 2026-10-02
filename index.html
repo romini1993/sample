@@ -595,41 +595,50 @@
 
         /* ═══════════════ LACI STATISTIK & KALENDER (khusus HP) ═══════════════ */
         .stats-handle, .stats-backdrop, .stats-sheet { display: none; }
-        @keyframes statsNudge {
-            0%, 70%, 100% { transform: translateY(0); }
-            80% { transform: translateY(-3px); }
-            90% { transform: translateY(0); }
+        @keyframes dockGlow {
+            0%, 100% { box-shadow: 0 18px 44px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.09); }
+            50% { box-shadow: 0 18px 44px rgba(0,0,0,0.6), 0 0 22px rgba(217,164,65,0.20), 0 0 0 1px rgba(217,164,65,0.22), inset 0 1px 0 rgba(255,255,255,0.09); }
         }
+        @keyframes chevFloat {
+            0%, 100% { transform: translateY(1px); opacity: .7; }
+            50% { transform: translateY(-3px); opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) { .stats-handle { animation: none; } }
         @media (max-width: 767px) {
             /* sedikit ruang kosong di ujung halaman supaya panah nggak menutupi baris terakhir */
-            main.relative { padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
+            main.relative { padding-bottom: calc(118px + env(safe-area-inset-bottom, 0px)); }
 
             .stats-handle {
                 display: flex;
+                flex-direction: column;
                 align-items: center;
                 justify-content: center;
+                gap: 4px;
                 position: fixed;
-                left: 50%;
-                /* jarak dari tepi bawah: naikin angka 52px ini kalau masih kena gesture navigasi */
-                bottom: calc(52px + env(safe-area-inset-bottom, 0px));
-                transform: translateX(-50%);
-                width: 84px;
-                height: 30px;
+                left: 14px; right: 14px;
+                /* jarak dari tepi bawah: naikin 34px kalau masih kena gesture navigasi */
+                bottom: calc(34px + env(safe-area-inset-bottom, 0px));
+                height: 56px;
+                padding: 0;
                 z-index: 30;
-                color: var(--accent);
-                background: rgba(15,18,26,0.78);
-                -webkit-backdrop-filter: blur(10px);
-                backdrop-filter: blur(10px);
-                border: 1px solid rgba(217,164,65,0.28);
-                border-radius: 999px;
-                box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+                color: var(--accent-bright);
+                background: linear-gradient(180deg, rgba(34,39,56,0.80), rgba(14,17,26,0.88));
+                -webkit-backdrop-filter: blur(18px) saturate(140%);
+                backdrop-filter: blur(18px) saturate(140%);
+                border: 1px solid rgba(255,255,255,0.09);
+                border-radius: 22px;
+                box-shadow: 0 18px 44px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.09);
                 touch-action: none;
                 -webkit-tap-highlight-color: transparent;
+                animation: dockGlow 3.6s ease-in-out infinite;
                 transition: opacity .2s ease, transform .25s ease;
             }
-            .stats-handle svg { animation: statsNudge 3.2s ease-in-out infinite; }
+            /* zona sentuh diperpanjang sampai tepi bawah layar */
+            .stats-handle::after { content: ''; position: absolute; left: -14px; right: -14px; top: 100%; height: 80px; }
+            .stats-handle svg { animation: chevFloat 1.9s ease-in-out infinite; }
+            .stats-handle .dock-label { font-size: 11px; font-weight: 600; letter-spacing: .02em; color: var(--text-dim); line-height: 1; }
             body.stats-open .stats-handle,
-            body.kb-open .stats-handle { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(16px); }
+            body.kb-open .stats-handle { opacity: 0; pointer-events: none; transform: translateY(18px); }
 
             .stats-backdrop {
                 display: block;
@@ -911,11 +920,12 @@
 
     <!-- LACI STATISTIK & KALENDER AKTIVITAS (khusus HP): panah tumpul di paling bawah, tarik ke atas -->
     <button type="button" id="statsHandle" class="stats-handle" aria-label="Buka statistik dan kalender aktivitas">
-        <svg width="44" height="14" viewBox="0 0 44 14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6,11 22,4 38,11"/></svg>
+        <svg width="44" height="16" viewBox="0 0 44 16" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline id="statsDockPoly" points="6,8 22,3 38,8"/></svg>
+        <span class="dock-label">Statistik &amp; kalender</span>
     </button>
     <div id="statsSheetBackdrop" class="stats-backdrop" onclick="closeStatsSheet()"></div>
     <div id="statsSheet" class="stats-sheet" aria-hidden="true">
-        <div id="statsSheetGrab" class="stats-grab"><span></span></div>
+        <div id="statsSheetGrab" class="stats-grab"><svg width="44" height="16" viewBox="0 0 44 16" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline id="statsGrabPoly" points="6,8 22,8 38,8"/></svg></div>
         <div class="stats-sheet-body custom-scroll">
             <div class="porto-card p-3.5 rounded-2xl shrink-0 cursor-pointer active:opacity-70 transition" onclick="toggleQuickStatsView()">
                 <div class="flex items-center gap-2 mb-2.5">
@@ -3451,6 +3461,32 @@
         //  Angka-angka tuning ada di bagian "keputusan buka/tutup" di bawah.
         // ══════════════════════════════════════════════════════════
         let statsSheetOpen = false;
+        let sheetProg = 0, sheetProgRaf = 0;
+        const SHEET_REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // p = 0 laci tertutup (panah ATAS di dock), p = 1 laci terbuka (panah BAWAH di pegangan).
+        // Di tengah, panah melurus jadi garis lalu berbalik arah.
+        function paintSheetProgress(p) {
+            sheetProg = p;
+            const dockMid = 3 + 5 * Math.min(1, p * 2.4);
+            const g = Math.max(0, (p - 0.3) / 0.7);
+            const grabMid = 8 + 5 * (1 - Math.pow(1 - g, 3));
+            const dp = document.getElementById('statsDockPoly');
+            const gp = document.getElementById('statsGrabPoly');
+            if (dp) dp.setAttribute('points', `6,8 22,${dockMid.toFixed(2)} 38,8`);
+            if (gp) gp.setAttribute('points', `6,8 22,${grabMid.toFixed(2)} 38,8`);
+        }
+        function tweenSheetProgress(to) {
+            cancelAnimationFrame(sheetProgRaf);
+            if (SHEET_REDUCED) { paintSheetProgress(to); return; }
+            const from = sheetProg, t0 = performance.now(), ms = 380;
+            const step = (t) => {
+                const k = Math.min(1, (t - t0) / ms);
+                paintSheetProgress(from + (to - from) * (1 - Math.pow(1 - k, 3)));
+                if (k < 1) sheetProgRaf = requestAnimationFrame(step);
+            };
+            sheetProgRaf = requestAnimationFrame(step);
+        }
 
         function setStatsSheet(open) {
             const sheet = document.getElementById('statsSheet');
@@ -3462,95 +3498,132 @@
             backdrop.classList.toggle('open', open);
             document.body.classList.toggle('stats-open', open);
             sheet.setAttribute('aria-hidden', String(!open));
+            tweenSheetProgress(open ? 1 : 0);
             if (changed) { if (open) previewModalOpened(); else previewModalClosed(); }
         }
         function openStatsSheet() { setStatsSheet(true); }
         function closeStatsSheet() { setStatsSheet(false); }
 
         function initStatsSheet() {
-            const handle = document.getElementById('statsHandle');
+            const dock = document.getElementById('statsHandle');
             const sheet = document.getElementById('statsSheet');
             const backdrop = document.getElementById('statsSheetBackdrop');
             const grab = document.getElementById('statsSheetGrab');
-            if (!handle || !sheet || !backdrop || !grab) return;
+            const body = sheet && sheet.querySelector('.stats-sheet-body');
+            if (!dock || !sheet || !backdrop || !grab || !body) return;
 
-            let dragging = false, moved = false, fromOpen = false;
-            let startY = 0, startOffset = 0, sheetH = 1, curOffset = 0, lastY = 0, lastT = 0, vel = 0, leadDist = 0;
+            let drag = null;
 
             const apply = (offset) => {
-                curOffset = offset;
+                drag.offset = offset;
+                const p = 1 - offset / drag.sheetH;
                 sheet.style.transform = `translateY(${offset}px)`;
-                backdrop.style.opacity = String(Math.max(0, Math.min(1, 1 - offset / sheetH)));
+                backdrop.style.opacity = String(Math.max(0, Math.min(1, p)));
+                dock.style.opacity = String(Math.max(0, 1 - p * 2));
+                dock.style.transform = `translateY(${Math.min(1, p) * 14}px)`;
+                cancelAnimationFrame(sheetProgRaf);
+                paintSheetProgress(p);
             };
 
-            const begin = (e, opened) => {
-                if (e.pointerType === 'mouse' && e.button !== 0) return;
-                dragging = true;
-                moved = false;
-                fromOpen = opened;
-                sheetH = sheet.getBoundingClientRect().height || sheet.offsetHeight || 1;
-                startOffset = opened ? 0 : sheetH;
-                // jarak jari ke tepi bawah layar (panah sekarang agak di atas tepi)
-                leadDist = opened ? 0 : Math.max(0, window.innerHeight - e.clientY);
-                curOffset = startOffset;
-                startY = lastY = e.clientY;
-                lastT = performance.now();
-                vel = 0;
-                try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+            const begin = (y, fromOpen, lead) => {
+                const h = sheet.getBoundingClientRect().height || sheet.offsetHeight || 1;
+                drag = { fromOpen, sheetH: h, startY: y, lastY: y, lastT: performance.now(), vel: 0, lead: lead || 0, moved: false, offset: fromOpen ? 0 : h };
             };
 
-            const move = (e) => {
-                if (!dragging) return;
-                const dy = e.clientY - startY;
-                if (!moved) {
+            const move = (y) => {
+                if (!drag) return;
+                const dy = y - drag.startY;
+                if (!drag.moved) {
                     if (Math.abs(dy) < 6) return;      // masih dianggap ketukan
-                    moved = true;
-                    sheet.classList.add('dragging');   // ikut jari, tanpa transisi
+                    drag.moved = true;
+                    sheet.classList.add('dragging');
                 }
-                if (fromOpen) {
-                    apply(Math.max(0, Math.min(sheetH, startOffset + dy)));
+                if (drag.fromOpen) {
+                    apply(Math.max(0, Math.min(drag.sheetH, dy)));
                 } else {
-                    // ujung laci "menyusul" jari pelan-pelan dalam 40px pertama, jadi nggak loncat
                     const up = Math.max(0, -dy);
-                    const lead = leadDist * Math.min(1, up / 40);
-                    apply(Math.max(0, Math.min(sheetH, sheetH - (up + lead))));
+                    const lead = drag.lead * Math.min(1, up / 40);   // ujung laci menyusul jari pelan-pelan
+                    apply(Math.max(0, Math.min(drag.sheetH, drag.sheetH - (up + lead))));
                 }
-                const now = performance.now();
-                const dt = now - lastT;
-                if (dt > 0) vel = (e.clientY - lastY) / dt;   // px/ms, negatif = ke atas
-                lastY = e.clientY;
-                lastT = now;
+                const now = performance.now(), dt = now - drag.lastT;
+                if (dt > 0) drag.vel = (y - drag.lastY) / dt;     // px/ms, negatif = ke atas
+                drag.lastY = y;
+                drag.lastT = now;
             };
 
             const end = () => {
-                if (!dragging) return;
-                dragging = false;
-                if (!moved) { setStatsSheet(!fromOpen); return; }   // ketukan biasa = buka / tutup
+                if (!drag) return;
+                const d = drag;
+                drag = null;
+                if (!d.moved) { setStatsSheet(!d.fromOpen); return; }   // ketukan biasa = buka / tutup
 
                 sheet.classList.remove('dragging');
-                void sheet.offsetHeight;          // nyalakan lagi transisi sebelum "snap"
+                void sheet.offsetHeight;
                 sheet.style.transform = '';
                 backdrop.style.opacity = '';
 
-                // ── keputusan buka/tutup ──
-                // flick cepat (> 0.45 px/ms) menang; kalau pelan, lihat posisi: lewat setengah = buka
+                // flick cepat (> 0.45 px/ms) menang; kalau pelan, lewat setengah = buka
                 const FLICK = 0.45;
-                const shouldOpen = vel < -FLICK ? true : (vel > FLICK ? false : curOffset < sheetH * 0.5);
+                const shouldOpen = d.vel < -FLICK ? true : (d.vel > FLICK ? false : d.offset < d.sheetH * 0.5);
                 setStatsSheet(shouldOpen);
+                dock.style.opacity = '';
+                dock.style.transform = '';
             };
 
-            handle.addEventListener('pointerdown', (e) => begin(e, false));
-            grab.addEventListener('pointerdown', (e) => begin(e, true));
-            [handle, grab].forEach(el => {
-                el.addEventListener('pointermove', move);
-                el.addEventListener('pointerup', end);
-                el.addEventListener('pointercancel', end);
+            // Dock: tarik ke atas dari panel / zona bawah layar
+            dock.addEventListener('pointerdown', (e) => {
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+                begin(e.clientY, false, Math.max(0, window.innerHeight - e.clientY));
+                try { dock.setPointerCapture(e.pointerId); } catch (err) {}
             });
-            handle.addEventListener('keydown', (e) => {
+            dock.addEventListener('pointermove', (e) => move(e.clientY));
+            dock.addEventListener('pointerup', end);
+            dock.addEventListener('pointercancel', end);
+            dock.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setStatsSheet(true); }
             });
 
-            // Panah disembunyikan waktu keyboard muncul (lagi ngisi form)
+            // Pegangan laci (khusus mouse; sentuhan ditangani di bawah)
+            grab.addEventListener('pointerdown', (e) => {
+                if (e.pointerType !== 'mouse' || e.button !== 0) return;
+                begin(e.clientY, true, 0);
+                try { grab.setPointerCapture(e.pointerId); } catch (err) {}
+            });
+            grab.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') move(e.clientY); });
+            grab.addEventListener('pointerup', (e) => { if (e.pointerType === 'mouse') end(); });
+
+            // Laci terbuka: tarik ke bawah di MANA SAJA di area panel = tutup.
+            // Kalau isi laci lagi ke-scroll (bukan di paling atas), tarikan dianggap scroll biasa.
+            let tch = null;
+            sheet.addEventListener('touchstart', (e) => {
+                if (e.touches.length !== 1) { tch = null; return; }
+                const p = e.touches[0];
+                tch = { x: p.clientX, y: p.clientY, mode: null };
+            }, { passive: true });
+            sheet.addEventListener('touchmove', (e) => {
+                if (!tch) return;
+                const p = e.touches[0];
+                if (!tch.mode) {
+                    const dx = p.clientX - tch.x, dy = p.clientY - tch.y;
+                    if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+                    const ok = dy > 0 && Math.abs(dy) > Math.abs(dx) && (body.scrollTop <= 0 || grab.contains(e.target));
+                    tch.mode = ok ? 'sheet' : 'other';
+                    if (ok) begin(tch.y, true, 0);
+                }
+                if (tch.mode === 'sheet') {
+                    if (e.cancelable) e.preventDefault();
+                    move(p.clientY);
+                }
+            }, { passive: false });
+            const tEnd = (e) => {
+                if (tch && tch.mode === 'sheet') end();
+                else if (tch && !tch.mode && e.type === 'touchend' && grab.contains(e.target)) closeStatsSheet();
+                tch = null;
+            };
+            sheet.addEventListener('touchend', tEnd);
+            sheet.addEventListener('touchcancel', tEnd);
+
+            // Panel disembunyikan waktu keyboard muncul (lagi ngisi form)
             document.addEventListener('focusin', (e) => {
                 if (e.target && e.target.matches && e.target.matches('input, textarea, select')) document.body.classList.add('kb-open');
             });
@@ -3560,6 +3633,8 @@
             window.addEventListener('resize', () => {
                 if (statsSheetOpen && !window.matchMedia('(max-width: 767px)').matches) closeStatsSheet();
             });
+
+            paintSheetProgress(0);
         }
 
         function handleError(err) {
