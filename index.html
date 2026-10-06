@@ -772,6 +772,94 @@
             #tabSwitcher { margin-left: 6px; margin-right: 6px; }
         }
     </style>
+
+    <style id="ported-from-index">
+        /* Dipindah dari index.html: toast dari bawah, kalender "pop", batang warna rekap harian, tab lebih cepat */
+        :root { --g-ease: cubic-bezier(.22, 1, .36, 1); --g-spring: cubic-bezier(.34, 1.56, .64, 1); }
+
+        /* ───────── Kalender: sel muncul "pop" berurutan saat ganti bulan ───────── */
+        .heat-cell { position: relative; -webkit-user-select: none; user-select: none; transition: transform .3s var(--g-spring); }
+        .heat-cell:active { transform: scale(.9); }
+        @keyframes heatPop { from { opacity: 0; transform: scale(.3); } to { opacity: 1; transform: scale(1); } }
+        .heat-pop .heat-cell { animation: heatPop .55s var(--g-spring) backwards; animation-delay: calc(var(--i, 0) * 12ms); }
+
+        /* ───────── Rekap harian: batang warna di kiri (hijau profit / merah loss) ───────── */
+        .day-row-bar.day-row-bar { position: relative; padding-left: 1rem; }
+        .day-row-bar::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 22%; bottom: 22%;
+            width: 3px;
+            border-radius: 0 3px 3px 0;
+            background: var(--tone);
+            box-shadow: 0 0 12px var(--tone);
+            pointer-events: none;
+        }
+
+        /* ───────── Pindah tab: indikator lebih cepat ───────── */
+        #tabIndicator {
+            transition: translate .26s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        width .26s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        scale .2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* ───────── Toast dari bawah ───────── */
+        #toastHost {
+            position: fixed;
+            left: 0; right: 0;
+            bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+            z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            pointer-events: none;
+        }
+        @media (max-width: 767px) { #toastHost { bottom: calc(env(safe-area-inset-bottom, 0px) + 66px); } }
+        .toast-pill {
+            pointer-events: auto;
+            position: relative;
+            overflow: hidden;
+            display: flex; align-items: center; gap: 12px;
+            max-width: min(92vw, 380px);
+            padding: .65rem 1.2rem .7rem .7rem;
+            border-radius: 18px;
+            color: #eef1f7;
+            font-size: 14px; font-weight: 600;
+            background: rgba(12,18,36,.84);
+            -webkit-backdrop-filter: blur(20px) saturate(160%);
+            backdrop-filter: blur(20px) saturate(160%);
+            border: 1px solid rgba(255,255,255,.1);
+            box-shadow: 0 18px 50px rgba(0,0,0,.55), 0 0 0 1px var(--t-a), 0 0 36px -6px var(--t-a);
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(48px) scale(.9);
+            transition: transform .6s var(--g-spring), opacity .3s ease;
+        }
+        .toast-pill.is-ok  { --t: #34d399; --t-a: rgba(52,211,153,.38);  --t-bg: rgba(52,211,153,.14); }
+        .toast-pill.is-err { --t: #fb7185; --t-a: rgba(251,113,133,.38); --t-bg: rgba(251,113,133,.14); }
+        .toast-pill.show { opacity: 1; transform: none; }
+        .toast-pill.hide { opacity: 0; transform: translateY(28px) scale(.94); transition: transform .35s ease-in, opacity .3s ease; }
+        .toast-ic { position: relative; flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; color: var(--t); background: var(--t-bg); }
+        .toast-ic svg { width: 32px; height: 32px; overflow: visible; }
+        .toast-ic::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--t); opacity: 0; }
+        .tc-ring, .tc-mark { stroke-dasharray: 1; stroke-dashoffset: 1; }
+        @keyframes tDraw { to { stroke-dashoffset: 0; } }
+        @keyframes tPing { 0% { transform: scale(.85); opacity: .75; } 100% { transform: scale(2); opacity: 0; } }
+        @keyframes tShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+        .toast-pill.show .tc-ring { animation: tDraw .55s .12s ease forwards; }
+        .toast-pill.show .tc-mark { animation: tDraw .4s .5s ease forwards; }
+        .toast-pill.show .toast-ic::after { animation: tPing .9s .45s ease-out; }
+        .toast-pill.is-err.show .toast-ic { animation: tShake .4s .55s ease; }
+        .toast-bar { position: absolute; left: 0; bottom: 0; width: 100%; height: 2px; background: var(--t); opacity: .85; transform-origin: left; }
+        @keyframes tBar { to { transform: scaleX(0); } }
+        .toast-pill.show .toast-bar { animation: tBar var(--dur, 2600ms) linear forwards; }
+
+
+        @media (prefers-reduced-motion: reduce) {
+            .heat-pop .heat-cell,
+            .toast-pill .tc-ring, .toast-pill .tc-mark, .toast-pill .toast-ic, .toast-pill .toast-ic::after, .toast-pill .toast-bar { animation: none !important; }
+            .tc-ring, .tc-mark { stroke-dashoffset: 0; }
+            .toast-pill { transition-duration: .01ms !important; }
+        }
+    </style>
 </head>
 <body class="relative">
     <div class="bg-glow"></div>
@@ -1433,29 +1521,44 @@
             el.style.color = val === 0 ? 'var(--text-faint)' : (isProfit ? 'var(--profit)' : 'var(--loss)');
         }
 
-        // Toast premium: gelap elegan + garis warna di kiri (hijau = sukses, merah = error)
+        // Toast premium: melayang dari bawah (spring), ikon centang/silang "digambar",
+        // garis waktu di dasar. Pakai DOM sendiri (bukan SweetAlert) supaya bisa naik dari bawah.
+        const TOAST_ICONS = {
+            ok:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle class="tc-ring" cx="12" cy="12" r="9.5" pathLength="1"/><path class="tc-mark" d="M7.8 12.4l2.9 2.9 5.6-6" pathLength="1"/></svg>',
+            err: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle class="tc-ring" cx="12" cy="12" r="9.5" pathLength="1"/><path class="tc-mark" d="M9 9l6 6M15 9l-6 6" pathLength="1"/></svg>'
+        };
+
         function showToast(message, type = 'success') {
             const ok = type === 'success';
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top',
-                showConfirmButton: false,
-                timer: 2600,
-                timerProgressBar: true,
-                customClass: { popup: 'premium-toast ' + (ok ? 'is-ok' : 'is-err') },
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer);
-                    toast.addEventListener('mouseleave', Swal.resumeTimer);
-                }
-            });
+            let host = document.getElementById('toastHost');
+            if (!host) {
+                host = document.createElement('div');
+                host.id = 'toastHost';
+                host.setAttribute('aria-live', 'polite');
+                document.body.appendChild(host);
+            }
+            while (host.children.length >= 3) host.firstElementChild.remove();
 
-            Toast.fire({
-                icon: ok ? 'success' : 'error',
-                title: message,
-                background: 'rgba(18,21,30,0.92)',
-                color: '#eef1f7',
-                iconColor: ok ? '#34d399' : '#fb7185'
-            });
+            const DUR = 2600;
+            const el = document.createElement('div');
+            el.className = 'toast-pill ' + (ok ? 'is-ok' : 'is-err');
+            el.setAttribute('role', ok ? 'status' : 'alert');
+            el.style.setProperty('--dur', DUR + 'ms');
+            el.innerHTML = `<span class="toast-ic">${ok ? TOAST_ICONS.ok : TOAST_ICONS.err}</span><span class="toast-msg"></span><span class="toast-bar"></span>`;
+            el.querySelector('.toast-msg').textContent = message;
+            host.appendChild(el);
+
+            let timer = null;
+            const dismiss = () => {
+                clearTimeout(timer);
+                if (!el.isConnected || el.classList.contains('hide')) return;
+                el.classList.remove('show');
+                el.classList.add('hide');
+                setTimeout(() => el.remove(), 380);
+            };
+            el.addEventListener('click', dismiss);
+            requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+            timer = setTimeout(dismiss, DUR);
         }
 
         function moveTabIndicator(activeBtn, instant) {
@@ -1535,6 +1638,25 @@
             return p;
         }
 
+        // Geser pager lewat klik tab: dibikin sendiri (bukan scrollTo smooth bawaan browser
+        // yang lambat & nggak bisa diatur) supaya perpindahan cepat dan terasa gesit.
+        const TAB_SLIDE_MS = 190;
+        function animatePagerTo(pager, left, ms) {
+            cancelAnimationFrame(pager._tabRaf);
+            const from = pager.scrollLeft, dist = left - from;
+            const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (!dist || reduced) { pager.scrollLeft = left; return; }
+            pager.style.scrollSnapType = 'none';      // snap dimatikan selama animasi, biar nggak berebut
+            const t0 = performance.now();
+            const step = (t) => {
+                const k = Math.min(1, (t - t0) / ms);
+                pager.scrollLeft = from + dist * (1 - Math.pow(1 - k, 3));   // easeOutCubic
+                if (k < 1) pager._tabRaf = requestAnimationFrame(step);
+                else pager.style.scrollSnapType = '';
+            };
+            pager._tabRaf = requestAnimationFrame(step);
+        }
+
         function switchTab(tab, instant) {
             syncTabState(tab);
             const btn = document.getElementById(tab === 'rekap' ? 'tabBtnRekap' : 'tabBtnRiwayat');
@@ -1554,8 +1676,8 @@
                 } else {
                     tabScrollLock = true;
                     clearTimeout(tabLockTimer);
-                    tabLockTimer = setTimeout(() => { tabScrollLock = false; }, 700);
-                    pager.scrollTo({ left, behavior: 'smooth' });
+                    tabLockTimer = setTimeout(() => { tabScrollLock = false; }, 450);
+                    animatePagerTo(pager, left, TAB_SLIDE_MS);
                 }
             } else {
                 document.getElementById('tabIndicator').style.transition = '';
@@ -1570,6 +1692,11 @@
             const indicator = document.getElementById('tabIndicator');
             if (!pager || !indicator) return;
             let raf = 0, settleTimer = null;
+
+            pager.addEventListener('touchstart', () => {
+                cancelAnimationFrame(pager._tabRaf);
+                pager.style.scrollSnapType = '';
+            }, { passive: true });
 
             pager.addEventListener('scroll', () => {
                 if (!isMobileTabs()) return;
@@ -2080,12 +2207,12 @@
                 var totalIdr = formatRupiah(summary.total * currentKursIdr);
 
                 const row = document.createElement('div');
-                row.className = `entrance-item ${animateDays ? 'rise-in' : ''} p-2.5 sm:p-3 rounded-xl border cursor-pointer flex justify-between items-center border-l-2 ${
+                row.className = `entrance-item ${animateDays ? 'rise-in' : ''} p-2.5 sm:p-3 rounded-xl border cursor-pointer flex justify-between items-center day-row-bar ${
                     isExpanded
                     ? 'bg-amber-500/10 border-amber-500 ring-1 ring-amber-500'
                     : 'bg-[var(--bg)] border-[var(--border)] hover:border-slate-600'
                 }`;
-                row.style.borderLeftColor = isProf ? 'var(--profit)' : 'var(--loss)';
+                row.style.setProperty('--tone', isProf ? 'var(--profit)' : 'var(--loss)');
                 row.style.animationDelay = `${i * 25}ms`;
                 row.onclick = () => {
                     if (row._holdFired) { row._holdFired = false; return; } // habis klik-tahan, jangan ikut buka/tutup
@@ -3314,6 +3441,29 @@
             return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         }
 
+        // ─────────── Animasi angka (CountUp) ───────────
+        const PREMIUM_REDUCED = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        function animateCount(el, from, to, fmt, ms) {
+            cancelAnimationFrame(el._cuRaf);
+            el.textContent = fmt(from);
+            if (PREMIUM_REDUCED || from === to) { el.textContent = fmt(to); return; }
+            const dur = ms || 1300, t0 = performance.now();
+            const step = (t) => {
+                const k = Math.min(1, (t - t0) / dur);
+                const eased = 1 - Math.pow(1 - k, 4);      // easeOutQuart: cepat di awal, melambat mendarat
+                el.textContent = fmt(from + (to - from) * eased);
+                if (k < 1) el._cuRaf = requestAnimationFrame(step);
+                else el.textContent = fmt(to);
+            };
+            el._cuRaf = requestAnimationFrame(step);
+        }
+
+        // Nilai yang SEDANG tampil di kotak Statistik. Render pertama hitung dari 0;
+        // render berikutnya (data baru dari Sheet / trade baru) hitung dari nilai tampil terakhir,
+        // jadi angka cuma bergerak kalau memang berubah.
+        let shownQuickStats = null, shownQuickMode = null, shownQuickKurs = null;
+        let heatPop = true;   // true = sel kalender muncul "pop" berurutan (load awal & ganti bulan)
+
         let lastQuickStats = { daily: 0, weekly: 0, monthly: 0 };
         let isQuickStatsIdrView = false;
 
@@ -3330,6 +3480,7 @@
             if (!grid) return;
             if (!history || history.length === 0) {
                 setStatsHTML('<p class="text-[11px] text-[var(--text-faint)] col-span-3 text-center py-2">Belum ada data.</p>');
+                shownQuickStats = null;
                 lastQuickStats = { daily: 0, weekly: 0, monthly: 0 };
                 return;
             }
@@ -3371,20 +3522,45 @@
             const grid = document.getElementById('quickStatsGrid');
             if (!grid) return;
 
-            const cell = (label, val) => {
+            const idr = isQuickStatsIdrView;
+            const keys = ['daily', 'weekly', 'monthly'];
+            const labels = { daily: 'Avg Harian', weekly: 'Avg Mingguan', monthly: 'Avg Bulanan' };
+            const fmt = idr
+                ? (v) => `${v >= 0 ? '' : '-'}${formatRupiah(Math.abs(v) * currentKursIdr)}`
+                : (v) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}`;
+
+            // sameMode: tampilan sama dengan render sebelumnya (USDT->USDT / IDR->IDR).
+            // Ganti USDT <-> IDR = sameMode false -> angka dihitung dari 0 ke nilai aslinya.
+            const sameMode = !!shownQuickStats && shownQuickMode === idr;
+
+            // Tidak ada yang berubah & kotak sudah tampil -> jangan dirender ulang
+            // (supaya hitung-naik yang lagi jalan nggak terpotong pas data Sheet datang).
+            if (sameMode && grid.querySelector('.stat-count')
+                && keys.every(k => shownQuickStats[k] === lastQuickStats[k])
+                && (!idr || shownQuickKurs === currentKursIdr)) {
+                return;
+            }
+
+            setStatsHTML(keys.map(k => {
+                const val = lastQuickStats[k];
+                const from = sameMode ? shownQuickStats[k] : 0;
                 const isProfit = val >= 0;
-                const text = isQuickStatsIdrView
-                    ? `${isProfit ? '' : '-'}${formatRupiah(Math.abs(val) * currentKursIdr)}`
-                    : `${isProfit ? '+' : ''}${val.toFixed(2)}`;
                 return `
                     <div class="text-center p-2 rounded-xl bg-[var(--bg)] border border-[var(--border)]">
-                        <div class="text-[9px] text-[var(--text-faint)] mb-1">${label}</div>
-                        <div class="num text-xs font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}">${text}</div>
+                        <div class="text-[9px] text-[var(--text-faint)] mb-1">${labels[k]}</div>
+                        <div class="num stat-count text-xs font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}" data-key="${k}">${fmt(from)}</div>
                     </div>
                 `;
-            };
+            }).join(''));
 
-            setStatsHTML(cell('Avg Harian', lastQuickStats.daily) + cell('Avg Mingguan', lastQuickStats.weekly) + cell('Avg Bulanan', lastQuickStats.monthly));
+            document.querySelectorAll('#quickStatsGrid .stat-count, #sheetStatsGrid .stat-count').forEach(el => {
+                const k = el.dataset.key;
+                animateCount(el, sameMode ? shownQuickStats[k] : 0, lastQuickStats[k], fmt);
+            });
+
+            shownQuickStats = { daily: lastQuickStats.daily, weekly: lastQuickStats.weekly, monthly: lastQuickStats.monthly };
+            shownQuickMode = idr;
+            shownQuickKurs = currentKursIdr;
         }
 
         function toggleQuickStatsView() {
@@ -3393,6 +3569,7 @@
         }
 
         function changeHeatmapMonth(delta, animate) {
+            heatPop = true;
             heatmapMonth += delta;
             if (heatmapMonth > 11) { heatmapMonth = 0; heatmapYear++; }
             if (heatmapMonth < 0) { heatmapMonth = 11; heatmapYear--; }
@@ -3464,6 +3641,15 @@
                 }
             });
 
+            // Data & bulan sama dengan render sebelumnya -> biarkan, supaya animasi pop
+            // yang lagi jalan nggak terpotong waktu data Sheet datang menyusul cache.
+            const sig = `${year}-${month}|${JSON.stringify(dailyMap)}`;
+            if (container.dataset.sig === sig && container.firstElementChild) return;
+            container.dataset.sig = sig;
+
+            const pop = heatPop;
+            heatPop = false;
+
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const vals = Object.values(dailyMap).map(v => Math.abs(v));
@@ -3486,10 +3672,10 @@
                     textColor = '#fff';
                 }
                 const valAttr = val !== undefined ? val : 'null';
-                cellsHtml += `<div class="aspect-square lg:aspect-auto rounded-md flex items-center justify-center text-[9px] font-medium cursor-pointer" style="background:${bg}; color:${textColor}" onclick="showHeatmapDayDetail(event, ${day}, ${valAttr})">${day}</div>`;
+                cellsHtml += `<div class="heat-cell aspect-square lg:aspect-auto rounded-md flex items-center justify-center text-[9px] font-medium cursor-pointer" style="background:${bg}; color:${textColor}; --i:${firstDay + day}" onclick="showHeatmapDayDetail(event, ${day}, ${valAttr})">${day}</div>`;
             }
 
-            const calendarHtml = `<div class="grid grid-cols-7 gap-1 lg:h-full lg:grid-rows-[auto_repeat(6,1fr)]">${cellsHtml}</div>`;
+            const calendarHtml = `<div class="grid grid-cols-7 gap-1 ${pop ? 'heat-pop' : ''} lg:h-full lg:grid-rows-[auto_repeat(6,1fr)]">${cellsHtml}</div>`;
             ['heatmapCalendar', 'sheetHeatmapCalendar'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.innerHTML = calendarHtml;
