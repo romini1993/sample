@@ -980,7 +980,7 @@
         <svg width="44" height="16" viewBox="0 0 44 16" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline id="statsDockPoly" points="6,8 22,3 38,8"/></svg>
         <span class="dock-label">Statistik &amp; kalender</span>
     </button>
-    <div id="statsSheetBackdrop" class="stats-backdrop" onclick="closeStatsSheet()"></div>
+    <div id="statsSheetBackdrop" class="stats-backdrop" onclick="onStatsBackdropClick()"></div>
     <div id="statsSheet" class="stats-sheet" aria-hidden="true">
         <div id="statsSheetGrab" class="stats-grab"><svg width="44" height="16" viewBox="0 0 44 16" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline id="statsGrabPoly" points="6,8 22,8 38,8"/></svg></div>
         <div class="stats-sheet-body custom-scroll">
@@ -3634,12 +3634,21 @@
             if (!sheet || !backdrop) return;
             const changed = open !== statsSheetOpen;
             statsSheetOpen = open;
+            if (open && changed) statsOpenedAt = performance.now();
             sheet.classList.toggle('open', open);
             backdrop.classList.toggle('open', open);
             document.body.classList.toggle('stats-open', open);
             sheet.setAttribute('aria-hidden', String(!open));
             tweenSheetProgress(open ? 1 : 0);
             if (changed) { if (open) previewModalOpened(); else previewModalClosed(); }
+        }
+        // Waktu laci terakhir dibuka. Setelah ketukan di panah, browser mengirim "klik susulan"
+        // ke elemen yang ada di bawah jari -- saat itu sudah backdrop, jadi laci langsung
+        // tertutup lagi. Klik backdrop yang datang <450ms setelah laci dibuka diabaikan.
+        let statsOpenedAt = 0;
+        function onStatsBackdropClick() {
+            if (performance.now() - statsOpenedAt < 450) return;
+            closeStatsSheet();
         }
         function openStatsSheet() { setStatsSheet(true); }
         function closeStatsSheet() { setStatsSheet(false); }
