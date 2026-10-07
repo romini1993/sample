@@ -826,8 +826,9 @@
 
             /* lagi ngetik di form: lepas semua kunci supaya form utuh & nggak ketutup daftar */
             body.form-editing .hero-panel,
-            body.form-editing #tabBar,
             body.form-editing #tradeForm { position: relative; top: auto; }
+            /* pill tetap terkunci; hero lagi dilepas (ikut gulir) jadi pill nempel ke tepi atas layar */
+            body.form-editing #tabBar { top: 0; }
             body.form-editing #tradeForm { transform: none; opacity: 1; }
         }
         @media (prefers-reduced-motion: reduce) {
@@ -1781,14 +1782,50 @@
             }, { passive: true });
         }
 
-        window.onload = function() {
-            // Kalau link sheet diganti, buang cache data dari sheet sebelumnya
+        // ─────────── Cache data: tampil secepat mungkin, jangan sampai hilang ───────────
+        // Cache dihapus HANYA kalau link Sheet benar-benar berganti. Kalau API_URL kebetulan kosong
+        // (mis. Database.js gagal termuat sesaat saat jaringan baru "bangun"), cache dibiarkan.
+        function checkCacheUrl() {
+            if (!API_URL) return;
             try {
                 if (localStorage.getItem('tradingDataCacheUrl') !== API_URL) {
                     localStorage.removeItem('tradingDataCache');
                     localStorage.setItem('tradingDataCacheUrl', API_URL);
                 }
             } catch (e) {}
+        }
+
+        let cacheRenderedEarly = false;
+        function renderFromCache() {
+            if (cacheRenderedEarly) return true;
+            try {
+                const raw = localStorage.getItem('tradingDataCache');
+                if (!raw) return false;
+                const parsed = JSON.parse(raw);
+                if (!parsed || !Array.isArray(parsed.history)) return false;
+                cachedGlobalResponse = parsed;
+                sortHistoryByClosedDate();
+                renderDashboard(cachedGlobalResponse);
+                cacheRenderedEarly = true;
+                return true;
+            } catch (e) { return false; }
+        }
+
+        // Tampilkan cache begitu halaman selesai di-parse, tanpa nunggu window.onload
+        // (onload baru jalan setelah SEMUA file luar -- CSS/font dari CDN -- selesai dimuat).
+        document.addEventListener('DOMContentLoaded', () => {
+            checkCacheUrl();
+            renderFromCache();
+        });
+
+        // Service worker: simpan file aplikasi & library CDN di HP supaya buka aplikasi nggak nunggu jaringan
+        if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+            window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+        }
+
+        window.onload = function() {
+            // Kalau link sheet diganti, buang cache data dari sheet sebelumnya
+            checkCacheUrl();
             if (!API_URL) showToast('API_URL kosong, cek file Database.js', 'error');
 
             fetchRealtimeKurs();
@@ -1816,20 +1853,16 @@
             initHeatmapSwipe();
             initStickyStack();
             
-            let hadCachedRender = false;
-            const cachedData = localStorage.getItem('tradingDataCache');
-            if (cachedData) {
-                try {
-                    cachedGlobalResponse = JSON.parse(cachedData);
-                    sortHistoryByClosedDate();
-                    renderDashboard(cachedGlobalResponse);
-                    hadCachedRender = true;
-                } catch(e) {}
-            }
+            // Cache biasanya sudah tampil duluan (lihat bootFromCache). Di sini cuma jaga-jaga,
+            // dan gambar ulang kurva karena ukuran layar baru pasti setelah semua file termuat.
+            const hadCachedRender = renderFromCache();
+            if (cacheRenderedEarly) { try { renderEquityCurve(cachedGlobalResponse.history || []); } catch (e) {} }
             
             (API_URL ? fetch(`${API_URL}?_ts=${Date.now()}`, { cache: 'no-store' }) : Promise.reject(new Error('API_URL kosong - cek Database.js')))
                 .then(res => res.json())
                 .then(data => {
+                    // Respons error / kosong dari Apps Script (mis. saat baru "bangun") jangan sampai menimpa cache yang bagus
+                    if (!data || !Array.isArray(data.history)) throw new Error('Respons Sheet tidak valid');
                     cachedGlobalResponse = data;
                     sortHistoryByClosedDate();
                     localStorage.setItem('tradingDataCache', JSON.stringify(data));
