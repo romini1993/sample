@@ -773,6 +773,55 @@
         }
     </style>
 
+
+    <style id="mobile-sticky-stack">
+        /* ═══ HP: hero terkunci di atas, form "tenggelam" ditutupi daftar yang naik ═══ */
+        @media (max-width: 767px) {
+            /* kolom hero jadi "transparan": hero & form langsung jadi anak grid,
+               supaya sticky berlaku sepanjang halaman (bukan cuma selama kolom itu kelihatan) */
+            #colHero { display: contents; }
+
+            .hero-panel { position: sticky; top: 0; z-index: 20; }
+
+            #tradeForm {
+                position: sticky;
+                top: var(--heroH, 220px);
+                z-index: 10;
+                margin-top: 0 !important;
+                transform-origin: 50% 0;
+                transform: translateY(calc(var(--sink, 0) * 14px)) scale(calc(1 - var(--sink, 0) * .05));
+                opacity: calc(1 - var(--sink, 0) * .6);
+                will-change: transform, opacity;
+            }
+
+            /* daftar rekap/riwayat = "lembaran" yang naik menutupi form */
+            #colList {
+                position: relative;
+                z-index: 15;
+                background: var(--bg);
+                border-radius: 18px 18px 0 0;
+                box-shadow: 0 -16px 30px rgba(0,0,0,.6), 0 -1px 0 rgba(255,255,255,.05);
+                padding-top: 8px;
+                min-height: calc(100dvh - var(--heroH, 220px));
+                padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
+            }
+            main.relative { padding-bottom: 0; }
+
+            /* daftar nggak punya scroll sendiri lagi: halaman yang di-scroll, hero tetap terkunci */
+            #dailySummaryList, #tradeList { max-height: none; overflow-y: visible; }
+            /* tiap halaman setinggi isinya sendiri (tinggi pager disamakan dengan tab aktif lewat JS) */
+            #tabPager > #rekapCardWrap, #tabPager > #riwayatCardWrap { align-self: flex-start; }
+
+            /* lagi ngetik di form: lepas semua kunci supaya form utuh & nggak ketutup daftar */
+            body.form-editing .hero-panel,
+            body.form-editing #tradeForm { position: relative; top: auto; }
+            body.form-editing #tradeForm { transform: none; opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #tradeForm { transform: none !important; }
+        }
+    </style>
+
     <style id="ported-from-index">
         /* Dipindah dari index.html: toast dari bawah, kalender "pop", batang warna rekap harian, tab lebih cepat */
         :root { --g-ease: cubic-bezier(.22, 1, .36, 1); --g-spring: cubic-bezier(.34, 1.56, .64, 1); }
@@ -868,7 +917,7 @@
     <div class="w-full max-w-[1600px] grid grid-cols-1 lg:grid-cols-[4fr_7fr] gap-2 lg:gap-3 items-start lg:items-stretch">
 
         <!-- KOLOM 1 (KIRI): Hero PNL + Form Input -->
-        <div class="space-y-2.5 lg:flex lg:flex-col">
+        <div id="colHero" class="space-y-2.5 lg:flex lg:flex-col">
 
             <!-- HERO: Total PNL + Equity Curve -->
             <div class="porto-card hero-panel hold-target rounded-3xl p-4 md:p-5 lg:shrink-0"
@@ -1017,7 +1066,7 @@
         </div>
 
         <!-- KOLOM 2 (KANAN): Rekap Harian + Riwayat Trade, digabung lewat TAB (mobile & desktop sama) -->
-        <div class="space-y-1">
+        <div id="colList" class="space-y-1">
 
             <!-- Tab pill: dipakai di mobile & desktop -->
             <div>
@@ -1614,6 +1663,7 @@
             btnRekap.classList.toggle('text-slate-400', !isRekap);
             btnRiwayat.classList.toggle('text-[#1a1305]', !isRekap);
             btnRiwayat.classList.toggle('text-slate-400', isRekap);
+            if (typeof fitPagerHeight === 'function') fitPagerHeight();
         }
 
         // Indikator emas ngikutin posisi geser pager secara real-time
@@ -1751,6 +1801,7 @@
             initCurveInteraction();
             initStatsSheet();
             initHeatmapSwipe();
+            initStickyStack();
             
             let hadCachedRender = false;
             const cachedData = localStorage.getItem('tradingDataCache');
@@ -3566,6 +3617,70 @@
         function toggleQuickStatsView() {
             isQuickStatsIdrView = !isQuickStatsIdrView;
             renderQuickStatsGrid();
+        }
+
+
+        // Tinggi pager di HP = tinggi halaman yang sedang aktif, supaya tab yang pendek
+        // (mis. Rekap) nggak ikut panjang gara-gara tab lain (Riwayat) isinya banyak.
+        function fitPagerHeight() {
+            const pager = document.getElementById('tabPager');
+            if (!pager) return;
+            if (!isMobileTabs()) { pager.style.height = ''; return; }
+            const wrap = document.getElementById(activeTab === 'riwayat' ? 'riwayatCardWrap' : 'rekapCardWrap');
+            if (wrap) pager.style.height = wrap.offsetHeight + 'px';
+        }
+
+        // ─────────── HP: hero terkunci, form tenggelam ditutupi daftar ───────────
+        function initStickyStack() {
+            const hero = document.querySelector('.hero-panel');
+            const form = document.getElementById('tradeForm');
+            const list = document.getElementById('colList');
+            if (!hero || !form || !list) return;
+            const root = document.documentElement;
+            let raf = 0;
+
+            const measure = () => {
+                root.style.setProperty('--heroH', hero.offsetHeight + 'px');
+                update();
+            };
+            const update = () => {
+                raf = 0;
+                if (!isMobileTabs() || document.body.classList.contains('form-editing')) {
+                    form.style.removeProperty('--sink');
+                    return;
+                }
+                const heroH = hero.offsetHeight;
+                const formH = form.offsetHeight || 1;
+                const listTop = list.getBoundingClientRect().top;
+                // seberapa jauh daftar sudah naik menutupi form (0 = belum, 1 = tertutup penuh)
+                const p = Math.max(0, Math.min(1, (heroH + formH - listTop) / formH));
+                form.style.setProperty('--sink', p.toFixed(3));
+            };
+            const schedule = () => { if (!raf) raf = requestAnimationFrame(update); };
+
+            window.addEventListener('scroll', schedule, { passive: true });
+            window.addEventListener('resize', () => { measure(); fitPagerHeight(); });
+            if (window.ResizeObserver) {
+                new ResizeObserver(measure).observe(hero);
+                const ro = new ResizeObserver(() => { fitPagerHeight(); schedule(); });
+                ['rekapCardWrap', 'riwayatCardWrap'].forEach(id => { const e = document.getElementById(id); if (e) ro.observe(e); });
+            }
+
+            // ngetik di form: balik ke atas & lepas kunci, supaya input nggak ketutup daftar
+            form.addEventListener('focusin', () => {
+                if (!isMobileTabs()) return;
+                document.body.classList.add('form-editing');
+                window.scrollTo(0, 0);
+                form.style.removeProperty('--sink');
+            });
+            form.addEventListener('focusout', (e) => {
+                if (e.relatedTarget && form.contains(e.relatedTarget)) return;
+                document.body.classList.remove('form-editing');
+                schedule();
+            });
+
+            measure();
+            fitPagerHeight();
         }
 
         function changeHeatmapMonth(delta, animate) {
