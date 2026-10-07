@@ -779,6 +779,7 @@
         @media (max-width: 767px) {
             /* kolom hero jadi "transparan": hero & form langsung jadi anak grid,
                supaya sticky berlaku sepanjang halaman (bukan cuma selama kolom itu kelihatan) */
+            :root { --stackGap: 6px; }   /* jarak antar blok bertumpuk: hero -> form, hero -> tab pill */
             #colHero { display: contents; }
 
             .hero-panel { position: sticky; top: 0; z-index: 20; }
@@ -801,11 +802,22 @@
                 background: var(--bg);
                 border-radius: 18px 18px 0 0;
                 box-shadow: 0 -16px 30px rgba(0,0,0,.6), 0 -1px 0 rgba(255,255,255,.05);
-                padding-top: 8px;
+                padding-top: 0;
                 min-height: calc(100dvh - var(--heroH, 220px));
                 padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px));
             }
             main.relative { padding-bottom: 0; }
+
+            /* tab pill ikut terkunci tepat di bawah hero (nggak ikut tenggelam).
+               Pembungkusnya berlatar solid supaya baris daftar yang lewat di bawahnya nggak tembus,
+               dan padding-atasnya = jarak hero -> form. */
+            #tabBar {
+                position: sticky;
+                top: var(--heroH, 220px);
+                z-index: 5;
+                background: var(--bg);
+                padding-top: var(--stackGap);
+            }
 
             /* daftar nggak punya scroll sendiri lagi: halaman yang di-scroll, hero tetap terkunci */
             #dailySummaryList, #tradeList { max-height: none; overflow-y: visible; }
@@ -814,6 +826,7 @@
 
             /* lagi ngetik di form: lepas semua kunci supaya form utuh & nggak ketutup daftar */
             body.form-editing .hero-panel,
+            body.form-editing #tabBar,
             body.form-editing #tradeForm { position: relative; top: auto; }
             body.form-editing #tradeForm { transform: none; opacity: 1; }
         }
@@ -1069,7 +1082,7 @@
         <div id="colList" class="space-y-1">
 
             <!-- Tab pill: dipakai di mobile & desktop -->
-            <div>
+            <div id="tabBar">
                 <div id="tabSwitcher" class="relative flex items-center gap-1 p-1 rounded-full bg-[var(--surface-2)] border border-[var(--border)] mb-1">
                     <div id="tabIndicator" class="absolute rounded-full bg-amber-500 shadow-lg shadow-amber-500/25" style="top:4px; bottom:4px; left:4px; width:0;"></div>
                     <button type="button" id="tabBtnRekap" onclick="switchTab('rekap')" class="relative z-10 flex-1 text-center text-xs font-semibold py-2 rounded-full transition-colors text-[#1a1305]">Rekap Harian</button>
