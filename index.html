@@ -779,7 +779,7 @@
         @media (max-width: 767px) {
             /* kolom hero jadi "transparan": hero & form langsung jadi anak grid,
                supaya sticky berlaku sepanjang halaman (bukan cuma selama kolom itu kelihatan) */
-            :root { --stackGap: 6px; }   /* jarak antar blok bertumpuk: hero -> form, hero -> tab pill */
+            :root { --tabGap: 12px; }   /* napas di atas & bawah tab pill: hero -> pill dan pill -> daftar */
             #colHero { display: contents; }
 
             .hero-panel { position: sticky; top: 0; z-index: 20; }
@@ -809,27 +809,38 @@
             main.relative { padding-bottom: 0; }
 
             /* tab pill ikut terkunci tepat di bawah hero (nggak ikut tenggelam).
-               Pembungkusnya berlatar solid supaya baris daftar yang lewat di bawahnya nggak tembus,
-               dan padding-atasnya = jarak hero -> form. */
+               Pembungkusnya berlatar solid supaya baris daftar yang lewat di bawahnya nggak tembus.
+               Ruang di atas (hero -> pill) dan di bawah (pill -> daftar) sama besar. */
             #tabBar {
                 position: sticky;
                 top: var(--heroH, 220px);
                 z-index: 5;
                 background: var(--bg);
-                padding-top: var(--stackGap);
+                padding: var(--tabGap) 0;
             }
+            #tabBar #tabSwitcher { margin-bottom: 0; }
+            #tabPager { margin-top: 0; }
+            /* saat terkunci, baris daftar yang naik memudar halus di bawah pill (bukan terpotong kasar) */
+            #tabBar::after {
+                content: '';
+                position: absolute;
+                left: 0; right: 0; top: 100%;
+                height: 16px;
+                background: linear-gradient(to bottom, var(--bg), rgba(0,0,0,0));
+                opacity: 0;
+                transition: opacity .2s ease;
+                pointer-events: none;
+            }
+            #tabBar.is-stuck::after { opacity: 1; }
 
             /* daftar nggak punya scroll sendiri lagi: halaman yang di-scroll, hero tetap terkunci */
             #dailySummaryList, #tradeList { max-height: none; overflow-y: visible; }
             /* tiap halaman setinggi isinya sendiri (tinggi pager disamakan dengan tab aktif lewat JS) */
             #tabPager > #rekapCardWrap, #tabPager > #riwayatCardWrap { align-self: flex-start; }
 
-            /* lagi ngetik di form: lepas semua kunci supaya form utuh & nggak ketutup daftar */
-            body.form-editing .hero-panel,
-            body.form-editing #tradeForm { position: relative; top: auto; }
-            /* pill tetap terkunci; hero lagi dilepas (ikut gulir) jadi pill nempel ke tepi atas layar */
-            body.form-editing #tabBar { top: 0; }
-            body.form-editing #tradeForm { transform: none; opacity: 1; }
+            /* lagi tap/ngetik di form: hero & pill tetap terkunci, nggak ada yang bergeser.
+               Form cuma berhenti memudar dan naik di atas daftar supaya isiannya nggak ketutup. */
+            body.form-editing #tradeForm { transform: none; opacity: 1; z-index: 18; }
         }
         @media (prefers-reduced-motion: reduce) {
             #tradeForm { transform: none !important; }
@@ -3689,9 +3700,17 @@
                 root.style.setProperty('--heroH', hero.offsetHeight + 'px');
                 update();
             };
+            const tabBar = document.getElementById('tabBar');
             const update = () => {
                 raf = 0;
-                if (!isMobileTabs() || document.body.classList.contains('form-editing')) {
+                if (!isMobileTabs()) {
+                    form.style.removeProperty('--sink');
+                    if (tabBar) tabBar.classList.remove('is-stuck');
+                    return;
+                }
+                // pill sudah menempel di bawah hero? (dipakai buat efek pudar di bawah pill)
+                if (tabBar) tabBar.classList.toggle('is-stuck', tabBar.getBoundingClientRect().top <= hero.offsetHeight + 1);
+                if (document.body.classList.contains('form-editing')) {
                     form.style.removeProperty('--sink');
                     return;
                 }
@@ -3712,11 +3731,11 @@
                 ['rekapCardWrap', 'riwayatCardWrap'].forEach(id => { const e = document.getElementById(id); if (e) ro.observe(e); });
             }
 
-            // ngetik di form: balik ke atas & lepas kunci, supaya input nggak ketutup daftar
+            // tap/ngetik di form: hero & pill TIDAK bergeser sama sekali (nggak ada scrollTo, nggak ada lepas kunci).
+            // Cuma tandai supaya form berhenti memudar & ada di atas daftar.
             form.addEventListener('focusin', () => {
                 if (!isMobileTabs()) return;
                 document.body.classList.add('form-editing');
-                window.scrollTo(0, 0);
                 form.style.removeProperty('--sink');
             });
             form.addEventListener('focusout', (e) => {
