@@ -2390,6 +2390,9 @@
             });
         }
 
+        // Nilai yang SEDANG tampil di hero. Render pertama & ganti Total P&L <-> Net P&L: angka dihitung dari 0
+        // ke nilai aslinya (sama seperti Statistik). Data baru di mode yang sama: bergerak dari nilai tampil terakhir.
+        let shownHero = null;
         function renderStats(res) {
             const totalEl = document.getElementById('statTotal');
             const totalIdrEl = document.getElementById('statTotalIdr');
@@ -2401,12 +2404,20 @@
             const total = isNetPnlView ? gross * 0.9 : gross;
             const isProfit = total >= 0;
 
-            totalEl.textContent = `${isProfit ? '+' : ''}${total.toFixed(2)} USDT`;
+            const fmtUsd = (v) => `${v >= 0 ? '+' : ''}${v.toFixed(2)} USDT`;
+            const fmtIdr = (v) => formatRupiah(v * currentKursIdr);   // kurs dibaca ulang tiap frame
+
             totalEl.className = `font-display text-2xl sm:text-3xl md:text-3xl font-bold leading-none ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`;
 
-            if (totalIdrEl) {
-                totalIdrEl.textContent = formatRupiah(total * currentKursIdr);
+            const sameMode = !!shownHero && shownHero.net === isNetPnlView;
+            if (!(sameMode && shownHero.total === total)) {
+                const from = sameMode ? shownHero.total : 0;       // ganti mode / render pertama = dari 0
+                animateCount(totalEl, from, total, fmtUsd);
+                if (totalIdrEl) animateCount(totalIdrEl, from, total, fmtIdr);
+            } else if (totalIdrEl && shownHero.kurs !== currentKursIdr) {
+                totalIdrEl.textContent = fmtIdr(total);            // cuma kurs yang berubah: tanpa animasi
             }
+            shownHero = { net: isNetPnlView, total, kurs: currentKursIdr };
 
             if (totalLabelEl) {
                 totalLabelEl.textContent = isNetPnlView ? 'Total Net P&L' : 'Total P&L';
