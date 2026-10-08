@@ -594,7 +594,7 @@
         #heatmapCalendar, #sheetHeatmapCalendar { touch-action: pan-y; }
 
         /* ═══════════════ LACI STATISTIK & KALENDER (khusus HP) ═══════════════ */
-        .stats-handle, .stats-backdrop, .stats-sheet { display: none; }
+        .stats-backdrop, .stats-sheet { display: none; }
         @keyframes dockGlow {
             0%, 100% { box-shadow: 0 -14px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.09); }
             50% { box-shadow: 0 -14px 40px rgba(0,0,0,0.6), 0 -4px 22px rgba(217,164,65,0.18), inset 0 1px 0 rgba(217,164,65,0.35); }
@@ -603,40 +603,11 @@
             0%, 100% { transform: translateY(1px); opacity: .7; }
             50% { transform: translateY(-3px); opacity: 1; }
         }
-        @media (prefers-reduced-motion: reduce) { .stats-handle { animation: none; } }
         @media (max-width: 767px) {
-            /* sedikit ruang kosong di ujung halaman supaya panah nggak menutupi baris terakhir */
+            /* tinggi bagian laci yang selalu kelihatan di dasar layar (panah + label + area aman) */
+            :root { --peekH: calc(46px + env(safe-area-inset-bottom, 0px)); }
+            /* sedikit ruang kosong di ujung halaman supaya panel nggak menutupi baris terakhir */
             main.relative { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)); }
-
-            .stats-handle {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                gap: 4px;
-                position: fixed;
-                left: 0; right: 0; bottom: 0;
-                /* panel nempel di dasar layar; area aman (gesture bar) ikut ketutup */
-                height: calc(46px + env(safe-area-inset-bottom, 0px));
-                padding: 0 0 env(safe-area-inset-bottom, 0px);
-                z-index: 30;
-                color: var(--accent-bright);
-                background: linear-gradient(180deg, rgba(30,34,48,0.97), rgba(12,15,23,0.99));
-                -webkit-backdrop-filter: blur(18px) saturate(140%);
-                backdrop-filter: blur(18px) saturate(140%);
-                border: 1px solid rgba(255,255,255,0.08);
-                border-bottom: 0;
-                border-radius: 24px 24px 0 0;
-                box-shadow: 0 -14px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.09);
-                touch-action: none;
-                -webkit-tap-highlight-color: transparent;
-                animation: dockGlow 3.6s ease-in-out infinite;
-                transition: opacity .2s ease, transform .25s ease;
-            }
-            .stats-handle svg { animation: chevFloat 1.9s ease-in-out infinite; }
-            .stats-handle .dock-label { font-size: 11px; font-weight: 600; letter-spacing: .02em; color: var(--text-dim); line-height: 1; }
-            body.stats-open .stats-handle,
-            body.kb-open .stats-handle { opacity: 0; pointer-events: none; transform: translateY(100%); }
 
             .stats-backdrop {
                 display: block;
@@ -653,17 +624,19 @@
             }
             .stats-backdrop.open { opacity: 1; pointer-events: auto; }
 
+            /* SATU kotak saja: bagian atasnya (panah + "Statistik & kalender") selalu kelihatan di dasar layar.
+               Ditarik ke atas = kotak yang sama itu yang naik dan membuka isinya -- bukan kotak lain dari bawah. */
             .stats-sheet {
                 display: flex;
                 flex-direction: column;
                 position: fixed;
                 left: 0; right: 0; bottom: 0;
-                z-index: 41;
+                z-index: 30;
                 max-height: 82vh;
                 max-height: 82dvh;
-                transform: translateY(100%);
-                visibility: hidden;
-                transition: transform .38s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear .38s;
+                --p: 0;
+                transform: translateY(calc(100% - var(--peekH)));
+                transition: transform .38s cubic-bezier(0.22, 1, 0.36, 1), opacity .2s ease, z-index 0s linear .38s;
                 border-radius: 26px 26px 0 0;
                 background: linear-gradient(180deg, rgba(26,30,43,0.98), rgba(12,15,23,0.99));
                 border: 1px solid rgba(255,255,255,0.08);
@@ -672,6 +645,7 @@
                 padding-bottom: env(safe-area-inset-bottom, 0px);
                 overflow: hidden;
             }
+            .stats-sheet:not(.open):not(.dragging) { animation: dockGlow 3.6s ease-in-out infinite; }
             .stats-sheet::before {
                 content: '';
                 position: absolute;
@@ -681,19 +655,38 @@
                 opacity: .7;
                 pointer-events: none;
             }
-            .stats-sheet.open { transform: translateY(0); visibility: visible; transition: transform .38s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s; }
-            .stats-sheet.dragging { transition: none !important; visibility: visible; }
+            .stats-sheet.open, .stats-sheet.dragging { z-index: 41; }
+            .stats-sheet.open { transform: translateY(0); transition: transform .38s cubic-bezier(0.22, 1, 0.36, 1), opacity .2s ease, z-index 0s; }
+            .stats-sheet.dragging { transition: none !important; }
+            /* lagi ngetik (keyboard muncul): bagian laci yang kelihatan disembunyikan dulu */
+            body.kb-open .stats-sheet:not(.open):not(.dragging) { transform: translateY(100%); opacity: 0; pointer-events: none; }
 
+            /* Kepala laci = panel di dasar layar. --p (0 tertutup .. 1 terbuka) diisi lewat JS saat ditarik. */
             .stats-grab {
                 flex-shrink: 0;
                 display: flex;
+                flex-direction: column;
+                align-items: center;
                 justify-content: center;
-                padding: 12px 0 10px;
+                gap: 4px;
+                height: 46px;
                 touch-action: none;
                 cursor: grab;
+                -webkit-tap-highlight-color: transparent;
+                color: color-mix(in srgb, var(--accent-bright) calc((1 - var(--p, 0)) * 100%), #8f95a6);
             }
-            .stats-grab span { width: 38px; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.2); }
+            .stats-grab svg { display: block; }
+            .stats-sheet:not(.open):not(.dragging) .stats-grab svg { animation: chevFloat 1.9s ease-in-out infinite; }
+            .stats-grab .dock-label {
+                font-size: 11px; font-weight: 600; letter-spacing: .02em; line-height: 1;
+                color: var(--text-dim);
+                opacity: calc(1 - var(--p, 0) * 2.5);
+            }
+
+            /* isi laci disembunyikan selagi tertutup (supaya nggak bocor di bawah kepala & nggak bisa difokus) */
             .stats-sheet-body {
+                visibility: hidden;
+                transition: visibility 0s linear .38s;
                 overflow-y: auto;
                 overscroll-behavior: contain;
                 padding: 2px 12px 16px;
@@ -701,11 +694,14 @@
                 flex-direction: column;
                 gap: 10px;
             }
+            .stats-sheet.open .stats-sheet-body,
+            .stats-sheet.dragging .stats-sheet-body { visibility: visible; transition: visibility 0s; }
         }
         @media (prefers-reduced-motion: reduce) {
-            .stats-handle svg { animation: none; }
+            .stats-sheet { animation: none !important; }
+            .stats-sheet .stats-grab svg { animation: none !important; }
             .heat-anim-next > div, .heat-anim-prev > div { animation: none; }
-            .stats-handle, .stats-backdrop, .stats-sheet { transition-duration: .01ms !important; }
+            .stats-backdrop, .stats-sheet { transition-duration: .01ms !important; }
         }
 
         /* ═══════════════ HORMATI "KURANGI ANIMASI" ═══════════════ */
@@ -779,7 +775,8 @@
         @media (max-width: 767px) {
             /* kolom hero jadi "transparan": hero & form langsung jadi anak grid,
                supaya sticky berlaku sepanjang halaman (bukan cuma selama kolom itu kelihatan) */
-            :root { --tabGap: 12px; }   /* napas di atas & bawah tab pill: hero -> pill dan pill -> daftar */
+            /* --tabGap: napas di atas & bawah pill SAAT TERKUNCI. Kondisi normal (belum di-scroll) tetap rapat. */
+            :root { --tabGap: 12px; --tabPadB: 6px; }
             #colHero { display: contents; }
 
             .hero-panel { position: sticky; top: 0; z-index: 20; }
@@ -809,22 +806,27 @@
             main.relative { padding-bottom: 0; }
 
             /* tab pill ikut terkunci tepat di bawah hero (nggak ikut tenggelam).
-               Pembungkusnya berlatar solid supaya baris daftar yang lewat di bawahnya nggak tembus.
-               Ruang di atas (hero -> pill) dan di bawah (pill -> daftar) sama besar. */
+               Normal: rapat (jarak = jarak antar kotak). Terkunci: pill turun --tabGap dari hero, dan latar
+               solid memanjang ke bawah pill sebesar --tabGap, jadi ruang atas & bawah sama besar.
+               Dibuat lewat transform + box-shadow (bukan padding) supaya tinggi di alur nggak berubah
+               dan daftar di bawahnya nggak loncat saat pill mulai terkunci. */
             #tabBar {
                 position: sticky;
                 top: var(--heroH, 220px);
                 z-index: 5;
                 background: var(--bg);
-                padding: var(--tabGap) 0;
+                padding: 0 0 var(--tabPadB);
             }
-            #tabBar #tabSwitcher { margin-bottom: 0; }
+            #tabBar #tabSwitcher { margin-bottom: 0; transition: transform .2s var(--g-ease); }
             #tabPager { margin-top: 0; }
+            #tabBar.is-stuck #tabSwitcher { transform: translateY(var(--tabGap)); }
+            #tabBar.is-stuck { box-shadow: 0 calc(2 * var(--tabGap) - var(--tabPadB)) 0 0 var(--bg); }
             /* saat terkunci, baris daftar yang naik memudar halus di bawah pill (bukan terpotong kasar) */
             #tabBar::after {
                 content: '';
                 position: absolute;
-                left: 0; right: 0; top: 100%;
+                left: 0; right: 0;
+                top: calc(100% + 2 * var(--tabGap) - var(--tabPadB));
                 height: 16px;
                 background: linear-gradient(to bottom, var(--bg), rgba(0,0,0,0));
                 opacity: 0;
@@ -844,6 +846,7 @@
         }
         @media (prefers-reduced-motion: reduce) {
             #tradeForm { transform: none !important; }
+            #tabBar #tabSwitcher { transition: none; }
         }
     </style>
 
@@ -1138,13 +1141,13 @@
     </main>
 
     <!-- LACI STATISTIK & KALENDER AKTIVITAS (khusus HP): panah tumpul di paling bawah, tarik ke atas -->
-    <button type="button" id="statsHandle" class="stats-handle" aria-label="Buka statistik dan kalender aktivitas">
-        <svg width="44" height="16" viewBox="0 0 44 16" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline id="statsDockPoly" points="6,8 22,3 38,8"/></svg>
-        <span class="dock-label">Statistik &amp; kalender</span>
-    </button>
+    <div id="statsPeekProbe" aria-hidden="true" style="position:fixed;left:0;bottom:0;width:0;height:var(--peekH, 46px);visibility:hidden;pointer-events:none"></div>
     <div id="statsSheetBackdrop" class="stats-backdrop" onclick="onStatsBackdropClick()"></div>
     <div id="statsSheet" class="stats-sheet" aria-hidden="true">
-        <div id="statsSheetGrab" class="stats-grab"><svg width="44" height="16" viewBox="0 0 44 16" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline id="statsGrabPoly" points="6,8 22,8 38,8"/></svg></div>
+        <div id="statsSheetGrab" class="stats-grab" role="button" tabindex="0" aria-label="Buka atau tutup statistik dan kalender aktivitas">
+            <svg width="44" height="16" viewBox="0 0 44 16" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline id="statsGrabPoly" points="6,8 22,3 38,8"/></svg>
+            <span class="dock-label">Statistik &amp; kalender</span>
+        </div>
         <div class="stats-sheet-body custom-scroll">
             <div class="porto-card p-3.5 rounded-2xl shrink-0 cursor-pointer active:opacity-70 transition" onclick="toggleQuickStatsView()">
                 <div class="flex items-center gap-2 mb-2.5">
@@ -3961,8 +3964,8 @@
 
         // ══════════════════════════════════════════════════════════
         //  LACI STATISTIK & KALENDER (khusus HP)
-        //  Panah tumpul mengambang di paling bawah layar. Ketuk atau tarik ke atas ->
-        //  laci naik berisi Statistik + Kalender aktivitas (isi sama dengan versi desktop).
+        //  Satu kotak: bagian atasnya (panah + label) selalu kelihatan di dasar layar. Ketuk atau tarik
+        //  ke atas -> kotak itu yang naik berisi Statistik + Kalender aktivitas (isi sama dengan versi desktop).
         //  Tutup: tarik ke bawah, ketuk area gelap, tombol Kembali, atau Esc.
         //  Angka-angka tuning ada di bagian "keputusan buka/tutup" di bawah.
         // ══════════════════════════════════════════════════════════
@@ -3970,17 +3973,17 @@
         let sheetProg = 0, sheetProgRaf = 0;
         const SHEET_REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        // p = 0 laci tertutup (panah ATAS di dock), p = 1 laci terbuka (panah BAWAH di pegangan).
-        // Di tengah, panah melurus jadi garis lalu berbalik arah.
+        // p = 0 laci tertutup (panah ATAS), p = 1 laci terbuka (panah BAWAH).
+        // Di tengah, panah melurus jadi garis lalu berbalik arah. Nilai p juga dipakai CSS (--p)
+        // buat memudarkan label dan mewarnai panah.
         function paintSheetProgress(p) {
             sheetProg = p;
-            const dockMid = 3 + 5 * Math.min(1, p * 2.4);
-            const g = Math.max(0, (p - 0.3) / 0.7);
-            const grabMid = 8 + 5 * (1 - Math.pow(1 - g, 3));
-            const dp = document.getElementById('statsDockPoly');
+            const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+            const mid = 3 + 10 * e;
             const gp = document.getElementById('statsGrabPoly');
-            if (dp) dp.setAttribute('points', `6,8 22,${dockMid.toFixed(2)} 38,8`);
-            if (gp) gp.setAttribute('points', `6,8 22,${grabMid.toFixed(2)} 38,8`);
+            if (gp) gp.setAttribute('points', `6,8 22,${mid.toFixed(2)} 38,8`);
+            const sh = document.getElementById('statsSheet');
+            if (sh) sh.style.setProperty('--p', p.toFixed(3));
         }
         function tweenSheetProgress(to) {
             cancelAnimationFrame(sheetProgRaf);
@@ -4020,29 +4023,30 @@
         function closeStatsSheet() { setStatsSheet(false); }
 
         function initStatsSheet() {
-            const dock = document.getElementById('statsHandle');
             const sheet = document.getElementById('statsSheet');
             const backdrop = document.getElementById('statsSheetBackdrop');
             const grab = document.getElementById('statsSheetGrab');
+            const probe = document.getElementById('statsPeekProbe');
             const body = sheet && sheet.querySelector('.stats-sheet-body');
-            if (!dock || !sheet || !backdrop || !grab || !body) return;
+            if (!sheet || !backdrop || !grab || !body) return;
 
             let drag = null;
+            const peekPx = () => (probe && probe.offsetHeight) || 46;   // bagian laci yang selalu kelihatan
 
+            // offset = jarak ujung atas laci dari posisi terbuka (0 = terbuka, drag.closed = tertutup/hanya kepala kelihatan)
             const apply = (offset) => {
                 drag.offset = offset;
-                const p = 1 - offset / drag.sheetH;
+                const p = 1 - offset / drag.closed;
                 sheet.style.transform = `translateY(${offset}px)`;
                 backdrop.style.opacity = String(Math.max(0, Math.min(1, p)));
-                dock.style.opacity = String(Math.max(0, 1 - p * 2));
-                dock.style.transform = `translateY(${Math.min(1, p) * 100}%)`;
                 cancelAnimationFrame(sheetProgRaf);
                 paintSheetProgress(p);
             };
 
-            const begin = (y, fromOpen, lead) => {
+            const begin = (y, fromOpen, src) => {
                 const h = sheet.getBoundingClientRect().height || sheet.offsetHeight || 1;
-                drag = { fromOpen, sheetH: h, startY: y, lastY: y, lastT: performance.now(), vel: 0, lead: lead || 0, moved: false, offset: fromOpen ? 0 : h };
+                const closed = Math.max(1, h - peekPx());
+                drag = { src, fromOpen, closed, startY: y, lastY: y, lastT: performance.now(), vel: 0, moved: false, offset: fromOpen ? 0 : closed };
             };
 
             const move = (y) => {
@@ -4053,13 +4057,8 @@
                     drag.moved = true;
                     sheet.classList.add('dragging');
                 }
-                if (drag.fromOpen) {
-                    apply(Math.max(0, Math.min(drag.sheetH, dy)));
-                } else {
-                    const up = Math.max(0, -dy);
-                    const lead = drag.lead * Math.min(1, up / 40);   // ujung laci menyusul jari pelan-pelan
-                    apply(Math.max(0, Math.min(drag.sheetH, drag.sheetH - (up + lead))));
-                }
+                // ujung atas laci mengikuti jari 1:1 (titik yang dipegang tetap di bawah jari)
+                apply(Math.max(0, Math.min(drag.closed, (drag.fromOpen ? 0 : drag.closed) + dy)));
                 const now = performance.now(), dt = now - drag.lastT;
                 if (dt > 0) drag.vel = (y - drag.lastY) / dt;     // px/ms, negatif = ke atas
                 drag.lastY = y;
@@ -4079,39 +4078,31 @@
 
                 // flick cepat (> 0.45 px/ms) menang; kalau pelan, lewat setengah = buka
                 const FLICK = 0.45;
-                const shouldOpen = d.vel < -FLICK ? true : (d.vel > FLICK ? false : d.offset < d.sheetH * 0.5);
+                const shouldOpen = d.vel < -FLICK ? true : (d.vel > FLICK ? false : d.offset < d.closed * 0.5);
                 setStatsSheet(shouldOpen);
-                dock.style.opacity = '';
-                dock.style.transform = '';
             };
 
-            // Dock: tarik ke atas dari panel / zona bawah layar
-            dock.addEventListener('pointerdown', (e) => {
-                if (e.pointerType === 'mouse' && e.button !== 0) return;
-                begin(e.clientY, false, Math.max(0, window.innerHeight - e.clientY));
-                try { dock.setPointerCapture(e.pointerId); } catch (err) {}
-            });
-            dock.addEventListener('pointermove', (e) => move(e.clientY));
-            dock.addEventListener('pointerup', end);
-            dock.addEventListener('pointercancel', end);
-            dock.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setStatsSheet(true); }
-            });
-
-            // Pegangan laci (khusus mouse; sentuhan ditangani di bawah)
+            // Kepala laci (= panel di dasar layar): tarik / ketuk. Tertutup: semua jenis input.
+            // Terbuka: hanya mouse di sini; sentuhan ditangani handler touch di bawah.
             grab.addEventListener('pointerdown', (e) => {
-                if (e.pointerType !== 'mouse' || e.button !== 0) return;
-                begin(e.clientY, true, 0);
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+                if (statsSheetOpen && e.pointerType !== 'mouse') return;
+                begin(e.clientY, statsSheetOpen, 'ptr');
                 try { grab.setPointerCapture(e.pointerId); } catch (err) {}
             });
-            grab.addEventListener('pointermove', (e) => { if (e.pointerType === 'mouse') move(e.clientY); });
-            grab.addEventListener('pointerup', (e) => { if (e.pointerType === 'mouse') end(); });
+            grab.addEventListener('pointermove', (e) => { if (drag && drag.src === 'ptr') move(e.clientY); });
+            const ptrEnd = () => { if (drag && drag.src === 'ptr') end(); };
+            grab.addEventListener('pointerup', ptrEnd);
+            grab.addEventListener('pointercancel', ptrEnd);
+            grab.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setStatsSheet(!statsSheetOpen); }
+            });
 
             // Laci terbuka: tarik ke bawah di MANA SAJA di area panel = tutup.
             // Kalau isi laci lagi ke-scroll (bukan di paling atas), tarikan dianggap scroll biasa.
             let tch = null;
             sheet.addEventListener('touchstart', (e) => {
-                if (e.touches.length !== 1) { tch = null; return; }
+                if (!statsSheetOpen || e.touches.length !== 1) { tch = null; return; }
                 const p = e.touches[0];
                 tch = { x: p.clientX, y: p.clientY, mode: null };
             }, { passive: true });
@@ -4123,7 +4114,7 @@
                     if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
                     const ok = dy > 0 && Math.abs(dy) > Math.abs(dx) && (body.scrollTop <= 0 || grab.contains(e.target));
                     tch.mode = ok ? 'sheet' : 'other';
-                    if (ok) begin(tch.y, true, 0);
+                    if (ok) begin(tch.y, true, 'touch');
                 }
                 if (tch.mode === 'sheet') {
                     if (e.cancelable) e.preventDefault();
@@ -4138,7 +4129,7 @@
             sheet.addEventListener('touchend', tEnd);
             sheet.addEventListener('touchcancel', tEnd);
 
-            // Panel disembunyikan waktu keyboard muncul (lagi ngisi form)
+            // Bagian laci yang kelihatan disembunyikan waktu keyboard muncul (lagi ngisi form)
             document.addEventListener('focusin', (e) => {
                 if (e.target && e.target.matches && e.target.matches('input, textarea, select')) document.body.classList.add('kb-open');
             });
