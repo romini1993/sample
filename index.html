@@ -779,6 +779,10 @@
             :root { --tabGap: 12px; --tabPadB: 6px; }
             #colHero { display: contents; }
 
+            /* scrollbar halaman di sisi kanan disembunyikan (halaman tetap bisa di-scroll seperti biasa) */
+            html { scrollbar-width: none; -ms-overflow-style: none; }
+            html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
             .hero-panel { position: sticky; top: 0; z-index: 20; }
 
             #tradeForm {
