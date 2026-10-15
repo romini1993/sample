@@ -858,6 +858,40 @@
         /* Dipindah dari index.html: toast dari bawah, kalender "pop", batang warna rekap harian, tab lebih cepat */
         :root { --g-ease: cubic-bezier(.22, 1, .36, 1); --g-spring: cubic-bezier(.34, 1.56, .64, 1); }
 
+
+        /* ───────── Total bulanan di kalender aktivitas ───────── */
+        .month-label { font-size: 9px; color: var(--text-faint); }
+        .month-sub { font-size: 9px; color: var(--text-faint); margin-top: 2px; }
+        .month-val { font-size: 13px; font-weight: 700; white-space: nowrap; }
+        .month-val.is-profit { color: #34d399; }
+        .month-val.is-loss { color: #fb7185; }
+        .month-val.is-zero { color: var(--text-dim); }
+        /* HP: satu baris ringkas di atas kalender (dengan kolom di samping, kalender 7 kolom jadi terlalu sempit) */
+        .month-strip {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            padding: 8px 12px; margin-bottom: 10px;
+            border-radius: 12px; background: var(--bg); border: 1px solid var(--border);
+            cursor: pointer; -webkit-tap-highlight-color: transparent;
+        }
+        .month-strip .month-val { font-size: 14px; }
+        /* Desktop: kolom di samping kalender */
+        .heat-wrap { display: contents; }
+        .month-side { display: none; }
+        @media (min-width: 1024px) {
+            .heat-wrap { display: flex; gap: 10px; flex: 1 1 0%; min-height: 0; }
+            .heat-wrap > #heatmapCalendar { flex: 1 1 0%; min-width: 0; }
+            .month-side {
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
+                width: 8rem; flex-shrink: 0; text-align: center;
+                padding: 10px 8px; border-radius: 12px;
+                background: var(--bg); border: 1px solid var(--border);
+                cursor: pointer; transition: border-color .2s ease;
+            }
+            .month-side:hover { border-color: var(--text-faint); }
+            .month-side .month-label { font-size: 10px; }
+            .month-side .month-val { font-size: 14px; margin-top: 6px; }
+        }
+
         /* ───────── Kalender: sel muncul "pop" berurutan saat ganti bulan ───────── */
         .heat-cell { position: relative; -webkit-user-select: none; user-select: none; transition: transform .3s var(--g-spring); }
         .heat-cell:active { transform: scale(.9); }
@@ -1090,7 +1124,15 @@
                             <button type="button" onclick="changeHeatmapMonth(1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-dim)] hover:text-white hover:border-slate-500 transition text-[10px]">›</button>
                         </div>
                     </div>
-                    <div id="heatmapCalendar" class="lg:flex-1 lg:flex lg:flex-col lg:min-h-0"></div>
+                    <div class="heat-wrap">
+                        <div id="heatmapCalendar" class="lg:flex-1 lg:flex lg:flex-col lg:min-h-0"></div>
+                        <!-- Total bulan yang sedang dilihat (per tanggal Closed). Mengikuti toggle USDT/IDR Statistik. -->
+                        <div class="month-side" onclick="toggleQuickStatsView()" title="Ketuk untuk ganti USDT / IDR">
+                            <div class="month-label" data-month-label>Total bulan ini</div>
+                            <div class="month-val num" data-month-val>0.00</div>
+                            <div class="month-sub" data-month-sub></div>
+                        </div>
+                    </div>
                     <div id="heatmapTooltip" class="heatmap-tooltip absolute z-20 px-2 py-1.5 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] shadow-lg text-center whitespace-nowrap"></div>
                 </div>
 
@@ -1172,6 +1214,13 @@
                         <span id="sheetHeatmapMonthLabel" class="text-[10px] text-[var(--text-faint)] w-28 text-center whitespace-nowrap shrink-0"></span>
                         <button type="button" onclick="changeHeatmapMonth(1)" class="w-5 h-5 flex items-center justify-center rounded-md bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-dim)] hover:text-white hover:border-slate-500 transition text-[10px]">›</button>
                     </div>
+                </div>
+                <div class="month-strip" onclick="toggleQuickStatsView()">
+                    <div>
+                        <div class="month-label" data-month-label>Total bulan ini</div>
+                        <div class="month-sub" data-month-sub></div>
+                    </div>
+                    <div class="month-val num" data-month-val>0.00</div>
                 </div>
                 <div id="sheetHeatmapCalendar"></div>
                 <div class="heatmap-tooltip absolute z-20 px-2 py-1.5 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] shadow-lg text-center whitespace-nowrap"></div>
@@ -1490,6 +1539,14 @@
         };
         const todayStr = getTodayStr();
 
+        // closedManual: true kalau tanggal Closed dipilih user sendiri (bukan diatur otomatis oleh kode).
+        // closedAuto: true selagi kode yang mengubah Closed, supaya onChange-nya tidak dianggap pilihan user.
+        let closedManual = false, closedAuto = false;
+        const setClosedAuto = (dateStr) => {
+            closedAuto = true;
+            try { closedPicker.setDate(dateStr, true); } finally { closedAuto = false; }
+        };
+
         const closedPicker = flatpickr("#closed", {
             dateFormat: "Y-m-d",
             altInput: true,
@@ -1498,11 +1555,12 @@
             disableMobile: true,
             onChange: function(selectedDates, dateStr) {
                 if (!dateStr) return;
+                if (!closedAuto) closedManual = true;
                 const openedVal = document.getElementById('opened').value;
                 // Kalau Closed digeser jadi lebih awal dari Opened, Opened ikut ketarik
                 // mundur ke tanggal Closed itu (ga masuk akal opened setelah closed).
                 // triggerChange di-set false biar rule di onChange openedPicker (di bawah)
-                // ga ikut reset ulang tanggal Closed yang baru aja dipilih user.
+                // ga ikut mengubah tanggal Closed yang baru aja dipilih user.
                 if (openedVal && dateStr < openedVal) {
                     openedPicker.setDate(dateStr, false);
                     closedPicker.set("minDate", dateStr);
@@ -1519,11 +1577,16 @@
             onChange: function(selectedDates, dateStr) {
                 if (!dateStr) return;
                 closedPicker.set("minDate", dateStr);
-                if (dateStr > todayStr) {
-                    closedPicker.setDate(dateStr, true);
-                } else {
-                    closedPicker.setDate(todayStr, true);
-                }
+                const cur = document.getElementById('closed').value;
+
+                // Closed yang sudah dipilih user (mis. mundur ke tgl 13) DIPERTAHANKAN selama
+                // masih sama atau setelah Opened. Jadi geser Opened ke tgl 12 -> Closed tetap tgl 13.
+                if (closedManual && cur && cur >= dateStr) return;
+
+                // Selain itu perilaku awal: Closed otomatis = hari ini (atau = Opened kalau Opened di masa depan).
+                closedManual = false;
+                const target = dateStr > todayStr ? dateStr : todayStr;
+                if (target !== cur) setClosedAuto(target);
             }
         });
 
@@ -3590,6 +3653,31 @@
         let shownQuickStats = null, shownQuickMode = null, shownQuickKurs = null;
         let heatPop = true;   // true = sel kalender muncul "pop" berurutan (load awal & ganti bulan)
 
+        // Total bulan yang sedang dilihat di kalender (dijumlah per tanggal Closed, tgl 1 s/d akhir bulan).
+        // Ikut mode USDT/IDR yang sama dengan Statistik; ganti mode = hitung dari 0, ganti bulan = dari nilai bulan sebelumnya.
+        let monthSummary = null, shownMonth = null;
+        function renderMonthTotal() {
+            const ms = monthSummary;
+            if (!ms) return;
+            const idr = isQuickStatsIdrView;
+            const fmt = idr
+                ? (v) => `${v >= 0 ? '' : '-'}${formatRupiah(Math.abs(v) * currentKursIdr)}`
+                : (v) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}`;
+
+            document.querySelectorAll('[data-month-label]').forEach(el => { el.textContent = ms.label; });
+            document.querySelectorAll('[data-month-sub]').forEach(el => { el.textContent = ms.count > 0 ? `${ms.count} trade` : 'Belum ada trade'; });
+            const cls = ms.count === 0 ? 'is-zero' : (ms.total >= 0 ? 'is-profit' : 'is-loss');
+
+            const sameMode = !!shownMonth && shownMonth.idr === idr;
+            const unchanged = sameMode && shownMonth.total === ms.total && (!idr || shownMonth.kurs === currentKursIdr);
+            document.querySelectorAll('[data-month-val]').forEach(el => {
+                el.classList.remove('is-profit', 'is-loss', 'is-zero');
+                el.classList.add(cls);
+                if (!unchanged) animateCount(el, sameMode ? shownMonth.total : 0, ms.total, fmt);
+            });
+            shownMonth = { total: ms.total, idr, kurs: currentKursIdr };
+        }
+
         let lastQuickStats = { daily: 0, weekly: 0, monthly: 0 };
         let isQuickStatsIdrView = false;
 
@@ -3692,6 +3780,7 @@
         function toggleQuickStatsView() {
             isQuickStatsIdrView = !isQuickStatsIdrView;
             renderQuickStatsGrid();
+            renderMonthTotal();
         }
 
 
@@ -3829,15 +3918,22 @@
             });
 
             const dailyMap = {};
+            let monthTotal = 0, monthCount = 0;
             (history || []).forEach(item => {
                 const d = parseClosedDate(item.closed);
                 if (!d) return;
                 if (d.getFullYear() === year && d.getMonth() === month) {
                     const key = d.getDate();
+                    const pnl = parseFloat(item.pnl) || 0;
                     if (!dailyMap[key]) dailyMap[key] = 0;
-                    dailyMap[key] += parseFloat(item.pnl) || 0;
+                    dailyMap[key] += pnl;
+                    monthTotal += pnl;
+                    monthCount++;
                 }
             });
+            // Total bulan ini (per tanggal Closed). Dibulatkan supaya selisih desimal kecil nggak memicu animasi ulang.
+            monthSummary = { total: Math.round(monthTotal * 1e4) / 1e4, count: monthCount, label: `Total ${monthNames[month]}` };
+            renderMonthTotal();
 
             // Data & bulan sama dengan render sebelumnya -> biarkan, supaya animasi pop
             // yang lagi jalan nggak terpotong waktu data Sheet datang menyusul cache.
