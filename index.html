@@ -859,6 +859,22 @@
         :root { --g-ease: cubic-bezier(.22, 1, .36, 1); --g-spring: cubic-bezier(.34, 1.56, .64, 1); }
 
 
+
+        /* ───────── Tooltip kurva hero: tanggal + nilai USDT (tahan & geser) ───────── */
+        #curveTooltip {
+            top: auto;
+            bottom: calc(100% + 6px);
+            padding: 5px 9px;
+            border-radius: 9px;
+            line-height: 1.25;
+            text-align: left;
+            box-shadow: 0 6px 18px rgba(0,0,0,.45);
+        }
+        #curveTooltip .ct-date { font-size: 10px; font-weight: 700; color: #f1f5f9; }
+        #curveTooltip .ct-val { margin-top: 1px; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
+        #curveTooltip .ct-val.is-profit { color: #34d399; }
+        #curveTooltip .ct-val.is-loss { color: #fb7185; }
+
         /* ───────── Total bulanan di kalender aktivitas (baris di atas kalender, desktop & HP sama) ───────── */
         /* kiri: Akumulasi + nama bulan | tengah: Trade + jumlahnya | kanan: total akumulasi balance */
         .month-strip {
@@ -3586,7 +3602,10 @@
                 group.style.opacity = '1';
 
                 const leftPx = (point.x / curveState.w) * rect.width;
-                tooltip.textContent = point.dateShort;
+                // Dua baris: tanggal + total akumulasi PNL di titik itu (USDT), seperti tooltip Binance
+                const val = point.value;
+                const valTxt = `${val >= 0 ? '+' : ''}${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT`;
+                tooltip.innerHTML = `<div class="ct-date">${point.dateShort}</div><div class="ct-val ${val >= 0 ? 'is-profit' : 'is-loss'}">${valTxt}</div>`;
                 tooltip.classList.remove('hidden');
                 tooltip.style.left = '0px';
                 const tw = tooltip.offsetWidth || 32;
