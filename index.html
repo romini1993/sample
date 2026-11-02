@@ -5663,5 +5663,34 @@
         }, true);
     })();
     </script>
+<!-- PERBAIKAN HP: geser daftar saat kursor masih di form (pair/side/tanggal/PNL) -> form kembali tenggelam & laci Statistik muncul lagi -->
+    <script>
+    (function () {
+        const mobile = () => window.matchMedia ? window.matchMedia('(max-width: 767px)').matches : true;
+        let sx = 0, sy = 0, tracking = false;
+        document.addEventListener('touchstart', e => { const t = e.touches && e.touches[0]; if (!t) return; sx = t.clientX; sy = t.clientY; tracking = true; }, { passive: true });
+        document.addEventListener('touchend', () => { tracking = false; }, { passive: true });
+        document.addEventListener('touchmove', e => {
+            if (!tracking || !mobile()) return;
+            const t = e.touches && e.touches[0]; if (!t) return;
+            if (Math.abs(t.clientY - sy) < 12 && Math.abs(t.clientX - sx) < 12) return;     // ketukan / geseran kecil: abaikan
+            tracking = false;
+            if (!document.body.classList.contains('form-editing')) return;                     // form tidak sedang "dipegang": tidak ada yang perlu dilepas
+            const form = document.getElementById('tradeForm');
+            if (e.target && e.target.closest && e.target.closest('#tradeForm, .flatpickr-calendar, #pairSuggest')) return;   // menggeser di dalam form / kalender / daftar saran
+            // jari menggeser data di luar form: lepas fokus (menutup keyboard) + tutup kalender, jadi form tenggelam lagi seperti biasa
+            document.querySelectorAll('input').forEach(i => { if (i._flatpickr && i._flatpickr.isOpen) i._flatpickr.close(); });
+            const a = document.activeElement;
+            if (a && form && form.contains(a) && a.blur) a.blur();
+        }, { passive: true });
+        // Laci "Statistik & kalender" di bawah hanya perlu bersembunyi kalau keyboard benar-benar muncul. Kolom tanggal (kalender) dan
+        // kolom yang hanya bisa dibaca / pilihan tidak memunculkan keyboard, jadi jangan sampai laci ikut tersembunyi gara-gara fokus di sana.
+        document.addEventListener('focusin', e => {
+            const t = e.target; if (!t || !t.matches) return;
+            const altTanggal = t.tagName === 'INPUT' && t.previousElementSibling && t.previousElementSibling._flatpickr;   // kolom tanggal buatan flatpickr (altInput)
+            if (altTanggal || t.matches('input[readonly], input[type=checkbox], input[type=radio], input[type=date], select')) document.body.classList.remove('kb-open');
+        });
+    })();
+    </script>
 </body>
 </html>
