@@ -5663,10 +5663,46 @@
         }, true);
     })();
     </script>
-<!-- PERBAIKAN HP: geser daftar saat kursor masih di form (pair/side/tanggal/PNL) -> form kembali tenggelam & laci Statistik muncul lagi -->
+<!-- PERBAIKAN HP: "mode mengisi" form (form terkunci di atas, laci Statistik & kalender sembunyi) hanya berlaku selama keyboard benar-benar terbuka -->
     <script>
     (function () {
         const mobile = () => window.matchMedia ? window.matchMedia('(max-width: 767px)').matches : true;
+        const vv = window.visualViewport, body = document.body;
+        const form = () => document.getElementById('tradeForm');
+        const inForm = t => { const f = form(); return !!(f && t && f.contains(t)); };
+        const curH = () => vv ? vv.height : window.innerHeight;
+        let baseH = curH();                                                   // tinggi layar tanpa keyboard
+        const keyboardOpen = () => !!vv && (baseH - curH() > 150);
+        // kolom yang tidak memunculkan keyboard: kolom tanggal (flatpickr), kolom baca-saja, checkbox, dst.
+        const noKb = t => t && t.tagName === 'INPUT' && (t.readOnly || (t.previousElementSibling && t.previousElementSibling._flatpickr) || /^(checkbox|radio|date|button|submit)$/.test(t.type));
+        const isText = t => !!t && (t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && !noKb(t)));
+        const setEditing = on => { body.classList.toggle('form-editing', on); body.classList.toggle('kb-open', on); window.dispatchEvent(new Event('scroll')); };   // 'scroll' = hitung ulang posisi form
+        const closeCalendars = () => document.querySelectorAll('input').forEach(i => { if (i._flatpickr && i._flatpickr.isOpen) i._flatpickr.close(); });
+        function release() {                                                  // batal mengisi: lepas fokus, tutup kalender, form tenggelam lagi
+            closeCalendars();
+            const a = document.activeElement; if (inForm(a) && a.blur) a.blur();
+            setEditing(false);
+        }
+
+        if (vv) {
+            let kbWas = false;
+            vv.addEventListener('resize', () => {
+                if (!mobile()) return;
+                const a = document.activeElement;
+                if (!isText(a)) baseH = curH();                               // tidak sedang mengetik: ini tinggi layar normal (juga untuk rotasi)
+                const now = keyboardOpen();
+                if (now && !kbWas && inForm(a) && isText(a)) setEditing(true);                      // keyboard muncul untuk kolom form
+                if (!now && kbWas && inForm(a) && isText(a)) { a.blur(); setEditing(false); }       // keyboard ditutup = batal mengisi
+                kbWas = now;
+            });
+        }
+        // fokus masuk ke form
+        document.addEventListener('focusin', e => {
+            const t = e.target; if (!mobile() || !inForm(t)) return;
+            if (!isText(t)) { setEditing(false); return; }                    // tombol Buy/Sell, kolom tanggal, dll: tidak ada keyboard, jangan kunci form
+            if (vv) setTimeout(() => { const a = document.activeElement; if (inForm(a) && isText(a) && !keyboardOpen()) setEditing(false); }, 450);   // keyboard tidak muncul juga: jangan kunci
+        });
+        // menggeser data di luar form saat keyboard TIDAK terbuka: form harus tertutup (tenggelam) dan laci Statistik & kalender muncul
         let sx = 0, sy = 0, tracking = false;
         document.addEventListener('touchstart', e => { const t = e.touches && e.touches[0]; if (!t) return; sx = t.clientX; sy = t.clientY; tracking = true; }, { passive: true });
         document.addEventListener('touchend', () => { tracking = false; }, { passive: true });
@@ -5675,21 +5711,11 @@
             const t = e.touches && e.touches[0]; if (!t) return;
             if (Math.abs(t.clientY - sy) < 12 && Math.abs(t.clientX - sx) < 12) return;     // ketukan / geseran kecil: abaikan
             tracking = false;
-            if (!document.body.classList.contains('form-editing')) return;                     // form tidak sedang "dipegang": tidak ada yang perlu dilepas
-            const form = document.getElementById('tradeForm');
+            if (keyboardOpen()) return;                                                        // keyboard terbuka = sedang mengisi, biarkan
             if (e.target && e.target.closest && e.target.closest('#tradeForm, .flatpickr-calendar, #pairSuggest')) return;   // menggeser di dalam form / kalender / daftar saran
-            // jari menggeser data di luar form: lepas fokus (menutup keyboard) + tutup kalender, jadi form tenggelam lagi seperti biasa
-            document.querySelectorAll('input').forEach(i => { if (i._flatpickr && i._flatpickr.isOpen) i._flatpickr.close(); });
-            const a = document.activeElement;
-            if (a && form && form.contains(a) && a.blur) a.blur();
+            const calOpen = !!document.querySelector('.flatpickr-calendar.open');
+            if (inForm(document.activeElement) || calOpen || body.classList.contains('form-editing')) release();
         }, { passive: true });
-        // Laci "Statistik & kalender" di bawah hanya perlu bersembunyi kalau keyboard benar-benar muncul. Kolom tanggal (kalender) dan
-        // kolom yang hanya bisa dibaca / pilihan tidak memunculkan keyboard, jadi jangan sampai laci ikut tersembunyi gara-gara fokus di sana.
-        document.addEventListener('focusin', e => {
-            const t = e.target; if (!t || !t.matches) return;
-            const altTanggal = t.tagName === 'INPUT' && t.previousElementSibling && t.previousElementSibling._flatpickr;   // kolom tanggal buatan flatpickr (altInput)
-            if (altTanggal || t.matches('input[readonly], input[type=checkbox], input[type=radio], input[type=date], select')) document.body.classList.remove('kb-open');
-        });
     })();
     </script>
 </body>
