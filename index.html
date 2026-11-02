@@ -133,7 +133,7 @@
             font-variant-numeric: tabular-nums;
         }
 
-        /* Toggle Long / Short (form & modal edit) */
+        /* Toggle Buy / Sell (form & modal edit) */
         .side-toggle { display: flex; gap: 4px; padding: 4px; }
         .field .side-toggle { padding: 4px; height: 100%; }
         .side-btn {
@@ -748,13 +748,15 @@
                 border-right-width: 0 !important;
             }
 
-            /* hero: kurva bablas sampai ujung kiri-kanan & dasar kartu */
+            /* hero: kurva tetap sampai dasar kartu, tapi kiri-kanan diberi jarak dari tepi layar
+               (12px padding kartu + 4px = 16px) supaya tahan & geser di ujung tidak mentok ke tepi.
+               Mau jaraknya lebih lebar/sempit: ubah angka 4px dan 8px (8px = 2 x 4px). */
             .hero-panel { padding: 14px 12px 0 12px !important; }
             .hero-panel #equityCurve {
                 height: 88px;
-                margin-left: -12px;
-                margin-right: -12px;
-                width: calc(100% + 24px);
+                margin-left: 4px;
+                margin-right: 4px;
+                width: calc(100% - 8px);
             }
 
             /* form input */
@@ -905,6 +907,48 @@
         .profile-menu button .avatar { --av: 26px; }
         #lockScreen .lock-avatar { --av: 72px; margin: 16px auto 0; box-shadow: 0 8px 28px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.18); }
         #lockScreen .lock-chip .avatar { --av: 20px; }
+
+
+        /* ───────── Mode akun: layar masuk, dialog, crop foto ───────── */
+        #lockScreen .auth-tabs { display: flex; gap: 4px; padding: 4px; margin: 14px 0 16px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); }
+        #lockScreen .auth-tab { flex: 1; padding: 8px 0; border-radius: 9px; font-size: 13px; font-weight: 700; font-family: inherit; color: var(--text-dim); background: transparent; border: 0; cursor: pointer; }
+        #lockScreen .auth-tab.is-on { background: var(--accent-bright); color: #1a1305; }
+        #lockScreen .auth-field { display: block; text-align: left; margin-bottom: 10px; }
+        #lockScreen .auth-field > span { display: block; margin: 0 2px 4px; font-size: 11px; font-weight: 600; color: var(--text-faint); }
+        #lockScreen input.auth-input { text-align: left; letter-spacing: normal; font-size: 15px; padding: 12px 14px; }
+        #lockScreen .auth-note { margin: 2px 0 10px; font-size: 12px; line-height: 1.45; color: var(--accent-bright); }
+        #lockScreen .auth-hint { margin-top: 12px; font-size: 11px; line-height: 1.45; color: var(--text-faint); }
+        #lockScreen .lock-btn[disabled] { opacity: .55; cursor: default; }
+        #lockScreen .auth-cancel { display: block; width: 100%; margin-top: 14px; padding: 10px; border-radius: 10px; font-size: 12px; font-weight: 600; font-family: inherit; color: var(--text-dim); background: transparent; border: 0; cursor: pointer; }
+        .profile-menu small.pm-sub { margin-left: 2px; font-size: 10px; font-weight: 500; color: var(--text-faint); }
+        .dlg-backdrop { position: fixed; inset: 0; z-index: 10001; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(4,5,8,.72); -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); overflow-y: auto; }
+        .dlg { width: 100%; max-width: 350px; padding: 18px; border-radius: 18px; background: var(--surface-2); border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,.6); animation: pmIn .18s var(--g-ease, ease-out); }
+        .dlg-title { font-size: 16px; font-weight: 800; color: var(--text); }
+        .dlg-title.is-danger { color: #fb7185; }
+        .dlg-desc { margin-top: 8px; font-size: 12px; line-height: 1.5; color: var(--text-dim); }
+        .dlg-field { display: block; margin-top: 12px; }
+        .dlg-field > span { display: block; margin-bottom: 4px; font-size: 11px; font-weight: 600; color: var(--text-faint); }
+        .dlg input[type="text"], .dlg input[type="password"] { width: 100%; padding: 11px 12px; border-radius: 11px; font-size: 15px; font-family: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); outline: none; }
+        .dlg input:focus { border-color: var(--accent-bright); }
+        .dlg-err { min-height: 16px; margin-top: 10px; font-size: 12px; color: #fb7185; }
+        .dlg-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .dlg-actions button, .dlg-link { font-family: inherit; cursor: pointer; border: 0; -webkit-tap-highlight-color: transparent; }
+        .dlg-actions button { flex: 1; padding: 11px; border-radius: 11px; font-size: 13px; font-weight: 700; }
+        .dlg-cancel { background: var(--bg); color: var(--text-dim); border: 1px solid var(--border) !important; }
+        .dlg-ok { background: var(--accent-bright); color: #1a1305; }
+        .dlg-ok.is-danger { background: #e11d48; color: #fff; }
+        .dlg-actions button[disabled] { opacity: .45; cursor: default; }
+        .dlg-link { display: inline-block; margin-top: 10px; padding: 8px 12px; border-radius: 9px; font-size: 12px; font-weight: 700; color: var(--accent-bright); background: var(--bg); border: 1px solid var(--border); }
+        .profile-menu .pm-head { display: flex; align-items: center; gap: 10px; padding: 8px 10px 10px; }
+        .profile-menu .pm-head .avatar { --av: 38px; }
+        .profile-menu .pm-head b { display: block; font-size: 13px; color: var(--text); }
+        .profile-menu .pm-head small { display: block; margin-top: 1px; font-size: 11px; color: var(--text-faint); }
+        .profile-menu button.pm-danger { color: #fb7185; }
+        .crop-stage { position: relative; margin: 14px auto 0; overflow: hidden; border-radius: 14px; background: #000; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+        .crop-stage canvas { display: block; width: 100%; height: 100%; }
+        .crop-ring { position: absolute; border-radius: 50%; box-shadow: 0 0 0 999px rgba(0,0,0,.58); border: 2px solid rgba(255,255,255,.92); pointer-events: none; }
+        .crop-zoom { display: flex; align-items: center; gap: 10px; margin-top: 12px; color: var(--text-faint); font-size: 16px; font-weight: 700; }
+        .crop-zoom input[type="range"] { flex: 1; accent-color: var(--accent-bright); }
 
         /* ───────── Layar sandi profil ───────── */
         #lockScreen {
@@ -1146,7 +1190,7 @@
                 <div class="grid grid-cols-2 gap-2.5">
                 <div class="field">
                     <span class="field-label">Pairs</span>
-                    <input type="text" id="pair" list="pairList" required placeholder="BTCUSDT" onblur="formatPairInput(this)" class="w-full porto-input rounded-xl px-3.5 text-sm uppercase">
+                    <input type="text" id="pair" required placeholder="BTCUSDT" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" enterkeyhint="next" onblur="formatPairInput(this)" class="w-full porto-input rounded-xl px-3.5 text-sm uppercase">
                     <datalist id="pairList">
                         <option value="ADAUSDT">
                         <option value="ALGOUSDT">
@@ -1191,8 +1235,8 @@
                 <div class="field">
                     <span class="field-label">Side</span>
                     <div class="side-toggle porto-input rounded-xl">
-                        <button type="button" id="sideLongBtn" class="side-btn on-long" onclick="setFormSide('Long')">Long</button>
-                        <button type="button" id="sideShortBtn" class="side-btn" onclick="setFormSide('Short')">Short</button>
+                        <button type="button" id="sideLongBtn" class="side-btn on-long" onclick="setFormSide('Buy')">Buy</button>
+                        <button type="button" id="sideShortBtn" class="side-btn" onclick="setFormSide('Sell')">Sell</button>
                     </div>
                 </div>
                 </div>
@@ -1200,11 +1244,11 @@
                 <div class="grid grid-cols-2 gap-2.5">
                     <div class="field">
                         <span class="field-label">Opened</span>
-                        <input type="text" id="opened" required placeholder="dd/mm/yyyy" class="w-full porto-input rounded-xl px-3.5 text-sm">
+                        <input type="text" id="opened" required placeholder="dd-mm-yyyy" class="w-full porto-input rounded-xl px-3.5 text-sm">
                     </div>
                     <div class="field">
                         <span class="field-label">Closed</span>
-                        <input type="text" id="closed" required placeholder="dd/mm/yyyy" class="w-full porto-input rounded-xl px-3.5 text-sm">
+                        <input type="text" id="closed" required placeholder="dd-mm-yyyy" class="w-full porto-input rounded-xl px-3.5 text-sm">
                     </div>
                 </div>
 
@@ -1298,6 +1342,23 @@
                         </div>
                         <span class="text-[10px] text-[var(--text-faint)]">Tahan untuk edit/hapus</span>
                     </div>
+                    <!-- FITUR TAMBAHAN: filter riwayat (satu baris; tanggal lewat tombol kalender) -->
+                    <div id="fltBar" class="relative mb-1.5">
+                        <div class="flex gap-1 items-center">
+                            <input id="fltQ" type="text" placeholder="Cari pair..." autocomplete="off" class="porto-input rounded-lg px-2 text-[11px] flex-1 min-w-0" style="height:30px">
+                            <select id="fltSide" class="porto-input rounded-lg px-1 text-[11px]" style="height:30px;width:60px"><option value="">Side</option><option value="Buy">Buy</option><option value="Sell">Sell</option></select>
+                            <select id="fltRes" class="porto-input rounded-lg px-1 text-[11px]" style="height:30px;width:64px"><option value="">Hasil</option><option value="profit">Profit</option><option value="loss">Loss</option></select>
+                            <button type="button" id="fltDateBtn" class="porto-input rounded-lg text-[13px] shrink-0 leading-none" style="height:30px;width:32px" aria-label="Filter tanggal">&#128197;</button>
+                            <button type="button" id="fltReset" class="hidden shrink-0 px-1.5 rounded-lg text-[10px] font-semibold text-amber-400 whitespace-nowrap" style="height:30px"></button>
+                        </div>
+                        <div id="fltDatePop" class="hidden absolute right-0 top-full mt-1 z-20 porto-card p-2.5 rounded-xl shadow-lg space-y-1.5" style="width:220px">
+                            <div class="text-[10px] text-slate-400">Closed dari</div>
+                            <input id="fltFrom" type="date" class="porto-input rounded-lg px-2 text-xs w-full" style="height:32px;color-scheme:dark">
+                            <div class="text-[10px] text-slate-400">Closed sampai</div>
+                            <input id="fltTo" type="date" class="porto-input rounded-lg px-2 text-xs w-full" style="height:32px;color-scheme:dark">
+                            <button type="button" id="fltDateClear" class="w-full text-center py-1.5 rounded-lg bg-[var(--surface-2)] text-[11px] text-slate-300">Hapus tanggal</button>
+                        </div>
+                    </div>
                     <div id="loading" class="text-center text-xs text-[var(--text-faint)] py-6" style="display:none;">Memuat data...</div>
                     <div id="tradeList" class="space-y-1.5 overflow-y-auto pr-1 custom-scroll lg:flex-1 lg:min-h-0"></div>
                 </div>
@@ -1384,8 +1445,8 @@
             <div>
                 <label class="block text-xs font-medium text-[var(--text-dim)] mb-1.5">Side</label>
                 <div class="side-toggle porto-input rounded-xl">
-                    <button type="button" id="editSideLongBtn" class="side-btn on-long" onclick="setEditSide('Long')">Long</button>
-                    <button type="button" id="editSideShortBtn" class="side-btn" onclick="setEditSide('Short')">Short</button>
+                    <button type="button" id="editSideLongBtn" class="side-btn on-long" onclick="setEditSide('Buy')">Buy</button>
+                    <button type="button" id="editSideShortBtn" class="side-btn" onclick="setEditSide('Sell')">Sell</button>
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-2.5">
@@ -1400,7 +1461,10 @@
             </div>
             <div>
                 <label class="block text-xs font-medium text-[var(--text-dim)] mb-1.5">Closing PNL (USDT)</label>
-                <input type="number" step="any" id="editPnl" class="w-full porto-input rounded-xl px-3.5 py-2.5 num font-medium">
+                <div class="relative">
+                    <input type="number" step="any" id="editPnl" oninput="updateEditPnlPreview()" class="w-full porto-input rounded-xl px-3.5 pr-24 py-2.5 num font-medium">
+                    <span id="editPnlPreview" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-[11px] text-[var(--text-faint)] pointer-events-none text-right">≈ Rp 0</span>
+                </div>
             </div>
             <div class="flex gap-2 pt-2">
                 <button type="button" onclick="closeEditModal()" class="w-1/2 bg-[var(--surface-2)] hover:bg-[#1d2230] text-slate-300 font-semibold py-2.5 rounded-xl text-xs transition border border-[var(--border)]">
@@ -1598,8 +1662,36 @@
         // Database.js boleh berisi daftar profil, tiap profil = satu Google Sheet / Apps Script sendiri:
         //   window.APP_CONFIG = { PROFILES: [ { id: 'a', name: 'Akun 1', API_URL: '...' }, { id: 'b', name: 'Akun 2', API_URL: '...' } ] };
         // Format lama ({ API_URL: '...' }) tetap jalan sebagai satu profil (tanpa pilihan profil).
+        // ───────── Mode akun (masuk / buat akun): satu Apps Script untuk SEMUA akun ─────────
+        // Aktif hanya kalau Database.js berisi  ACCOUNTS_URL: '<link /exec dari Code.gs>'.  Tanpa itu, aplikasi jalan persis seperti biasa.
+        const ACCOUNTS_URL = (window.APP_CONFIG && window.APP_CONFIG.ACCOUNTS_URL) || '';
+        const ACCOUNT_MODE = !!ACCOUNTS_URL;
+        // Semua akun yang sedang masuk di HP ini: { namaPengguna: { token, exp, user, name, pv } }.
+        // Yang disimpan adalah TIKET login (berlaku 30 hari atau sampai keluar), bukan sandi, jadi pindah akun cukup sekali ketuk.
+        function readSessions() {
+            const out = {};
+            try {
+                const map = JSON.parse(localStorage.getItem('acct:sessions') || 'null') || {};
+                Object.keys(map).forEach(u => { const x = map[u]; if (x && x.token && x.user && x.exp > Date.now()) out[u] = x; });
+                const old = JSON.parse(localStorage.getItem('acct:session') || 'null');       // format lama (satu akun)
+                if (old && old.token && old.user && old.exp > Date.now() && !out[old.user]) out[old.user] = old;
+            } catch (e) {}
+            return out;
+        }
+        const SESSIONS = ACCOUNT_MODE ? readSessions() : {};
+        const SESSION = (() => {
+            if (!ACCOUNT_MODE) return null;
+            let want = null;
+            try { want = localStorage.getItem('acct:active') || (JSON.parse(localStorage.getItem('acct:session') || 'null') || {}).user; } catch (e) {}
+            return SESSIONS[want] || SESSIONS[Object.keys(SESSIONS)[0]] || null;
+        })();
+        const NEEDS_LOGIN = ACCOUNT_MODE && !SESSION;
+
         const PROFILES = (() => {
             const c = window.APP_CONFIG || {};
+            if (ACCOUNT_MODE) {
+                return SESSION ? [{ id: 'u:' + SESSION.user, name: SESSION.name || SESSION.user, API_URL: ACCOUNTS_URL, color: '', password: '' }] : [];
+            }
             if (Array.isArray(c.PROFILES) && c.PROFILES.length) {
                 return c.PROFILES.filter(p => p && p.API_URL).map((p, i) => ({
                     id: String(p.id || ('p' + (i + 1))), name: String(p.name || ('Akun ' + (i + 1))), API_URL: p.API_URL, color: p.color || '',
@@ -1623,6 +1715,11 @@
             return wanted || PROFILES[0];
         })();
         const API_URL = ACTIVE_PROFILE ? ACTIVE_PROFILE.API_URL : "";
+        // Alamat panggilan ke Apps Script. Mode biasa: persis seperti sebelumnya. Mode akun: ditambah tiket masuk.
+        function apiUrl(query) {
+            return ACCOUNT_MODE ? `${API_URL}?${query}&token=${encodeURIComponent(SESSION ? SESSION.token : '')}` : `${API_URL}?${query}`;
+        }
+        function dataQuery() { return ACCOUNT_MODE ? `action=get&_ts=${Date.now()}` : `_ts=${Date.now()}`; }
 
         // ───────── Sandi profil (kunci tampilan) ─────────
         // Kalau sebuah profil punya `password` di Database.js, aplikasi minta sandi itu dulu sebelum menampilkan / mengambil data Sheet-nya.
@@ -1656,9 +1753,9 @@
                 localStorage.removeItem('unlockUntil:' + p.id);
             } catch (e) {}
         }
-        const APP_LOCKED = !!(ACTIVE_PROFILE && ACTIVE_PROFILE.password) && !isProfileUnlocked(ACTIVE_PROFILE);
+        const APP_LOCKED = NEEDS_LOGIN || (!!(ACTIVE_PROFILE && ACTIVE_PROFILE.password) && !isProfileUnlocked(ACTIVE_PROFILE));
         // Data tersimpan dipisah per profil. Profil pertama memakai nama kunci lama, jadi cache yang sudah ada tidak hilang.
-        const PROFILE_SUFFIX = (ACTIVE_PROFILE && PROFILES.indexOf(ACTIVE_PROFILE) > 0) ? ':' + ACTIVE_PROFILE.id : '';
+        const PROFILE_SUFFIX = ACCOUNT_MODE ? (ACTIVE_PROFILE ? ':' + ACTIVE_PROFILE.id : ':none') : ((ACTIVE_PROFILE && PROFILES.indexOf(ACTIVE_PROFILE) > 0) ? ':' + ACTIVE_PROFILE.id : '');
         const CACHE_KEY = 'tradingDataCache' + PROFILE_SUFFIX;
         const CACHE_URL_KEY = 'tradingDataCacheUrl' + PROFILE_SUFFIX;
         const SIDE_MAP_KEY = 'tradeSideMap' + PROFILE_SUFFIX;
@@ -1677,24 +1774,25 @@
         let heatmapYear = now_.getFullYear();
         let heatmapMonth = now_.getMonth();
 
-        // Long / Short: leverage selalu 20x (tidak ada input).
+        // Buy / Sell: leverage selalu 20x (tidak ada input).
         // Side disimpan di Sheet (kolom Side) lewat parameter &side= dan dibaca balik dari
-        // respons API, jadi sama di semua perangkat. Trade lama yang Side-nya kosong dianggap Long.
-        let formSide = 'Long';
-        let editSide = 'Long';
+        // respons API, jadi sama di semua perangkat. Trade lama yang Side-nya kosong dianggap Buy.
+        let formSide = 'Buy';
+        let editSide = 'Buy';
         let tradeSideMap = {};
         try { tradeSideMap = JSON.parse(localStorage.getItem(SIDE_MAP_KEY) || '{}') || {}; } catch (e) { tradeSideMap = {}; }
         function saveSideMap() {
             try { localStorage.setItem(SIDE_MAP_KEY, JSON.stringify(tradeSideMap)); } catch (e) {}
         }
         function getTradeSide(item) {
-            const s = (item && item.side) || 'Long';
-            return String(s).toLowerCase() === 'short' ? 'Short' : 'Long';
+            const s = (item && item.side) || 'Buy';
+            const k = String(s).toLowerCase();
+            return (k === 'sell' || k === 'short') ? 'Sell' : 'Buy';   // 'short' = nilai lama di Sheet
         }
         function paintSide(longBtn, shortBtn, side) {
             if (!longBtn || !shortBtn) return;
-            longBtn.classList.toggle('on-long', side === 'Long');
-            shortBtn.classList.toggle('on-short', side === 'Short');
+            longBtn.classList.toggle('on-long', side === 'Buy');
+            shortBtn.classList.toggle('on-short', side === 'Sell');
         }
         function setFormSide(side) {
             formSide = side;
@@ -1744,7 +1842,7 @@
         const closedPicker = flatpickr("#closed", {
             dateFormat: "Y-m-d",
             altInput: true,
-            altFormat: "d/m/Y",
+            altFormat: "d-m-Y",
             defaultDate: "today",
             disableMobile: true,
             onChange: function(selectedDates, dateStr) {
@@ -1765,7 +1863,7 @@
         const openedPicker = flatpickr("#opened", {
             dateFormat: "Y-m-d",
             altInput: true,
-            altFormat: "d/m/Y",
+            altFormat: "d-m-Y",
             defaultDate: "today",
             disableMobile: true,
             onChange: function(selectedDates, dateStr) {
@@ -1827,10 +1925,12 @@
         // baris di Sheet pindah posisi & nomornya ikut berubah).
         function syncFromSheet() {
             if (!API_URL) return Promise.resolve();
-            return fetch(`${API_URL}?_ts=${Date.now()}`, { cache: 'no-store' })
+            return fetch(apiUrl(dataQuery()), { cache: 'no-store' })
                 .then(res => res.json())
                 .then(data => {
+                    if (checkAuthError(data)) return;
                     if (!data || !data.history) return;
+                    applyServerProfile(data.profile);
                     cachedGlobalResponse = data;
                     sortHistoryByClosedDate();
                     localStorage.setItem(CACHE_KEY, JSON.stringify(data));
@@ -1854,6 +1954,16 @@
             const el = document.getElementById('pnlPreview');
             if (!el) return;
             const val = parseFloat(document.getElementById('pnl').value) || 0;
+            const isProfit = val >= 0;
+            el.textContent = `≈ ${isProfit ? '' : '-'}${formatRupiah(Math.abs(val) * currentKursIdr)}`;
+            el.style.color = val === 0 ? 'var(--text-faint)' : (isProfit ? 'var(--profit)' : 'var(--loss)');
+        }
+
+        // Estimasi Rp di modal edit trade (sama seperti updatePnlPreview untuk form tambah)
+        function updateEditPnlPreview() {
+            const el = document.getElementById('editPnlPreview');
+            if (!el) return;
+            const val = parseFloat(document.getElementById('editPnl').value) || 0;
             const isProfit = val >= 0;
             el.textContent = `≈ ${isProfit ? '' : '-'}${formatRupiah(Math.abs(val) * currentKursIdr)}`;
             el.style.color = val === 0 ? 'var(--text-faint)' : (isProfit ? 'var(--profit)' : 'var(--loss)');
@@ -2119,6 +2229,484 @@
         }
 
         // ─────────── Pilih profil / Sheet ───────────
+
+        // ═══════════════ MODE AKUN: masuk, buat akun, profil, hapus akun, crop foto ═══════════════
+        // (Semua bagian ini hanya dipakai kalau Database.js berisi ACCOUNTS_URL.)
+        let loggingOut = false;
+
+        function acctPost(payload, ms) {
+            const ctl = new AbortController();
+            const timer = setTimeout(() => ctl.abort(), ms || 60000);
+            return fetch(ACCOUNTS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), signal: ctl.signal, cache: 'no-store' })
+                .then(r => r.json())
+                .finally(() => clearTimeout(timer));
+        }
+        function persistSession() {
+            try {
+                SESSIONS[SESSION.user] = SESSION;
+                localStorage.setItem('acct:sessions', JSON.stringify(SESSIONS));
+                localStorage.setItem('acct:active', SESSION.user);
+                localStorage.removeItem('acct:session');
+            } catch (e) {}
+        }
+        // Simpan tiket dari respons masuk / daftar yang berhasil, jadikan akun aktif (akun lain di HP ini tetap ada)
+        function addSessionFromLogin(r) {
+            const pr = r.profile || {};
+            try {
+                const map = readSessions();
+                map[pr.user] = { token: r.token, exp: r.exp, user: pr.user, name: pr.name || pr.user, pv: pr.pv || '0' };
+                localStorage.setItem('acct:sessions', JSON.stringify(map));
+                localStorage.setItem('acct:active', pr.user);
+                localStorage.removeItem('acct:session');
+            } catch (e) {}
+            storePhoto(pr.user, pr.photo || '');
+        }
+        function switchAccount(user) {
+            try { localStorage.setItem('acct:active', user); } catch (e) {}
+            location.replace(cleanUrl());
+        }
+        // Keluarkan satu akun dari HP ini (tiket + data lokalnya). Data di Sheet tidak tersentuh.
+        function removeAccountSession(user) {
+            clearAccountLocalData(user);
+            try {
+                const map = readSessions(); delete map[user];
+                localStorage.setItem('acct:sessions', JSON.stringify(map));
+                localStorage.removeItem('acct:session');
+                const rest = Object.keys(map);
+                if (localStorage.getItem('acct:active') === user) { if (rest.length) localStorage.setItem('acct:active', rest[0]); else localStorage.removeItem('acct:active'); }
+            } catch (e) {}
+        }
+        function logoutAll() {
+            if (loggingOut) return;
+            loggingOut = true;
+            Object.keys(readSessions()).forEach(u => clearAccountLocalData(u));
+            try { localStorage.removeItem('acct:sessions'); localStorage.removeItem('acct:active'); localStorage.removeItem('acct:session'); sessionStorage.setItem('authNotice', 'Kamu sudah keluar dari semua akun.'); } catch (e) {}
+            location.replace(cleanUrl());
+        }
+        function storePhoto(user, photo) {
+            try { if (photo) localStorage.setItem('avatar:u:' + user, photo); else localStorage.removeItem('avatar:u:' + user); } catch (e) {}
+        }
+        function cleanUrl() { const u = new URL(location.href); u.searchParams.delete('p'); return u.toString(); }
+
+        // Hapus semua data akun ini dari HP (sesi, cache, foto, pilihan Buy/Sell). Data di Sheet tidak tersentuh.
+        function clearAccountLocalData(user) {
+            try {
+                const suffix = ':u:' + user;
+                Object.keys(localStorage).forEach(k => { if (user && k.endsWith(suffix)) localStorage.removeItem(k); });
+            } catch (e) {}
+        }
+        function forceLogout(msg) {
+            if (loggingOut) return;
+            loggingOut = true;
+            if (SESSION) removeAccountSession(SESSION.user);      // akun lain di HP ini (kalau ada) tetap masuk
+            try { sessionStorage.setItem('authNotice', msg || 'Silakan masuk lagi'); } catch (e) {}
+            location.replace(cleanUrl());
+        }
+        function checkAuthError(data) {
+            if (ACCOUNT_MODE && data && data.error === 'auth') { forceLogout(data.msg || 'Sesi berakhir, silakan masuk lagi'); return true; }
+            return false;
+        }
+        // Panggilan yang hasilnya tidak dibaca (tambah / edit / hapus trade): di mode akun, tetap pantau kalau sesi habis
+        function watchAuth(p) {
+            if (!ACCOUNT_MODE) return p;
+            return p.then(res => { try { res.clone().json().then(checkAuthError).catch(() => {}); } catch (e) {} return res; });
+        }
+        // Nama / foto yang berubah dari HP lain ikut terbawa lewat data biasa
+        function applyServerProfile(pr) {
+            if (!ACCOUNT_MODE || !SESSION || !ACTIVE_PROFILE || !pr) return;
+            let changed = false;
+            if (pr.name && pr.name !== ACTIVE_PROFILE.name) { ACTIVE_PROFILE.name = pr.name; SESSION.name = pr.name; changed = true; }
+            if (pr.pv !== undefined && pr.pv !== SESSION.pv) {
+                SESSION.pv = pr.pv; persistSession();
+                acctPost({ action: 'me', token: SESSION.token }).then(r => {
+                    if (r && r.profile) { storePhoto(SESSION.user, r.profile.photo || ''); renderHeaderProfile(); }
+                }).catch(() => {});
+            }
+            if (changed) { persistSession(); renderHeaderProfile(); document.title = document.title.split(' · ')[0] + ' · ' + ACTIVE_PROFILE.name; }
+        }
+
+        // ── Dialog sederhana ──
+        function closeDialog() { document.querySelectorAll('.dlg-backdrop').forEach(el => el.remove()); }
+        function mkEl(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+        // o: { title, desc, danger, fields:[{id,label,type,value,placeholder,autocomplete,max}], okText, extra(node), onConfirm(vals, api) }
+        function showDialog(o) {
+            closeDialog();
+            const back = mkEl('div', 'dlg-backdrop');
+            const card = mkEl('div', 'dlg'); card.setAttribute('role', 'dialog'); card.setAttribute('aria-modal', 'true');
+            card.appendChild(mkEl('div', 'dlg-title' + (o.danger ? ' is-danger' : ''), o.title));
+            if (o.desc) card.appendChild(mkEl('div', 'dlg-desc', o.desc));
+            const inputs = {};
+            (o.fields || []).forEach(f => {
+                const lab = mkEl('label', 'dlg-field'); lab.appendChild(mkEl('span', '', f.label));
+                const inp = document.createElement('input');
+                inp.type = f.type || 'text'; inp.value = f.value || ''; inp.placeholder = f.placeholder || '';
+                inp.autocomplete = f.autocomplete || 'off'; inp.setAttribute('autocapitalize', 'off'); inp.spellcheck = false;
+                if (f.max) inp.maxLength = f.max;
+                inputs[f.id] = inp; lab.appendChild(inp); card.appendChild(lab);
+            });
+            if (o.extra) card.appendChild(o.extra);
+            const err = mkEl('div', 'dlg-err'); err.setAttribute('role', 'alert'); card.appendChild(err);
+            const act = mkEl('div', 'dlg-actions');
+            const cancel = mkEl('button', 'dlg-cancel', o.cancelText || 'Batal'); cancel.type = 'button';
+            const ok = mkEl('button', 'dlg-ok' + (o.danger ? ' is-danger' : ''), o.okText || 'Simpan'); ok.type = 'button';
+            act.append(cancel, ok); card.appendChild(act);
+            back.appendChild(card); document.body.appendChild(back);
+            const api = {
+                card, inputs, ok, close: closeDialog,
+                setError: (m) => { err.textContent = m || ''; },
+                setBusy: (b) => { ok.disabled = b; cancel.disabled = b; ok.dataset.label = ok.dataset.label || ok.textContent; ok.textContent = b ? 'Memproses…' : ok.dataset.label; }
+            };
+            cancel.addEventListener('click', closeDialog);
+            const submit = async () => {
+                if (ok.disabled) return;
+                api.setError(''); api.setBusy(true);
+                try {
+                    const vals = {}; Object.keys(inputs).forEach(k => { vals[k] = inputs[k].value; });
+                    const keep = await o.onConfirm(vals, api);
+                    if (keep !== false) { /* onConfirm menutup dialog sendiri kalau sukses */ }
+                } catch (e) { api.setError(e && e.message ? e.message : 'Terjadi kesalahan'); }
+                if (document.body.contains(card)) api.setBusy(false);
+            };
+            ok.addEventListener('click', submit);
+            Object.values(inputs).forEach(i => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); }));
+            const first = Object.values(inputs)[0]; if (first) setTimeout(() => first.focus(), 60);
+            return api;
+        }
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDialog(); });
+
+        async function acctCall(payload) {
+            let r;
+            try { r = await acctPost(Object.assign({ token: SESSION ? SESSION.token : '' }, payload)); }
+            catch (e) { throw new Error('Tidak bisa terhubung ke server. Coba lagi.'); }
+            if (r && r.error === 'auth') { forceLogout(r.msg); throw new Error(r.msg || 'Sesi berakhir'); }
+            if (!r || r.error) throw new Error((r && r.msg) || 'Gagal');
+            return r;
+        }
+
+        // ── Layar masuk / buat akun ──
+        function showAuthScreen(opts) {
+            const addMode = !!(opts && opts.add);
+            if (document.getElementById('lockScreen')) return;
+            const el = mkEl('div'); el.id = 'lockScreen'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true');
+            const card = mkEl('div', 'lock-card');
+            card.appendChild(mkEl('div', 'lock-app', document.title.split(' · ')[0].toUpperCase()));
+            const tabs = mkEl('div', 'auth-tabs');
+            const tIn = mkEl('button', 'auth-tab is-on', 'Masuk'); tIn.type = 'button';
+            const tUp = mkEl('button', 'auth-tab', 'Buat akun'); tUp.type = 'button';
+            tabs.append(tIn, tUp); card.appendChild(tabs);
+            const notice = mkEl('div', 'auth-note');
+            try { const n = sessionStorage.getItem('authNotice'); if (n) { notice.textContent = n; sessionStorage.removeItem('authNotice'); } } catch (e) {}
+            card.appendChild(notice);
+            const field = (id, label, type, ac) => {
+                const w = mkEl('label', 'auth-field'); w.appendChild(mkEl('span', '', label));
+                const i = document.createElement('input'); i.className = 'auth-input'; i.type = type; i.id = id; i.autocomplete = ac;
+                i.setAttribute('autocapitalize', 'off'); i.spellcheck = false; w.appendChild(i);
+                return { w, i };
+            };
+            const fU = field('authUser', 'Nama pengguna', 'text', 'username');
+            const fName = field('authName', 'Nama yang ditampilkan', 'text', 'name');
+            const fP = field('authPass', 'Sandi', 'password', 'current-password');
+            const fP2 = field('authPass2', 'Ulangi sandi', 'password', 'new-password');
+            const fCode = field('authCode', 'Kode undangan', 'text', 'off');
+            [fU, fName, fP, fP2, fCode].forEach(f => card.appendChild(f.w));
+            const err = mkEl('div', 'lock-err'); err.setAttribute('role', 'alert'); card.appendChild(err);
+            const btn = mkEl('button', 'lock-btn', 'Masuk'); btn.type = 'button'; card.appendChild(btn);
+            const hint = mkEl('div', 'auth-hint'); card.appendChild(hint);
+            if (addMode) {
+                const cancel = mkEl('button', 'auth-cancel', 'Batal, kembali ke akun saya'); cancel.type = 'button';
+                cancel.addEventListener('click', () => el.remove()); card.appendChild(cancel);
+            }
+            let mode = 'in';
+            let needCode = false;          // kolom kode undangan cuma muncul kalau server memintanya (mode "kode")
+            let regMode = '';
+            const setMode = (m) => {
+                mode = m; err.textContent = '';
+                tIn.classList.toggle('is-on', m === 'in'); tUp.classList.toggle('is-on', m === 'up');
+                fName.w.style.display = fP2.w.style.display = (m === 'up') ? '' : 'none';
+                fCode.w.style.display = (m === 'up' && needCode) ? '' : 'none';
+                fP.i.autocomplete = (m === 'up') ? 'new-password' : 'current-password';
+                btn.textContent = (m === 'up') ? 'Buat akun' : 'Masuk';
+                if (m === 'up') {
+                    hint.textContent = 'Nama pengguna: huruf kecil, angka, atau _ (3-20 karakter).'
+                        + (needCode ? ' Kode undangan didapat dari admin.' : '')
+                        + (regMode === 'persetujuan' ? ' Akun baru perlu disetujui admin dulu sebelum bisa masuk.' : '')
+                        + (regMode === 'tutup' ? ' Pendaftaran sedang ditutup.' : '');
+                } else hint.textContent = 'Datamu tersimpan di Google Sheet. Kalau sudah lama tidak dipakai, masuk pertama bisa butuh beberapa detik.';
+            };
+            tIn.addEventListener('click', () => setMode('in')); tUp.addEventListener('click', () => setMode('up'));
+            setMode('in');
+            // Tanya server mode pendaftarannya (tanpa data apa pun) supaya kolom kode cuma muncul kalau diminta
+            fetch(ACCOUNTS_URL + '?action=ping', { cache: 'no-store' }).then(r => r.json()).then(d => {
+                if (d && d.mode) { regMode = d.mode; needCode = (d.mode === 'kode'); setMode(mode); }
+            }).catch(() => {});
+            const busy = (b) => { btn.disabled = b; if (b) { btn.dataset.l = btn.textContent; btn.textContent = 'Memproses…'; } else if (btn.dataset.l) btn.textContent = btn.dataset.l; };
+            const submit = async () => {
+                if (btn.disabled) return;
+                err.textContent = ''; notice.textContent = '';
+                const u = fU.i.value.trim().toLowerCase(), p = fP.i.value;
+                if (!u || !p) { err.textContent = 'Isi nama pengguna dan sandi'; return; }
+                let payload;
+                if (mode === 'up') {
+                    if (p !== fP2.i.value) { err.textContent = 'Ulangi sandi tidak sama'; return; }
+                    if (p.length < 6) { err.textContent = 'Sandi minimal 6 karakter'; return; }
+                    payload = { action: 'signup', u, name: fName.i.value.trim(), p, code: fCode.i.value.trim() };
+                } else payload = { action: 'login', u, p };
+                busy(true);
+                const slow = setTimeout(() => { notice.textContent = 'Masih menunggu server… (Apps Script yang lama tidak dipakai butuh beberapa detik untuk bangun)'; }, 6000);
+                try {
+                    const r = await acctPost(payload);
+                    if (r && r.ok && r.token) {
+                        const pr = r.profile || {};
+                        addSessionFromLogin(r);
+                        location.replace(cleanUrl());
+                        return;
+                    }
+                    if (r && r.ok && r.status === 'menunggu') { setMode('in'); notice.textContent = r.msg || 'Akun dibuat. Tunggu admin menyetujui.'; fU.i.value = u; fP.i.value = ''; }
+                    else if (r && r.error === 'code') { needCode = true; setMode('up'); err.textContent = r.msg || 'Kode undangan salah'; fCode.i.focus(); }
+                    else err.textContent = (r && r.msg) || 'Gagal masuk';
+                } catch (e) {
+                    err.textContent = 'Tidak bisa terhubung ke server. Periksa internet lalu coba lagi.';
+                } finally { clearTimeout(slow); busy(false); }
+            };
+            btn.addEventListener('click', submit);
+            card.querySelectorAll('input').forEach(i => i.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); }));
+            el.appendChild(card); document.body.appendChild(el);
+            setTimeout(() => fU.i.focus(), 60);
+        }
+
+        // ── Menu akun (ketuk bulatan profil) ──
+        function openAccountMenu(anchor) {
+            if (!SESSION || !ACTIVE_PROFILE) return;
+            if (document.querySelector('.profile-menu')) { closeProfileMenu(); return; }
+            const back = mkEl('div', 'profile-menu-backdrop'); back.addEventListener('click', closeProfileMenu);
+            const menu = mkEl('div', 'profile-menu'); menu.setAttribute('role', 'menu');
+            const users = Object.keys(SESSIONS);
+            menu.appendChild(mkEl('div', 'pm-title', users.length > 1 ? 'AKUN DI HP INI' : 'AKUN'));
+            users.forEach(u => {
+                const ss = SESSIONS[u], active = (u === SESSION.user);
+                const b = mkEl('button', active ? 'is-active' : ''); b.type = 'button'; b.setAttribute('role', 'menuitem');
+                b.append(makeAvatar({ id: 'u:' + u, name: ss.name || u }, 28), mkEl('span', '', ss.name || u), mkEl('small', 'pm-sub', '@' + u));
+                if (active) {
+                    const ck = mkEl('span', 'pm-check'); ck.style.marginLeft = 'auto';
+                    ck.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2.5,6.5 5,9 9.5,3.5"/></svg>';
+                    b.appendChild(ck);
+                }
+                b.addEventListener('click', () => { closeProfileMenu(); if (!active) switchAccount(u); });
+                menu.appendChild(b);
+            });
+            menu.appendChild(mkEl('div', 'pm-sep'));
+            const item = (label, fn, cls) => { const b = mkEl('button', cls || '', label); b.type = 'button'; b.setAttribute('role', 'menuitem'); b.addEventListener('click', () => { closeProfileMenu(); fn(); }); menu.appendChild(b); };
+            item('Ubah nama', openRenameDialog);
+            item('Ganti foto', pickAvatar);
+            let hasPhoto = false; try { hasPhoto = !!localStorage.getItem('avatar:u:' + SESSION.user); } catch (e) {}
+            if (hasPhoto) item('Hapus foto', removePhotoAccount);
+            item('Ubah sandi', openPasswordDialog);
+            menu.appendChild(mkEl('div', 'pm-sep'));
+            item('Tambah akun lain', () => showAuthScreen({ add: true }));
+            item('Keluar', openLogoutDialog);
+            if (users.length > 1) item('Keluar dari semua akun', openLogoutAllDialog);
+            item('Hapus akun', openDeleteDialog, 'pm-danger');
+            document.body.append(back, menu);
+            const r = anchor.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight;
+            menu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - mw - 8)) + 'px';
+            menu.style.top = (r.bottom + 8 + mh > window.innerHeight ? Math.max(8, r.top - mh - 8) : r.bottom + 8) + 'px';
+        }
+
+        function openRenameDialog() {
+            showDialog({
+                title: 'Ubah nama', desc: 'Nama yang tampil di samping foto profil. Nama pengguna untuk masuk tidak berubah.',
+                fields: [{ id: 'name', label: 'Nama', value: ACTIVE_PROFILE.name, max: 30 }], okText: 'Simpan',
+                onConfirm: async (v, api) => {
+                    const name = v.name.trim();
+                    if (!name) throw new Error('Nama tidak boleh kosong');
+                    const r = await acctCall({ action: 'profile', name });
+                    ACTIVE_PROFILE.name = r.profile.name; SESSION.name = r.profile.name; persistSession();
+                    renderHeaderProfile(); document.title = document.title.split(' · ')[0] + ' · ' + ACTIVE_PROFILE.name;
+                    api.close(); showToast('Nama diperbarui', 'success');
+                }
+            });
+        }
+        function openPasswordDialog() {
+            showDialog({
+                title: 'Ubah sandi',
+                fields: [
+                    { id: 'old', label: 'Sandi sekarang', type: 'password', autocomplete: 'current-password' },
+                    { id: 'n1', label: 'Sandi baru (minimal 6 karakter)', type: 'password', autocomplete: 'new-password' },
+                    { id: 'n2', label: 'Ulangi sandi baru', type: 'password', autocomplete: 'new-password' }
+                ], okText: 'Simpan',
+                onConfirm: async (v, api) => {
+                    if (v.n1.length < 6) throw new Error('Sandi baru minimal 6 karakter');
+                    if (v.n1 !== v.n2) throw new Error('Ulangi sandi baru tidak sama');
+                    const r = await acctCall({ action: 'changePassword', old: v.old, new: v.n1 });
+                    SESSION.token = r.token; SESSION.exp = r.exp; persistSession();
+                    api.close(); showToast('Sandi diperbarui', 'success');
+                }
+            });
+        }
+        function openLogoutDialog() {
+            const others = Object.keys(SESSIONS).length - 1;
+            showDialog({
+                title: 'Keluar dari akun ' + ACTIVE_PROFILE.name + '?',
+                desc: 'Data akun ini di HP (cache, foto, pilihan Buy/Sell) akan dihapus. Data di Google Sheet tetap aman dan muncul lagi kalau kamu masuk.'
+                    + (others > 0 ? ' Kamu akan pindah ke akun lain yang masih masuk di HP ini.' : ''),
+                okText: 'Keluar',
+                onConfirm: async () => { forceLogout('Kamu sudah keluar dari ' + ACTIVE_PROFILE.name + '.'); }
+            });
+        }
+        function openLogoutAllDialog() {
+            showDialog({
+                title: 'Keluar dari semua akun?',
+                desc: 'Semua akun di HP ini keluar dan data lokalnya dihapus. Data di Google Sheet tetap aman.',
+                okText: 'Keluar semua',
+                onConfirm: async () => { logoutAll(); }
+            });
+        }
+        function removePhotoAccount() {
+            acctCall({ action: 'profile', photo: '' }).then(r => { storePhoto(SESSION.user, ''); SESSION.pv = r.profile.pv; persistSession(); renderHeaderProfile(); showToast('Foto dihapus', 'success'); })
+                .catch(e => showToast(e.message || 'Gagal menghapus foto', 'error'));
+        }
+        async function uploadPhoto(dataUrl) {
+            try {
+                const r = await acctCall({ action: 'profile', photo: dataUrl });
+                storePhoto(SESSION.user, dataUrl); SESSION.pv = r.profile.pv; persistSession();
+                renderHeaderProfile(); showToast('Foto akun diperbarui', 'success');
+            } catch (e) { showToast(e.message || 'Foto gagal disimpan', 'error'); }
+        }
+
+        // ── Cadangan CSV (sebelum hapus akun) ──
+        function downloadBackupCsv() {
+            const rows = ((cachedGlobalResponse && cachedGlobalResponse.history) || []).slice().reverse();
+            const esc = (x) => { const t = String(x === undefined || x === null ? '' : x); return /[",\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t; };
+            const lines = ['No,Opened,Closed,Pair,Side,PNL (USDT)'].concat(rows.map(h => [h.no, h.opened, h.closed, h.pair, h.side || '', h.pnl].map(esc).join(',')));
+            const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            a.download = 'cadangan-' + (SESSION ? SESSION.user : 'akun') + '-' + new Date().toISOString().slice(0, 10) + '.csv';
+            document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+            return rows.length;
+        }
+
+        // ── Hapus akun: sandi + ketik HAPUS AKUN + hitung mundur ──
+        function openDeleteDialog() {
+            const n = (cachedGlobalResponse && cachedGlobalResponse.history) ? cachedGlobalResponse.history.length : 0;
+            const extra = mkEl('div');
+            const bk = mkEl('button', 'dlg-link', 'Unduh cadangan (CSV) dulu'); bk.type = 'button';
+            bk.addEventListener('click', () => { const c = downloadBackupCsv(); showToast(c + ' trade diunduh', 'success'); });
+            extra.appendChild(bk);
+            const dlg = showDialog({
+                title: 'Hapus akun', danger: true,
+                desc: 'Akun ' + ACTIVE_PROFILE.name + ' akan dinonaktifkan dan tidak bisa masuk lagi. ' + n + ' trade di Sheet TIDAK ikut terhapus dan masih bisa dipulihkan admin. Untuk lanjut, masukkan sandi lalu ketik HAPUS AKUN.',
+                fields: [
+                    { id: 'p', label: 'Sandi', type: 'password', autocomplete: 'current-password' },
+                    { id: 'c', label: 'Ketik: HAPUS AKUN', placeholder: 'HAPUS AKUN' }
+                ], okText: 'Hapus akun', extra,
+                onConfirm: async (v, api) => {
+                    if (v.c !== 'HAPUS AKUN') throw new Error('Ketik HAPUS AKUN persis (huruf besar)');
+                    if (!v.p) throw new Error('Masukkan sandi');
+                    await acctCall({ action: 'deleteAccount', p: v.p, confirm: 'HAPUS AKUN' });
+                    forceLogout('Akun sudah dihapus. Data di Sheet masih tersimpan dan bisa dipulihkan admin.');
+                }
+            });
+            // Tombol hapus baru aktif kalau tulisan benar, sandi terisi, dan hitung mundur 5 detik selesai
+            let left = 5;
+            const refresh = () => {
+                const okTxt = dlg.inputs.c.value === 'HAPUS AKUN' && dlg.inputs.p.value.length > 0;
+                dlg.ok.disabled = !(okTxt && left <= 0);
+                dlg.ok.dataset.label = left > 0 ? 'Hapus akun (' + left + ')' : 'Hapus akun';
+                if (!dlg.ok.textContent.startsWith('Memproses')) dlg.ok.textContent = dlg.ok.dataset.label;
+            };
+            dlg.inputs.c.addEventListener('input', refresh); dlg.inputs.p.addEventListener('input', refresh);
+            const tm = setInterval(() => { if (!document.body.contains(dlg.card)) { clearInterval(tm); return; } left--; refresh(); if (left <= 0) clearInterval(tm); }, 1000);
+            refresh();
+        }
+
+        // ── Crop foto: geser, cubit / roda mouse / slider untuk zoom ──
+        function openCropper(file) {
+            return new Promise((resolve) => {
+                const objUrl = URL.createObjectURL(file);
+                const img = new Image();
+                img.onerror = () => { URL.revokeObjectURL(objUrl); showToast('Gambar tidak bisa dibuka', 'error'); resolve(null); };
+                img.onload = () => {
+                    URL.revokeObjectURL(objUrl);
+                    let src = img, W = img.naturalWidth, H = img.naturalHeight;
+                    const MAXD = 1600;                       // foto besar diperkecil dulu supaya geser & zoom tetap lancar
+                    if (Math.max(W, H) > MAXD) {
+                        const k = MAXD / Math.max(W, H), c = document.createElement('canvas');
+                        c.width = Math.round(W * k); c.height = Math.round(H * k);
+                        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); src = c; W = c.width; H = c.height;
+                    }
+                    build(src, W, H);
+                };
+                img.src = objUrl;
+
+                function build(src, W, H) {
+                    const S = Math.max(200, Math.min(320, window.innerWidth - 56)), BOX = Math.round(S * 0.82), dpr = Math.min(2, window.devicePixelRatio || 1);
+                    const back = mkEl('div', 'dlg-backdrop'); const card = mkEl('div', 'dlg');
+                    card.appendChild(mkEl('div', 'dlg-title', 'Atur foto profil'));
+                    card.appendChild(mkEl('div', 'dlg-desc', 'Geser foto, lalu cubit atau pakai slider untuk memperbesar. Bagian di dalam lingkaran yang akan dipakai.'));
+                    const stage = mkEl('div', 'crop-stage'); stage.style.width = stage.style.height = S + 'px';
+                    const cv = document.createElement('canvas'); cv.width = cv.height = Math.round(S * dpr); stage.appendChild(cv);
+                    const ring = mkEl('div', 'crop-ring'); ring.style.cssText = 'left:' + (S - BOX) / 2 + 'px;top:' + (S - BOX) / 2 + 'px;width:' + BOX + 'px;height:' + BOX + 'px';
+                    stage.appendChild(ring); card.appendChild(stage);
+                    const zoomRow = mkEl('div', 'crop-zoom'); zoomRow.appendChild(mkEl('span', '', '−'));
+                    const slider = document.createElement('input'); slider.type = 'range'; slider.min = '1'; slider.max = '6'; slider.step = '0.01'; slider.value = '1'; slider.setAttribute('aria-label', 'Zoom');
+                    zoomRow.appendChild(slider); zoomRow.appendChild(mkEl('span', '', '+')); card.appendChild(zoomRow);
+                    const act = mkEl('div', 'dlg-actions');
+                    const cancel = mkEl('button', 'dlg-cancel', 'Batal'); cancel.type = 'button';
+                    const ok = mkEl('button', 'dlg-ok', 'Pakai foto'); ok.type = 'button';
+                    act.append(cancel, ok); card.appendChild(act); back.appendChild(card); document.body.appendChild(back);
+
+                    const minS = BOX / Math.min(W, H);
+                    let scale = minS, cx = S / 2, cy = S / 2;
+                    const ctx = cv.getContext('2d');
+                    const clamp = () => {
+                        const hw = W * scale / 2, hh = H * scale / 2, lo = (S - BOX) / 2, hi = (S + BOX) / 2;
+                        cx = Math.min(lo + hw, Math.max(hi - hw, cx)); cy = Math.min(lo + hh, Math.max(hi - hh, cy));
+                    };
+                    const draw = () => {
+                        ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, S, S);
+                        ctx.drawImage(src, cx - W * scale / 2, cy - H * scale / 2, W * scale, H * scale);
+                    };
+                    const setScale = (ns, ax, ay) => {          // zoom dengan titik (ax, ay) tetap di tempatnya
+                        ns = Math.min(minS * 6, Math.max(minS, ns));
+                        const ix = (ax - cx) / scale, iy = (ay - cy) / scale;
+                        scale = ns; cx = ax - ix * scale; cy = ay - iy * scale; clamp();
+                        slider.value = String(scale / minS); draw();
+                    };
+                    clamp(); draw();
+
+                    const ptrs = new Map(); let lastDist = 0;
+                    const pos = (e) => { const r = stage.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+                    stage.addEventListener('pointerdown', (e) => { stage.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, pos(e)); lastDist = 0; });
+                    stage.addEventListener('pointermove', (e) => {
+                        if (!ptrs.has(e.pointerId)) return;
+                        const prev = ptrs.get(e.pointerId), cur = pos(e);
+                        if (ptrs.size === 1) { cx += cur.x - prev.x; cy += cur.y - prev.y; clamp(); draw(); }
+                        ptrs.set(e.pointerId, cur);
+                        if (ptrs.size === 2) {
+                            const [a, b] = Array.from(ptrs.values()), d = Math.hypot(a.x - b.x, a.y - b.y);
+                            if (lastDist) setScale(scale * d / lastDist, (a.x + b.x) / 2, (a.y + b.y) / 2);
+                            lastDist = d;
+                        }
+                    });
+                    const up = (e) => { ptrs.delete(e.pointerId); lastDist = 0; };
+                    stage.addEventListener('pointerup', up); stage.addEventListener('pointercancel', up);
+                    stage.addEventListener('wheel', (e) => { e.preventDefault(); const p = pos(e); setScale(scale * Math.exp(-e.deltaY * 0.0015), p.x, p.y); }, { passive: false });
+                    slider.addEventListener('input', () => setScale(minS * parseFloat(slider.value), S / 2, S / 2));
+
+                    const finish = (val) => { document.removeEventListener('keydown', onKey, true); back.remove(); resolve(val); };
+                    const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); finish(null); } };
+                    document.addEventListener('keydown', onKey, true);
+                    cancel.addEventListener('click', () => finish(null));
+                    ok.addEventListener('click', () => {
+                        const lo = (S - BOX) / 2, left = cx - W * scale / 2, top = cy - H * scale / 2;
+                        const out = document.createElement('canvas'); out.width = out.height = 192;
+                        out.getContext('2d').drawImage(src, (lo - left) / scale, (lo - top) / scale, BOX / scale, BOX / scale, 0, 0, 192, 192);
+                        finish(out.toDataURL('image/jpeg', 0.85));
+                    });
+                }
+            });
+        }
+
         // ── Avatar profil: foto (dari galeri, tersimpan di perangkat ini) atau bulatan 2 huruf ──
         const AVATAR_COLORS = ['#34d399', '#60a5fa', '#f59e0b', '#f472b6', '#a78bfa', '#fb7185', '#2dd4bf', '#facc15'];
         function profileInitials(name) {
@@ -2178,7 +2766,10 @@
                 inp.remove();
                 if (!f) return;
                 try {
-                    localStorage.setItem('avatar:' + ACTIVE_PROFILE.id, await fileToAvatar(f, 192));
+                    const cropped = await openCropper(f);          // geser & zoom dulu, baru dipakai
+                    if (!cropped) return;
+                    if (ACCOUNT_MODE) { await uploadPhoto(cropped); return; }
+                    localStorage.setItem('avatar:' + ACTIVE_PROFILE.id, cropped);
                     renderHeaderProfile();
                     showToast('Foto akun diperbarui', 'success');
                 } catch (e) { showToast('Foto tidak bisa dipakai, coba gambar lain', 'error'); }
@@ -2205,7 +2796,7 @@
         }
         function initProfileSwitcher() {
             const hdr = document.getElementById('appHeader');
-            if (!hdr || PROFILES.length < 2 || !ACTIVE_PROFILE) return;
+            if (!hdr || !ACTIVE_PROFILE || (!ACCOUNT_MODE && PROFILES.length < 2)) return;
             hdr.hidden = false;
             renderHeaderProfile();
             document.title = document.title.split(' · ')[0] + ' · ' + ACTIVE_PROFILE.name;
@@ -2216,6 +2807,7 @@
         }
 
         function openProfileMenu(anchor) {
+            if (ACCOUNT_MODE) { openAccountMenu(anchor); return; }
             if (PROFILES.length < 2) return;
             if (document.querySelector('.profile-menu')) { closeProfileMenu(); return; }
             const back = document.createElement('div');
@@ -2330,10 +2922,13 @@
         // (onload baru jalan setelah SEMUA file luar -- CSS/font dari CDN -- selesai dimuat).
         document.addEventListener('DOMContentLoaded', () => {
             initProfileSwitcher();
-            if (APP_LOCKED) { showLockScreen(); return; }   // terkunci: tidak ada data yang ditampilkan atau diambil
+            if (APP_LOCKED) { if (NEEDS_LOGIN) showAuthScreen(); else showLockScreen(); return; }   // terkunci: tidak ada data yang ditampilkan atau diambil
             checkCacheUrl();
             renderFromCache();
             startInitialFetch();   // permintaan ke Sheet langsung berangkat, tidak nunggu font/CSS CDN selesai (window.onload)
+            if (ACCOUNT_MODE && SESSION) {   // mis. setelah keluar dari satu akun lalu otomatis pindah ke akun lain
+                try { const n = sessionStorage.getItem('authNotice'); if (n) { sessionStorage.removeItem('authNotice'); showToast(n, 'success'); } } catch (e) {}
+            }
         });
 
         // Ambil data segar dari Google Sheet (sekali saat aplikasi dibuka).
@@ -2345,10 +2940,12 @@
             initialFetchStarted = true;
             const hadCachedRender = cacheRenderedEarly;
             document.body.classList.add('is-syncing');
-            (API_URL ? fetch(`${API_URL}?_ts=${Date.now()}`, { cache: 'no-store' }) : Promise.reject(new Error('API_URL kosong - cek Database.js')))
+            (API_URL ? fetch(apiUrl(dataQuery()), { cache: 'no-store' }) : Promise.reject(new Error('API_URL kosong - cek Database.js')))
                 .then(res => res.json())
                 .then(data => {
+                    if (checkAuthError(data)) return;
                     if (!data || !Array.isArray(data.history)) throw new Error('Respons Sheet tidak valid');
+                    applyServerProfile(data.profile);
                     cachedGlobalResponse = data;
                     sortHistoryByClosedDate();
                     localStorage.setItem(CACHE_KEY, JSON.stringify(data));
@@ -2371,11 +2968,11 @@
         window.onload = function() {
             // Kalau link sheet diganti, buang cache data dari sheet sebelumnya
             checkCacheUrl();
-            if (!API_URL) showToast('API_URL kosong, cek file Database.js', 'error');
+            if (!API_URL && !NEEDS_LOGIN) showToast('API_URL kosong, cek file Database.js', 'error');
 
             fetchRealtimeKurs();
             switchTab('rekap', true);
-            setFormSide('Long');
+            setFormSide('Buy');
             let lastTabW = window.innerWidth;
             window.addEventListener('resize', () => {
                 if (window.innerWidth === lastTabW) return;   // keyboard HP (tinggi doang) diabaikan
@@ -2514,7 +3111,7 @@
             const encPnl = encodeURIComponent(pnlVal);
             const encSide = encodeURIComponent(formSide);
 
-            fetch(`${API_URL}?action=add&pair=${encPair}&opened=${encOpened}&closed=${encClosed}&pnl=${encPnl}&side=${encSide}`, { cache: 'no-store' })
+            watchAuth(fetch(apiUrl(`action=add&pair=${encPair}&opened=${encOpened}&closed=${encClosed}&pnl=${encPnl}&side=${encSide}`), { cache: 'no-store' }))
                 .catch(err => {
                     console.log(err);
                     showToast("Gagal sync ke Sheet", "error");
@@ -2545,6 +3142,7 @@
             document.getElementById('editNoLabel').innerText = item.no;
             document.getElementById('editPair').value = item.pair;
             document.getElementById('editPnl').value = item.pnl;
+            updateEditPnlPreview();
             setEditSide(getTradeSide(item));
             const openedISO = toISODate(item.opened);
             const closedISO = toISODate(item.closed);
@@ -2601,11 +3199,11 @@
             renderDashboard(cachedGlobalResponse);
             showToast("Trade diupdate", "success");
 
-            let url = `${API_URL}?action=edit&no=${encodeURIComponent(no)}&pair=${encodeURIComponent(newPair)}&pnl=${encodeURIComponent(newPnl)}&side=${encodeURIComponent(newSide)}`;
-            if (newOpenedISO) url += `&opened=${encodeURIComponent(newOpenedISO)}`;
-            if (newClosedISO) url += `&closed=${encodeURIComponent(newClosedISO)}`;
+            let query = `action=edit&no=${encodeURIComponent(no)}&pair=${encodeURIComponent(newPair)}&pnl=${encodeURIComponent(newPnl)}&side=${encodeURIComponent(newSide)}`;
+            if (newOpenedISO) query += `&opened=${encodeURIComponent(newOpenedISO)}`;
+            if (newClosedISO) query += `&closed=${encodeURIComponent(newClosedISO)}`;
 
-            fetch(url, { cache: 'no-store' })
+            watchAuth(fetch(apiUrl(query), { cache: 'no-store' }))
                 .then(() => { if (closedChanged) return syncFromSheet(); })
                 .catch(err => {
                     console.log(err);
@@ -2635,7 +3233,7 @@
 
             showToast("Terhapus", "error");
 
-            fetch(`${API_URL}?action=delete&no=${no}`, { cache: 'no-store' })
+            watchAuth(fetch(apiUrl(`action=delete&no=${no}`), { cache: 'no-store' }))
                 .catch(err => {
                     console.log(err);
                     showToast("Gagal hapus di Sheet", "error");
@@ -2683,10 +3281,10 @@
             const bgCard = isProfit ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-rose-500/20 bg-rose-500/5';
             const totalIdr = formatRupiah(pnlNum * currentKursIdr);
 
-            // Badge posisi di samping nama koin: S merah = Short, L hijau = Long
+            // Badge posisi di samping nama koin: S merah = Sell, B hijau = Buy
             const sideName = getTradeSide(item);
-            const sideLetter = sideName === 'Short' ? 'S' : 'L';
-            const sideBg = sideName === 'Short' ? '#F6465D' : '#2EBD85';
+            const sideLetter = sideName === 'Sell' ? 'S' : 'B';
+            const sideBg = sideName === 'Sell' ? '#F6465D' : '#2EBD85';
 
             const shouldAnimate = forceAnimate || animateRows;
             const div = document.createElement('div');
@@ -3490,7 +4088,7 @@
             tsX: 142,       // x jam share (sejajar dengan nama Romini)
             tsY: 130,       // jam share
             titleY: 487,    // pair / judul
-            metaY: 537,     // baris Long | 20x
+            metaY: 537,     // baris Buy | 20x
             pnlBase: 668,   // baseline angka P&L + USDT
             col2X: 503,     // x kolom kanan (Closed / Setara IDR)
             labelY: 749,    // label Opened / Closed
@@ -3638,7 +4236,7 @@
             if (kind === 'trade') {
                 pcDraw(ctx, `${d.pair} Perpetual`, PL.padX, PL.titleY, 700, szTitle, PC.white, PL.maxW);
 
-                const sideColor = d.side === 'Short' ? PC.red : PC.green;
+                const sideColor = d.side === 'Sell' ? PC.red : PC.green;
                 const wSide = pcDraw(ctx, d.side, PL.padX, PL.metaY, 500, szMeta, sideColor);
                 const sepX = PL.padX + wSide + 20;
                 ctx.fillStyle = PC.sep;
@@ -4043,8 +4641,10 @@
                 tooltip.classList.remove('hidden');
                 tooltip.style.left = '0px';
                 const tw = tooltip.offsetWidth || 32;
-                let left = leftPx - tw / 2;
-                left = Math.max(0, Math.min(rect.width - tw, left));
+                // posisi tooltip relatif ke pembungkusnya, jadi geser sebesar jarak kurva dari tepi pembungkus (margin kurva)
+                const off = container.offsetLeft;
+                let left = off + leftPx - tw / 2;
+                left = Math.max(off, Math.min(off + rect.width - tw, left));
                 tooltip.style.left = `${left}px`;
             };
 
@@ -4715,6 +5315,349 @@
         function handleError(err) {
             console.error(err);
         }
+    </script>
+<!-- FITUR TAMBAHAN: modal statistik lanjutan & impor massal -->
+    <div id="advStatsModal" style="z-index:95" onclick="if(event.target===this) this.classList.add('hidden')" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 hidden">
+        <div class="porto-card w-full max-w-sm p-3.5 rounded-2xl space-y-2 rise-in max-h-[85vh] overflow-y-auto custom-scroll">
+            <div class="flex items-center justify-between"><h2 class="section-label">Statistik lanjutan</h2><span id="advStatsNote" class="text-[10px] text-[var(--text-faint)]"></span></div>
+            <div id="advStatsBody" class="grid grid-cols-2 gap-2"></div>
+            <button type="button" onclick="document.getElementById('advStatsModal').classList.add('hidden')" class="w-full text-center px-4 py-2.5 rounded-xl bg-[var(--surface-2)] text-slate-400 text-xs font-medium">Tutup</button>
+        </div>
+    </div>
+    <div id="importModal" style="z-index:95" onclick="if(event.target===this && !window.__impBusy) this.classList.add('hidden')" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 hidden">
+        <div class="porto-card w-full max-w-sm p-3.5 rounded-2xl space-y-2 rise-in max-h-[90vh] overflow-y-auto custom-scroll">
+            <h2 class="section-label">Impor massal</h2>
+            <div class="grid grid-cols-2 gap-1.5">
+                <div class="relative"><input id="impO" type="text" inputmode="numeric" maxlength="10" placeholder="Opened" class="porto-input rounded-lg pl-2 pr-8 text-[11px] w-full" style="height:32px"><button type="button" data-impcal="impO" class="absolute right-1 top-1/2 -translate-y-1/2 text-[13px] leading-none px-1" aria-label="Pilih tanggal Opened">&#128197;</button></div>
+                <div class="relative"><input id="impC" type="text" inputmode="numeric" maxlength="10" placeholder="Closed" class="porto-input rounded-lg pl-2 pr-8 text-[11px] w-full" style="height:32px"><button type="button" data-impcal="impC" class="absolute right-1 top-1/2 -translate-y-1/2 text-[13px] leading-none px-1" aria-label="Pilih tanggal Closed">&#128197;</button></div>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5">
+                <input id="impPair" type="text" placeholder="Pair" autocomplete="off" class="porto-input rounded-lg px-2 text-[11px] uppercase min-w-0" style="height:32px">
+                <select id="impSide" class="porto-input rounded-lg px-1 text-[11px]" style="height:32px"><option value="Buy">Buy</option><option value="Sell">Sell</option></select>
+                <input id="impPnl" type="text" placeholder="PNL" autocomplete="off" class="porto-input rounded-lg px-2 text-[11px] min-w-0" style="height:32px">
+            </div>
+            <button type="button" id="impAdd" class="w-full px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] text-xs font-semibold text-amber-400">+ Tambah ke daftar</button>
+            <textarea id="impText" rows="4" class="w-full porto-input rounded-xl p-2.5 text-xs num" placeholder="Tempel di sini: salinan riwayat Binance (Open Long, Close Short, dst.) atau baris Opened, Closed, Pair, Buy/Sell, PNL"></textarea>
+            <label class="flex items-center gap-1.5 text-[10px] text-[var(--text-faint)]"><input id="impFee" type="checkbox"> Riwayat Binance: kurangi fee dari PNL (kalau dimatikan, PNL = Realized Profit)</label>
+            <p class="text-[10px] text-[var(--text-faint)] leading-relaxed">Riwayat Binance yang disalin langsung (Open/Close Long/Short) otomatis digabung jadi satu trade per posisi. Tanggal boleh 25102026, 25/10/2026, 25-10-2026, atau 2026-10-25. Kolom dipisah tab, koma, titik koma, atau titik. Kalau pakai titik: 4 titik pertama = pemisah kolom, sisanya PNL (contoh 25102026.25102026.BTCUSDT.Buy.12.5, tanggal tulis tanpa titik). Urutan baris = urutan di Sheet untuk tanggal yang sama.</p>
+            <div id="impInfo" class="text-[11px] text-[var(--text-dim)]"></div>
+            <div id="impPrev" class="max-h-40 overflow-y-auto custom-scroll text-[11px] num space-y-0.5"></div>
+            <button type="button" id="impRun" disabled class="w-full px-3 py-2.5 rounded-xl bg-amber-500 text-[#1a1305] text-xs font-bold disabled:opacity-40">Impor</button>
+            <button type="button" id="impClose" class="w-full text-center px-4 py-2 rounded-xl text-slate-400 text-xs font-medium">Tutup</button>
+        </div>
+    </div>
+    <script>
+    // ═════ FITUR TAMBAHAN (berdiri sendiri; tidak mengubah kode di atas) ═════
+    /*PURE_START*/
+    const _k = s => { const d = parseClosedDate(s); return d ? d.getTime() : 0; };
+    const _p = t => parseFloat(t.pnl) || 0;
+    function advStats(arr) {
+        const c = arr.slice().sort((a, b) => (_k(a.closed) - _k(b.closed)) || ((parseInt(a.no) || 0) - (parseInt(b.no) || 0)));
+        let gp = 0, gl = 0, w = 0, l = 0, cum = 0, peak = 0, dd = 0, ddPct = 0, cw = 0, cl = 0, mw = 0, ml = 0;
+        const pairs = {}, sides = { Buy: { n: 0, w: 0, p: 0 }, Sell: { n: 0, w: 0, p: 0 } };
+        c.forEach(t => {
+            const p = _p(t); cum += p;
+            if (p >= 0) { w++; gp += p; cw++; cl = 0; } else { l++; gl -= p; cl++; cw = 0; }
+            mw = Math.max(mw, cw); ml = Math.max(ml, cl);
+            if (cum > peak) peak = cum;
+            if (peak - cum > dd) { dd = peak - cum; ddPct = peak > 0 ? dd / peak * 100 : 0; }
+            pairs[t.pair] = (pairs[t.pair] || 0) + p;
+            const s = sides[getTradeSide(t)]; s.n++; s.p += p; if (p >= 0) s.w++;
+        });
+        const pe = Object.entries(pairs).sort((a, b) => b[1] - a[1]);
+        return { n: c.length, w, l, wr: c.length ? Math.round(w / c.length * 100) : 0, gp, gl,
+            pf: gl > 0 ? gp / gl : (gp > 0 ? Infinity : null), avgW: w ? gp / w : 0, avgL: l ? gl / l : 0,
+            dd, ddPct, mw, ml, best: pe[0] || null, worst: pe.length ? pe[pe.length - 1] : null, sides };
+    }
+    function impDate(s) {
+        s = String(s).trim(); const cand = []; let x;
+        if ((x = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/))) cand.push([+x[3], +x[2], +x[1]]);
+        if ((x = s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/))) cand.push([+x[1], +x[2], +x[3]]);
+        if ((x = s.match(/^(\d{2})(\d{2})(\d{4})$/))) cand.push([+x[3], +x[2], +x[1]]);
+        if ((x = s.match(/^(\d{4})(\d{2})(\d{2})$/))) cand.push([+x[1], +x[2], +x[3]]);
+        for (const [y, m, d] of cand) {
+            if (y < 1990 || y > 2100) continue;
+            const dt = new Date(y, m - 1, d);
+            if (dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d) return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        }
+        return null;
+    }
+    // ketikan di kolom tanggal: 25102026 -> 25/10/2026 (juga menerima tempelan 2026-10-25)
+    function impTyped(raw) {
+        raw = String(raw); const m = raw.trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+        if (m) return `${m[3].padStart(2, '0')}/${m[2].padStart(2, '0')}/${m[1]}`;
+        const d = raw.replace(/\D/g, '').slice(0, 8);
+        return d.length <= 2 ? d : (d.length <= 4 ? `${d.slice(0, 2)}/${d.slice(2)}` : `${d.slice(0, 2)}/${d.slice(2, 4)}/${d.slice(4)}`);
+    }
+    const impShow = iso => iso.split('-').reverse().join('/');
+    // Pemisah kolom: tab > titik koma > koma (kalau pas 5 kolom) > titik. Kalau titik: 4 titik pertama = pemisah kolom, sisanya = PNL (jadi titik di PNL = desimal).
+    function impSplit(ln) {
+        if (ln.includes('\t')) return ln.split('\t').map(x => x.trim());
+        if (ln.includes(';')) return ln.split(';').map(x => x.trim());
+        if (ln.split(',').length !== 5 && (ln.match(/\./g) || []).length >= 4) {
+            const out = []; let rest = ln;
+            for (let k = 0; k < 4; k++) { const i = rest.indexOf('.'); out.push(rest.slice(0, i)); rest = rest.slice(i + 1); }
+            out.push(rest); return out.map(x => x.trim());
+        }
+        return ln.split(',').map(x => x.trim());
+    }
+// Riwayat transaksi Binance (hasil salin): waktu, simbol, "Open Long"/"Close Short", harga, jumlah, fee, realized profit.
+    const impRnd = (x, d) => { const m = Math.pow(10, d); return Math.round(x * m) / m; };
+    function impBinanceFill(ln) {
+        const c = []; ln.replace(/"([^"]*)"|([^,\t]+)/g, (m, a, b) => { c.push((a !== undefined ? a : b).trim()); return m; });
+        if (c.length < 7 || !/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}$/.test(c[0])) return null;
+        const m = c[2].match(/^(open|close)\s+(long|short)$/i); if (!m) return null;
+        const num = t => parseFloat(String(t).replace(/[^\d.\-]/g, ''));
+        const f = { t: c[0].replace('T', ' '), sym: c[1].toUpperCase(), open: m[1].toLowerCase() === 'open', long: m[2].toLowerCase() === 'long',
+            qty: num(c[4]), fee: /(USDT|USDC|BUSD)\s*$/i.test(c[5]) ? num(c[5]) : 0, pnl: num(c[6]) };
+        return isFinite(f.qty) && isFinite(f.pnl) ? f : null;
+    }
+    // posisi dari 0 sampai kembali 0 = satu trade (Opened = fill Open pertama, Closed = fill Close terakhir)
+    function impBinanceTrades(fills, withFee) {
+        fills.sort((a, b) => (a.t < b.t ? -1 : (a.t > b.t ? 1 : (b.open - a.open))));   // waktu sama: Open dulu
+        const st = {}, out = [];
+        fills.forEach(f => {
+            const k = f.sym + (f.long ? '|L' : '|S'), p = st[k] || (st[k] = { q: 0, t: '', pnl: 0 });
+            const net = f.pnl + (withFee ? (isFinite(f.fee) ? f.fee : 0) : 0);
+            if (f.open) { if (p.q === 0) { p.t = f.t; p.pnl = 0; } p.q = impRnd(p.q + f.qty, 8); p.pnl += net; return; }
+            if (p.q === 0) { out.push({ sym: f.sym, long: f.long, o: f.t, c: f.t, pnl: net }); return; }   // posisi dibuka sebelum data yang ditempel
+            p.pnl += net; p.q = impRnd(p.q - f.qty, 8);
+            if (p.q <= 0) { out.push({ sym: f.sym, long: f.long, o: p.t, c: f.t, pnl: p.pnl }); st[k] = { q: 0, t: '', pnl: 0 }; }
+        });
+        out.sort((a, b) => (a.c < b.c ? -1 : (a.c > b.c ? 1 : 0)));
+        return { trades: out, open: Object.keys(st).filter(k => st[k].q > 0).length };
+    }
+    function impParse(text, existing, opt) {
+        const rows = [], ok = [], errs = [], bf = []; let dup = 0;
+        const seen = new Set(existing.map(t => `${t.closed}|${String(t.pair).toUpperCase()}|${_p(t).toFixed(4)}|${getTradeSide(t)}`));
+        text.split(/\r?\n/).forEach((ln, i) => {
+            if (!ln.trim()) return;
+            const bfill = impBinanceFill(ln); if (bfill) { bf.push(bfill); return; }
+            if (i === 0 && /^\W*(date|time|waktu|tanggal)/i.test(ln)) return;   // baris judul salinan
+            const c = impSplit(ln);
+            if (i === 0 && c.length >= 5 && isNaN(parseFloat(c[4].replace(',', '.')))) return;   // baris judul
+            const bad = msg => { const m = `Baris ${i + 1}: ${msg}`; errs.push(m); rows.push({ st: 'err', msg: m }); };
+            if (c.length !== 5) return bad('harus 5 kolom (desimal pakai titik, atau pisahkan kolom dengan ;)');
+            let o = impDate(c[0]); const cl = impDate(c[1]);
+            let pair = c[2].toUpperCase(); if (pair && !pair.includes('USDT')) pair += 'USDT';
+            const sd = /^(buy|long)$/i.test(c[3]) ? 'Buy' : (/^(sell|short)$/i.test(c[3]) ? 'Sell' : null);
+            const pnl = parseFloat(c[4].replace(',', '.'));
+            if (!o || !cl) return bad('tanggal tidak dikenali');
+            if (!/^[A-Z0-9]{4,20}$/.test(pair)) return bad('pair tidak valid');
+            if (!sd) return bad('isi Buy atau Sell');
+            if (!isFinite(pnl)) return bad('PNL bukan angka');
+            if (o > cl) o = cl;
+            const d = { opened: o, closed: cl, pair, side: sd, pnl };
+            const [y, m, dd] = cl.split('-');
+            const key = `${dd}/${m}/${y}|${pair}|${pnl.toFixed(4)}|${sd}`;
+            if (seen.has(key)) { dup++; rows.push({ st: 'dup', d }); return; }
+            seen.add(key); ok.push(d); rows.push({ st: 'ok', d });
+        });
+        let openPos = 0;
+        if (bf.length) {
+            const r = impBinanceTrades(bf, !!(opt && opt.fee)); openPos = r.open;
+            r.trades.forEach(t => {
+                const d = { opened: t.o.slice(0, 10), closed: t.c.slice(0, 10), pair: t.sym, side: t.long ? 'Buy' : 'Sell', pnl: impRnd(t.pnl, 4) };
+                const [y, m, dd] = d.closed.split('-'); const key = `${dd}/${m}/${y}|${d.pair}|${d.pnl.toFixed(4)}|${d.side}`;
+                if (seen.has(key)) { dup++; rows.push({ st: 'dup', d }); return; }
+                seen.add(key); ok.push(d); rows.push({ st: 'ok', d });
+            });
+        }
+        return { ok, errs, dup, rows, openPos };
+    }
+    /*PURE_END*/
+    (function () {
+        const $ = id => document.getElementById(id);
+        const F = { q: '', side: '', res: '', from: '', to: '' };
+        const hist = () => cachedGlobalResponse.history || [];
+        function match(t) {
+            if (F.q && !String(t.pair).toUpperCase().includes(F.q)) return false;
+            if (F.side && getTradeSide(t) !== F.side) return false;
+            const p = _p(t); if (F.res === 'profit' && p < 0) return false; if (F.res === 'loss' && p >= 0) return false;
+            const k = _k(t.closed);
+            if (F.from && k < new Date(F.from + 'T00:00:00').getTime()) return false;
+            if (F.to && k > new Date(F.to + 'T00:00:00').getTime()) return false;
+            return true;
+        }
+        const active = () => !!(F.q || F.side || F.res || F.from || F.to);
+        const list = $('tradeList'); let obs = null;
+        function apply() {
+            if (obs) obs.disconnect();
+            const by = {}; hist().forEach(t => { by[parseInt(t.no)] = t; });
+            let shown = 0, total = 0;
+            Array.from(list.children).forEach(row => {
+                const t = by[parseInt((row.textContent.match(/#(\d+)/) || [])[1])]; if (!t) return;
+                total++; const ok = match(t); row.style.display = ok ? '' : 'none'; if (ok) shown++;
+            });
+            const rb = $('fltReset'); rb.classList.toggle('hidden', !active()); rb.textContent = `${shown}/${total} \u2715`;
+            $('fltDateBtn').style.borderColor = (F.from || F.to) ? '#f59e0b' : '';
+            if (obs) obs.observe(list, { childList: true });
+        }
+        obs = new MutationObserver(apply); obs.observe(list, { childList: true });
+        [['fltQ', 'q', v => v.trim().toUpperCase()], ['fltSide', 'side', v => v], ['fltRes', 'res', v => v], ['fltFrom', 'from', v => v], ['fltTo', 'to', v => v]]
+            .forEach(([id, key, fn]) => { const e = $(id); const h = () => { F[key] = fn(e.value); apply(); }; e.addEventListener('input', h); e.addEventListener('change', h); });
+        const clearDates = () => { ['fltFrom', 'fltTo'].forEach(id => { $(id).value = ''; }); F.from = ''; F.to = ''; apply(); };
+        $('fltReset').onclick = () => { ['fltQ', 'fltSide', 'fltRes', 'fltFrom', 'fltTo'].forEach(id => { $(id).value = ''; }); Object.keys(F).forEach(k => { F[k] = ''; }); $('fltDatePop').classList.add('hidden'); apply(); };
+        $('fltDateClear').onclick = clearDates;
+        $('fltDateBtn').onclick = e => { e.stopPropagation(); $('fltDatePop').classList.toggle('hidden'); };
+        document.addEventListener('click', e => { const pop = $('fltDatePop'); if (!pop.classList.contains('hidden') && !pop.contains(e.target)) pop.classList.add('hidden'); });
+
+        const f2 = v => (v >= 0 ? '+' : '') + v.toFixed(2);
+        const box = (label, val, cls) => `<div class="bg-[var(--surface-2)] rounded-xl p-2.5 min-w-0"><div class="text-[10px] text-slate-400">${label}</div><div class="num text-sm font-bold truncate ${cls || 'text-slate-100'}">${val}</div></div>`;
+        const openAdvStats = () => {
+            const arr = hist().filter(match), r = advStats(arr);
+            $('advStatsNote').textContent = active() ? `sesuai filter · ${r.n} trade` : `${r.n} trade`;
+            const G = 'text-emerald-400', R = 'text-rose-400', sd = r.sides;
+            const sideTxt = k => sd[k].n ? `${sd[k].n}x · ${Math.round(sd[k].w / sd[k].n * 100)}% · ${f2(sd[k].p)}` : '-';
+            $('advStatsBody').innerHTML = r.n ? [
+                box('Win rate', r.wr + '%'), box('Profit factor', r.pf === null ? '-' : (isFinite(r.pf) ? r.pf.toFixed(2) : '∞'), r.pf !== null && r.pf >= 1 ? G : R),
+                box('Rata-rata profit', f2(r.avgW), G), box('Rata-rata loss', r.l ? '-' + r.avgL.toFixed(2) : '-', R),
+                box('Max drawdown', r.dd > 0 ? `-${r.dd.toFixed(2)} (${r.ddPct.toFixed(1)}%)` : '0', r.dd > 0 ? R : ''), box('Streak menang / kalah', `${r.mw} / ${r.ml}`),
+                box('Pair terbaik', r.best ? `${r.best[0]} ${f2(r.best[1])}` : '-', G), box('Pair terburuk', r.worst ? `${r.worst[0]} ${f2(r.worst[1])}` : '-', R),
+                box('Buy (jumlah · win · total)', sideTxt('Buy')), box('Sell (jumlah · win · total)', sideTxt('Sell'))
+            ].join('') : '<div class="col-span-2 text-center text-xs text-[var(--text-faint)] py-4">Belum ada trade yang cocok.</div>';
+            $('advStatsModal').classList.remove('hidden');
+        };
+
+        let imp = null; const info = $('impInfo'), prev = $('impPrev');
+        const esc = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+        function refresh() {
+            const r = imp = impParse($('impText').value, hist(), { fee: $('impFee').checked });
+            info.innerHTML = r.rows.length ? `Siap diimpor: <b class="text-emerald-400">${r.ok.length}</b> · Duplikat dilewati: <b>${r.dup}</b> · Salah: <b class="${r.errs.length ? 'text-rose-400' : ''}">${r.errs.length}</b>${r.openPos ? ` · Posisi belum tertutup (dilewati): <b>${r.openPos}</b>` : ''}` : '';
+            prev.innerHTML = r.rows.slice(0, 40).map(x => {
+                if (x.st === 'err') return `<div class="text-rose-400">${esc(x.msg)}</div>`;
+                const d = x.d, c = d.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400';
+                return `<div class="${x.st === 'dup' ? 'opacity-40' : ''}">${impShow(d.opened)} &rarr; ${impShow(d.closed)} &middot; ${d.pair} &middot; ${d.side} &middot; <span class="${c}">${f2(d.pnl)}</span>${x.st === 'dup' ? ' (duplikat)' : ''}</div>`;
+            }).join('') + (r.rows.length > 40 ? `<div class="text-[var(--text-faint)]">... dan ${r.rows.length - 40} baris lagi</div>` : '');
+            $('impRun').disabled = !r.ok.length || !!window.__impBusy;
+        }
+        const openImport = () => { $('importModal').classList.remove('hidden'); refresh(); };
+        $('impText').addEventListener('input', refresh); $('impFee').addEventListener('change', refresh);
+        $('impClose').onclick = () => { if (!window.__impBusy) $('importModal').classList.add('hidden'); };
+        // isi manual: tanggal otomatis jadi dd/mm/yyyy saat diketik; kalender (flatpickr, sudah dimuat aplikasi) dibuka lewat ikon
+        const FPS = {};
+        ['impO', 'impC'].forEach(id => {
+            const e = $(id);
+            e.addEventListener('input', () => { const v = impTyped(e.value); if (v !== e.value) e.value = v; });
+            if (typeof flatpickr === 'function') FPS[id] = flatpickr(e, { dateFormat: 'd/m/Y', allowInput: true, clickOpens: false, disableMobile: true });
+        });
+        document.querySelectorAll('[data-impcal]').forEach(b => { b.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); const f = FPS[b.dataset.impcal]; if (f) f.open(); else showToast('Kalender tidak termuat, ketik tanggalnya manual', 'error'); }; });
+        $('impPair').addEventListener('blur', () => { const v = $('impPair').value.trim().toUpperCase(); $('impPair').value = v && !v.includes('USDT') ? v + 'USDT' : v; });
+        $('impAdd').onclick = () => {
+            let o = $('impO').value, c = $('impC').value; if (!o) o = c; if (!c) c = o;
+            const line = `${o}, ${c}, ${$('impPair').value.trim()}, ${$('impSide').value}, ${$('impPnl').value.trim().replace(',', '.')}`;
+            const chk = impParse(line, []);
+            if (!chk.ok.length) { showToast(chk.errs.length ? chk.errs[0].replace(/^Baris 1: /, '') : 'Data belum lengkap', 'error'); return; }
+            const ta = $('impText'); ta.value += (ta.value && !ta.value.endsWith('\n') ? '\n' : '') + line;
+            $('impPair').value = ''; $('impPnl').value = ''; refresh(); $('impPair').focus();
+        };
+        $('impRun').onclick = async () => {
+            if (!imp || !imp.ok.length || window.__impBusy) return;
+            window.__impBusy = true; $('impRun').disabled = true;
+            let done = 0, fail = 0; const items = imp.ok;
+            for (const t of items) {
+                try {
+                    const r = await watchAuth(fetch(apiUrl(`action=add&pair=${encodeURIComponent(t.pair)}&opened=${t.opened}&closed=${t.closed}&pnl=${encodeURIComponent(t.pnl)}&side=${t.side}`), { cache: 'no-store' }));
+                    const j = await r.json();
+                    if (j && j.status === 'success') done++; else { fail++; if (j && j.error === 'auth') break; }
+                } catch (e) { fail++; }
+                info.textContent = `Mengirim ${done + fail} / ${items.length}...`;
+            }
+            window.__impBusy = false;
+            showToast(fail ? `${done} masuk, ${fail} gagal` : `${done} trade diimpor`, fail ? 'error' : 'success');
+            await syncFromSheet();
+            $('impText').value = ''; refresh(); $('importModal').classList.add('hidden');
+        };
+        // tombol di sebelah judul "Statistik" (kartu Statistik di HP & desktop); stopPropagation supaya kartu tidak ikut berpindah USDT/IDR
+        document.querySelectorAll('h2.section-label').forEach(h => {
+            if (h.textContent.trim() !== 'Statistik') return;
+            const w = document.createElement('div'); w.className = 'ml-auto flex gap-3 items-center';
+            const mk = (txt, fn, cls) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = txt; b.className = 'section-label'; b.style.cssText = 'background:none;border:0;padding:4px 0;margin:-4px 0;cursor:pointer;color:' + cls; const cs = getComputedStyle(h); ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'letterSpacing', 'lineHeight', 'textTransform'].forEach(k => { if (cs[k]) b.style[k] = cs[k]; }); b.onclick = e => { e.stopPropagation(); fn(); }; w.appendChild(b); };
+            mk('Lanjutan', openAdvStats, '#fbbf24'); mk('Impor', openImport, 'var(--text-dim)');
+            h.parentElement.appendChild(w);
+        });
+    })();
+    </script>
+<!-- PERBAIKAN input Pairs: daftar saran sendiri menggantikan saran bawaan browser -->
+    <style>
+        #pair:-webkit-autofill, #pair:-webkit-autofill:hover, #pair:-webkit-autofill:focus { -webkit-text-fill-color: var(--text); caret-color: var(--text); box-shadow: 0 0 0 1000px var(--bg) inset; transition: background-color 99999s ease-out 0s; }
+        #pairSuggest div[data-v] { padding: 9px 12px; font-size: 13px; border-radius: 8px; cursor: pointer; }
+        #pairSuggest div[data-v]:hover, #pairSuggest div[data-v].on { background: var(--surface-2); }
+    </style>
+    <script>
+    (function () {
+        const inp = document.getElementById('pair'); if (!inp) return;
+        const dl = document.getElementById('pairList');
+        const base = dl ? Array.from(dl.options).map(o => o.value.toUpperCase()) : [];
+        inp.removeAttribute('list');                                      // tidak memakai datalist bawaan browser lagi
+        const box = document.createElement('div'); box.id = 'pairSuggest';
+        box.className = 'hidden absolute left-0 right-0 z-30 porto-card rounded-xl overflow-y-auto custom-scroll';
+        box.style.cssText = 'top:calc(100% + 4px);max-height:11rem;padding:4px';
+        inp.parentElement.appendChild(box);
+        function pool() {                                                 // pair yang paling sering dipakai dulu, lalu daftar koin bawaan
+            let h = []; try { h = cachedGlobalResponse.history || []; } catch (e) {}
+            const cnt = {}; h.forEach(t => { const k = String(t.pair || '').toUpperCase(); if (k) cnt[k] = (cnt[k] || 0) + 1; });
+            const used = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]);
+            return used.concat(base.filter(x => !(x in cnt)).sort());
+        }
+        function show() {
+            const q = inp.value.trim().toUpperCase(), all = pool();
+            const m = (q ? all.filter(x => x.startsWith(q)).concat(all.filter(x => !x.startsWith(q) && x.includes(q))) : all).slice(0, 8);
+            if (!m.length || (m.length === 1 && m[0] === q)) { box.classList.add('hidden'); return; }
+            box.innerHTML = m.map(x => `<div data-v="${x}" class="num">${x}</div>`).join('');
+            box.classList.remove('hidden');
+        }
+        const hide = () => box.classList.add('hidden');
+        inp.addEventListener('input', show);
+        inp.addEventListener('focus', show);
+        inp.addEventListener('blur', () => setTimeout(hide, 120));
+        inp.addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
+        box.addEventListener('mousedown', e => e.preventDefault());       // menjaga fokus di kolom, jadi keyboard HP tidak tertutup
+        box.addEventListener('pointerdown', e => {
+            const d = e.target.closest('[data-v]'); if (!d) return;
+            e.preventDefault(); inp.value = d.dataset.v; hide();
+            inp.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        document.addEventListener('pointerdown', e => { if (e.target !== inp && !box.contains(e.target)) hide(); });
+    })();
+    </script>
+<!-- PERBAIKAN keyboard PC: Enter = Simpan/Tambah, Esc = Tutup, di modal yang sebelumnya belum punya -->
+    <script>
+    (function () {
+        const $ = id => document.getElementById(id);
+        const isOpen = id => { const e = $(id); return !!e && !e.classList.contains('hidden'); };
+        // dipasang di fase capture supaya modal paling atas (z-index tinggi) diproses lebih dulu dan Esc tidak ikut menutup modal di bawahnya
+        document.addEventListener('keydown', e => {
+            if (e.isComposing) return;
+            if (e.key === 'Escape') {
+                if (document.querySelector('.flatpickr-calendar.open')) return;           // kalender yang terbuka ditutup oleh kalendernya sendiri
+                if (isOpen('advStatsModal')) { $('advStatsModal').classList.add('hidden'); e.stopImmediatePropagation(); return; }
+                if (isOpen('importModal')) { if (!window.__impBusy) $('importModal').classList.add('hidden'); e.stopImmediatePropagation(); return; }
+                const pop = $('fltDatePop'); if (pop && !pop.classList.contains('hidden')) { pop.classList.add('hidden'); e.stopImmediatePropagation(); }
+                return;
+            }
+            if (e.key !== 'Enter' || e.shiftKey || e.altKey) return;
+            if (document.querySelector('.flatpickr-calendar.open')) return;               // Enter saat kalender terbuka = urusan kalender
+            const t = e.target, tag = t && t.tagName;
+            // modal hapus: Enter = Hapus. Tidak berlaku kalau fokus ada di tombol (mis. Batal, Enter di situ = tombol itu) dan diabaikan saat tombol Enter ditahan (e.repeat),
+            // supaya Enter yang menahan/membuka modal ini tidak langsung menghapus tanpa sempat terlihat.
+            if (isOpen('deleteModal')) {
+                if (!e.repeat && tag !== 'BUTTON' && tag !== 'A') { e.preventDefault(); const b = $('confirmDeleteBtn'); if (b && !b.disabled) b.click(); }
+                return;
+            }
+            // modal edit trade: Enter di kolom isian = Simpan
+            if (isOpen('editModal') && $('editModal').contains(t) && tag === 'INPUT') {
+                e.preventDefault(); if (t.blur) t.blur();                                // blur supaya ketikan di kolom tanggal ikut terbaca
+                const b = $('confirmEditBtn'); if (b && !b.disabled) b.click();
+                return;
+            }
+            // impor massal: Enter di kolom isian manual = Tambah ke daftar; Ctrl+Enter di kotak tempel = Impor
+            if (isOpen('importModal') && $('importModal').contains(t)) {
+                if (tag === 'TEXTAREA') { if (e.ctrlKey || e.metaKey) { e.preventDefault(); const r = $('impRun'); if (r && !r.disabled) r.click(); } return; }
+                if (tag === 'INPUT' && t.type !== 'checkbox') { e.preventDefault(); $('impAdd').click(); }
+            }
+        }, true);
+    })();
     </script>
 </body>
 </html>
