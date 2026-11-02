@@ -5613,10 +5613,14 @@
         inp.addEventListener('blur', () => setTimeout(hide, 120));
         inp.addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
         box.addEventListener('mousedown', e => e.preventDefault());       // menjaga fokus di kolom, jadi keyboard HP tidak tertutup
-        box.addEventListener('pointerdown', e => {
+        // dipilih saat 'click' (bukan 'pointerdown'): kalau daftar disembunyikan saat jari/mouse baru menyentuh, klik lanjutannya jatuh ke kolom
+        // di bawah daftar (mis. Opened) dan langsung membuka kalender. Dengan 'click', daftar masih ada di bawah jari saat klik terjadi.
+        box.addEventListener('click', e => {
             const d = e.target.closest('[data-v]'); if (!d) return;
-            e.preventDefault(); inp.value = d.dataset.v; hide();
+            e.preventDefault(); e.stopPropagation();
+            inp.value = d.dataset.v;
             inp.dispatchEvent(new Event('input', { bubbles: true }));
+            hide();
         });
         document.addEventListener('pointerdown', e => { if (e.target !== inp && !box.contains(e.target)) hide(); });
     })();
