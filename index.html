@@ -5572,7 +5572,7 @@
         document.querySelectorAll('h2.section-label').forEach(h => {
             if (h.textContent.trim() !== 'Statistik') return;
             const w = document.createElement('div'); w.className = 'ml-auto flex gap-3 items-center';
-            const mk = (txt, fn, cls) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = txt; b.className = 'section-label'; b.style.cssText = 'background:none;border:0;padding:4px 0;margin:-4px 0;cursor:pointer;color:' + cls; const cs = getComputedStyle(h); ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'letterSpacing', 'lineHeight', 'textTransform'].forEach(k => { if (cs[k]) b.style[k] = cs[k]; }); b.onclick = e => { e.stopPropagation(); fn(); }; w.appendChild(b); };
+            const mk = (txt, fn, cls) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = txt; b.className = 'section-label'; b.style.cssText = 'background:none;border:0;padding:4px 0;margin:-4px 0;cursor:pointer;color:' + cls; const cs = getComputedStyle(h); ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'letterSpacing', 'lineHeight', 'textTransform'].forEach(k => { if (cs[k]) b.style[k] = cs[k]; }); b.style.setProperty('font-size', '11px', 'important'); b.onclick = e => { e.stopPropagation(); fn(); }; w.appendChild(b); };
             mk('Lanjutan', openAdvStats, '#fbbf24'); mk('Impor', openImport, 'var(--text-dim)');
             h.parentElement.appendChild(w);
         });
@@ -5718,5 +5718,13 @@
         }, { passive: true });
     })();
     </script>
+<!-- Sudut membulat: tombol Simpan position, kartu Rekap harian, kartu Riwayat trade. Ubah angka di bawah untuk lebih bulat / lebih kotak. -->
+    <style>
+        :root { --r-box: 9px; }
+        #submitBtn, #rekapCard, #riwayatCard, .day-row-bar, .row-card { border-radius: var(--r-box) !important; }
+        /* tab Rekap Harian / Riwayat Trade: dari pil bulat penuh jadi kotak membulat. Kotak luar = --r-box, isi (penanda kuning & tombol) sedikit lebih kecil supaya sejajar */
+        #tabSwitcher { border-radius: var(--r-box) !important; }
+        #tabIndicator, #tabBtnRekap, #tabBtnRiwayat { border-radius: calc(var(--r-box) - 2px) !important; }
+    </style>
 </body>
 </html>
