@@ -1134,7 +1134,7 @@
         }
     </style>
 </head>
-<body class="relative">
+<body class="relative" data-view="home">
     <div class="bg-glow"></div>
 
     <main class="relative z-10 p-2 md:p-4 flex justify-center">
@@ -1264,7 +1264,7 @@
             </form>
 
             <!-- WIDGET TAMBAHAN (khusus desktop) -->
-            <div class="hidden lg:flex lg:flex-col lg:flex-1 lg:min-h-0 space-y-2.5">
+            <div id="widgetsCol" class="hidden lg:flex lg:flex-col lg:flex-1 lg:min-h-0 space-y-2.5">
 
                 <!-- Statistik Cepat -->
                 <div class="porto-card p-3.5 rounded-2xl shrink-0 cursor-pointer active:opacity-70 transition" onclick="toggleQuickStatsView()">
@@ -1366,6 +1366,9 @@
             </div><!-- /#tabPager -->
 
         </div>
+
+        <!-- Halaman Profil (HP): diisi lewat JS saat menu Profil dibuka -->
+        <section id="profilePage" aria-label="Profil"></section>
 
     </div>
     </main>
@@ -5726,5 +5729,347 @@
         #tabSwitcher { border-radius: var(--r-box) !important; }
         #tabIndicator, #tabBtnRekap, #tabBtnRiwayat { border-radius: calc(var(--r-box) - 2px) !important; }
     </style>
+<!-- ═════════════ MENU BAWAH (HP): Beranda · Statistik · Rekap · Riwayat · Profil ═════════════
+     Hanya aktif di layar < 768px. Desktop tidak berubah sama sekali.
+     Satu halaman tampil per menu; semua fungsi lama (form, rekap, riwayat, share card, kalender) dipakai apa adanya. -->
+<style id="bottom-nav">
+    #bnav, #bfab, #profilePage { display: none; }
+
+    @keyframes bnViewIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    @media (max-width: 767px) {
+        :root { --bnavH: 60px; }
+
+        /* pengganti: tombol profil di atas, pil tab Rekap/Riwayat, panah laci statistik */
+        #appHeader, .stats-backdrop, .stats-sheet, #statsPeekProbe { display: none !important; }
+        body:not([data-view="home"]) #tabBar { display: none !important; }
+
+        /* Beranda: pembatas kuning antara hero/form dan daftar, sama persis dengan pil tab lama tapi isinya cuma "Riwayat Trade" */
+        body[data-view="home"] #tabBtnRekap,
+        body[data-view="home"] #tabIndicator { display: none !important; }
+        body[data-view="home"] #tabBtnRiwayat {
+            background: #f59e0b;                       /* amber-500, sama dengan penanda kuning lama */
+            color: #1a1305 !important;
+            box-shadow: 0 10px 15px -3px rgba(245, 158, 11, .25), 0 4px 6px -4px rgba(245, 158, 11, .25);
+            pointer-events: none;
+        }
+
+        /* BERANDA = susunan lama: hero terkunci, form tenggelam ditutupi daftar riwayat yang naik.
+           Lembaran daftar diberi ruang bawah supaya baris terakhir tidak tertutup menu. */
+        body[data-view="home"] #colList { padding-bottom: calc(var(--bnavH) + 24px + env(safe-area-inset-bottom, 0px)) !important; }
+
+        /* halaman lain: tanpa tumpukan terkunci, daftar jadi halaman biasa */
+        body:not([data-view="home"]) #colList {
+            background: transparent !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            min-height: 0 !important;
+            padding-bottom: 0 !important;
+            z-index: auto !important;
+        }
+        body:not([data-view="home"]) main.relative { padding-bottom: calc(var(--bnavH) + 28px + env(safe-area-inset-bottom, 0px)) !important; }
+        body[data-view="stats"] main.relative,
+        body[data-view="rekap"] main.relative,
+        body[data-view="riwayat"] main.relative { padding-bottom: calc(var(--bnavH) + 84px + env(safe-area-inset-bottom, 0px)) !important; }
+        main.view-in { animation: bnViewIn .22s var(--g-ease) backwards; }
+
+        /* satu daftar per menu: Beranda & Riwayat = riwayat, Rekap = rekap (tanpa geser antar-tab) */
+        #tabPager { overflow-x: hidden !important; height: auto !important; }
+        body[data-view="home"] #tabPager > #rekapCardWrap,
+        body[data-view="riwayat"] #tabPager > #rekapCardWrap,
+        body[data-view="rekap"] #tabPager > #riwayatCardWrap { display: none !important; }
+
+        /* ── halaman mana yang tampil ── */
+        body[data-view="home"]    #widgetsCol, body[data-view="home"]    #profilePage { display: none !important; }
+        body[data-view="stats"]   .hero-panel, body[data-view="stats"] #tradeForm, body[data-view="stats"] #colList, body[data-view="stats"] #profilePage { display: none !important; }
+        body[data-view="rekap"]   .hero-panel, body[data-view="rekap"] #tradeForm, body[data-view="rekap"] #widgetsCol, body[data-view="rekap"] #profilePage,
+        body[data-view="riwayat"] .hero-panel, body[data-view="riwayat"] #tradeForm, body[data-view="riwayat"] #widgetsCol, body[data-view="riwayat"] #profilePage { display: none !important; }
+        body[data-view="profil"]  .hero-panel, body[data-view="profil"] #tradeForm, body[data-view="profil"] #colList, body[data-view="profil"] #widgetsCol { display: none !important; }
+
+        /* Statistik & kalender: widget desktop dipakai langsung, rapat ke tepi seperti kartu lain */
+        body[data-view="stats"] #widgetsCol { display: flex !important; flex-direction: column; gap: 6px; }
+        #widgetsCol > * { margin: 0 !important; }
+        #widgetsCol .porto-card { border-radius: 0 !important; border-left-width: 0 !important; border-right-width: 0 !important; }
+
+        /* ── Profil ── */
+        body[data-view="profil"] #profilePage { display: flex !important; flex-direction: column; gap: 6px; }
+        #profilePage .porto-card { border-radius: 0 !important; border-left-width: 0 !important; border-right-width: 0 !important; padding: 0; overflow: hidden; }
+        .pf-head { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 26px 16px 22px !important; text-align: center; }
+        .pf-head .avatar { margin-bottom: 8px; }
+        .pf-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 21px; line-height: 1.15; }
+        .pf-id { font-size: 12px; color: var(--text-dim); }
+        .pf-title { padding: 14px 14px 8px; font-size: 12px; font-weight: 600; color: var(--text-faint); }
+        .pf-row {
+            display: flex; align-items: center; gap: 12px; width: 100%;
+            padding: 14px; background: none; border: 0; border-top: 1px solid var(--border-soft);
+            color: var(--text); text-align: left; cursor: pointer;
+            transition: background .12s ease;
+        }
+        .pf-title + .pf-row { border-top: 0; }
+        .pf-row:active { background: var(--surface-2); }
+        div.pf-row { cursor: default; }
+        div.pf-row:active { background: none; }
+        .pf-row .pf-label { flex: 1; min-width: 0; font-size: 14px; font-weight: 500; }
+        .pf-row .pf-label small { display: block; margin-top: 2px; font-size: 11px; font-weight: 400; color: var(--text-dim); }
+        .pf-row .pf-val { font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+        .pf-row .pf-chev { color: var(--text-faint); display: flex; }
+        .pf-row.on-acct .pf-val { color: var(--accent-bright); }
+        .pf-row.danger { color: var(--loss); }
+        .pf-row.danger .pf-chev { color: var(--loss); opacity: .6; }
+
+        /* ── Bar menu bawah ── */
+        #bnav {
+            display: flex;
+            position: fixed; left: 0; right: 0; bottom: var(--kbInset, 0px); z-index: 45;
+            padding: 6px 4px calc(10px + env(safe-area-inset-bottom, 0px));
+            background: rgba(12, 14, 21, .96);
+            -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+            border-top: 1px solid var(--border-soft);
+        }
+        #bnav button {
+            flex: 1; min-width: 0;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            padding: 0; background: none; border: 0; cursor: pointer;
+            color: var(--text-faint);
+            transition: color .15s ease;
+        }
+        #bnav .bn-chip {
+            width: 46px; height: 30px; border-radius: 15px;
+            display: grid; place-items: center;
+            transition: background .18s ease, transform .12s ease;
+        }
+        #bnav button:active .bn-chip { transform: scale(.92); }
+        #bnav .bn-label { font-size: 10.5px !important; font-weight: 600; line-height: 1; letter-spacing: .01em; }
+        #bnav button.on { color: var(--text); }
+        #bnav button.on .bn-chip { background: var(--accent-dim); color: var(--accent-bright); }
+        #bnav .bn-chip .avatar { box-shadow: 0 0 0 1.5px var(--border); }
+        #bnav button.on .bn-chip .avatar { box-shadow: 0 0 0 1.5px var(--accent); }
+
+        /* tombol bulat "tambah trade" di halaman daftar */
+        #bfab {
+            position: fixed; right: 14px; z-index: 44;
+            bottom: calc(var(--bnavH) + 16px + env(safe-area-inset-bottom, 0px) + var(--kbInset, 0px));
+            width: 52px; height: 52px; border-radius: 50%;
+            place-items: center;
+            background: var(--accent); color: #1a1305; border: 0; cursor: pointer;
+            box-shadow: 0 10px 22px rgba(217, 164, 65, .26), 0 2px 8px rgba(0, 0, 0, .5);
+            transition: transform .12s ease, opacity .15s ease;
+        }
+        #bfab:active { transform: scale(.94); }
+        body[data-view="stats"] #bfab, body[data-view="rekap"] #bfab, body[data-view="riwayat"] #bfab { display: grid; }
+        body.kb-open #bfab { display: none !important; }
+
+        /* toast naik sedikit supaya tidak menutupi bar */
+        #toastHost { bottom: calc(env(safe-area-inset-bottom, 0px) + var(--bnavH) + 12px) !important; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        main.view-in { animation: none !important; }
+        #bnav, #bnav .bn-chip, #bfab { transition: none !important; }
+    }
+</style>
+
+<nav id="bnav" aria-label="Menu utama">
+    <button type="button" data-view="home" class="on" aria-current="page">
+        <span class="bn-chip"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10.8 12 3.8l8.5 7"/><path d="M5.5 9.5V19a1 1 0 0 0 1 1H9.5v-5.5h5V20h3a1 1 0 0 0 1-1V9.5"/></svg></span>
+        <span class="bn-label">Beranda</span>
+    </button>
+    <button type="button" data-view="rekap" aria-current="false">
+        <span class="bn-chip"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16"/><path d="M8.5 3.5v3"/><path d="M15.5 3.5v3"/><path d="m9.2 15 2 2 3.6-3.8"/></svg></span>
+        <span class="bn-label">Rekap</span>
+    </button>
+    <button type="button" data-view="riwayat" aria-current="false">
+        <span class="bn-chip"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.8 12a8.2 8.2 0 1 0 2.5-5.9"/><path d="M3.5 4.2v3.6h3.6"/><path d="M12 8v4.2l2.8 1.8"/></svg></span>
+        <span class="bn-label">Riwayat</span>
+    </button>
+    <button type="button" data-view="stats" aria-current="false">
+        <span class="bn-chip"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V11"/><path d="M12 20V4"/><path d="M19 20v-6.5"/><path d="M3 20h18"/></svg></span>
+        <span class="bn-label">Statistik</span>
+    </button>
+    <button type="button" data-view="profil" aria-current="false">
+        <span class="bn-chip" id="bnProfilChip"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.5" r="3.6"/><path d="M4.8 20a7.2 7.2 0 0 1 14.4 0"/></svg></span>
+        <span class="bn-label">Profil</span>
+    </button>
+</nav>
+
+<button type="button" id="bfab" aria-label="Tambah trade">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+</button>
+
+<script>
+(function () {
+    const $ = id => document.getElementById(id);
+    const mq = window.matchMedia('(max-width: 767px)');
+    const body = document.body;
+    const VIEWS = ['home', 'stats', 'rekap', 'riwayat', 'profil'];
+    let view = 'home';
+
+    function paintNav() {
+        document.querySelectorAll('#bnav button').forEach(b => {
+            const on = b.dataset.view === view;
+            b.classList.toggle('on', on);
+            b.setAttribute('aria-current', on ? 'page' : 'false');
+        });
+    }
+
+    function setView(v) {
+        if (!VIEWS.includes(v)) v = 'home';
+        view = v;
+        body.setAttribute('data-view', v);
+        paintNav();
+        if (v === 'profil') renderProfilePage();
+        if (v === 'home' || v === 'rekap' || v === 'riwayat') {
+            // Beranda & Riwayat memakai daftar riwayat, Rekap memakai rekap harian
+            requestAnimationFrame(() => {
+                try { switchTab(v === 'rekap' ? 'rekap' : 'riwayat', true); } catch (e) {}
+                try { fitPagerHeight(); } catch (e) {}
+                window.dispatchEvent(new Event('resize'));      // hitung ulang tinggi hero (dipakai susunan terkunci di Beranda)
+            });
+        }
+        window.scrollTo(0, 0);
+        const m = document.querySelector('main');
+        if (m) { m.classList.remove('view-in'); void m.offsetWidth; m.classList.add('view-in'); }
+    }
+
+    document.querySelectorAll('#bnav button').forEach(b => b.addEventListener('click', () => { if (b.dataset.view !== view) setView(b.dataset.view); else window.scrollTo({ top: 0, behavior: 'smooth' }); }));
+
+    // tombol bulat: ke Beranda lalu langsung isi Pairs
+    const fab = $('bfab');
+    if (fab) fab.addEventListener('click', () => {
+        setView('home');
+        setTimeout(() => { const p = $('pair'); if (p) p.focus(); }, 240);
+    });
+
+    // menu selalu terlihat: saat keyboard muncul, bar diangkat tepat di atas keyboard (bukan disembunyikan)
+    const vv = window.visualViewport;
+    if (vv) {
+        const lift = () => {
+            const inset = Math.round(window.innerHeight - vv.height - vv.offsetTop);
+            document.documentElement.style.setProperty('--kbInset', (inset > 100 ? inset : 0) + 'px');
+        };
+        vv.addEventListener('resize', lift); vv.addEventListener('scroll', lift); lift();
+    }
+
+    // foto / nama berubah -> bulatan di menu Profil dan halaman Profil ikut diperbarui
+    function navProfile() { try { return ACTIVE_PROFILE || null; } catch (e) { return null; } }
+    function updateNavAvatar() {
+        const p = navProfile(), chip = $('bnProfilChip');
+        if (!p || !chip || typeof makeAvatar !== 'function') return;
+        chip.replaceChildren(makeAvatar(p, 24));
+    }
+    const _rh = window.renderHeaderProfile;
+    if (typeof _rh === 'function') {
+        window.renderHeaderProfile = function () {
+            const r = _rh.apply(this, arguments);
+            updateNavAvatar();
+            if (view === 'profil') renderProfilePage();
+            return r;
+        };
+    }
+
+    // ───────── Halaman Profil: semua aksi memakai fungsi menu akun yang sudah ada ─────────
+    const CHEV = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5,3 9,7 5,11"/></svg>';
+    const CHECK = '<svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="2.5,6.5 5,9 9.5,3.5"/></svg>';
+
+    function row(label, o) {
+        o = o || {};
+        const el = document.createElement(o.onClick ? 'button' : 'div');
+        if (o.onClick) el.type = 'button';
+        el.className = 'pf-row' + (o.danger ? ' danger' : '') + (o.active ? ' on-acct' : '');
+        if (o.lead) el.appendChild(o.lead);
+        const t = document.createElement('span'); t.className = 'pf-label'; t.textContent = label;
+        if (o.sub) { const s = document.createElement('small'); s.textContent = o.sub; t.appendChild(s); }
+        el.appendChild(t);
+        if (o.value != null) { const v = document.createElement('span'); v.className = 'pf-val'; v.textContent = o.value; el.appendChild(v); }
+        if (o.check) { const c = document.createElement('span'); c.className = 'pf-chev'; c.style.color = 'var(--accent-bright)'; c.innerHTML = CHECK; el.appendChild(c); }
+        else if (o.onClick && !o.noChev) { const c = document.createElement('span'); c.className = 'pf-chev'; c.innerHTML = CHEV; el.appendChild(c); }
+        if (o.onClick) el.addEventListener('click', o.onClick);
+        return el;
+    }
+
+    function renderProfilePage() {
+        const host = $('profilePage'); if (!host) return;
+        const prof = navProfile();
+        const acct = ACCOUNT_MODE && SESSION;
+        const pv = prof || { id: 'local', name: 'Romini' };
+        const frag = document.createDocumentFragment();
+        const card = (title, cls) => {
+            const c = document.createElement('div'); c.className = 'porto-card' + (cls ? ' ' + cls : '');
+            if (title) { const h = document.createElement('div'); h.className = 'pf-title'; h.textContent = title; c.appendChild(h); }
+            frag.appendChild(c); return c;
+        };
+        const photoKey = acct ? 'avatar:u:' + SESSION.user : 'avatar:' + pv.id;
+        let hasPhoto = false; try { hasPhoto = !!localStorage.getItem(photoKey); } catch (e) {}
+
+        // kepala: foto / inisial + nama
+        const head = card(null, 'pf-head');
+        head.appendChild(makeAvatar(pv, 76));
+        const nm = document.createElement('div'); nm.className = 'pf-name'; nm.textContent = pv.name; head.appendChild(nm);
+        const sub = document.createElement('div'); sub.className = 'pf-id';
+        sub.textContent = acct ? '@' + SESSION.user : (typeof PROFILES !== 'undefined' && PROFILES.length > 1 ? 'Sheet aktif' : 'Data trading');
+        head.appendChild(sub);
+
+        // pindah akun / sheet
+        if (acct) {
+            const users = Object.keys(SESSIONS);
+            if (users.length > 1) {
+                const c = card('Akun di HP ini');
+                users.forEach(u => {
+                    const ss = SESSIONS[u], active = (u === SESSION.user);
+                    c.appendChild(row(ss.name || u, {
+                        lead: makeAvatar({ id: 'u:' + u, name: ss.name || u }, 30), sub: '@' + u, check: active,
+                        onClick: active ? null : () => switchAccount(u)
+                    }));
+                });
+            }
+        } else if (typeof PROFILES !== 'undefined' && PROFILES.length > 1) {
+            const c = card('Pilih akun');
+            PROFILES.forEach(p => {
+                const active = prof && p.id === prof.id;
+                c.appendChild(row(p.name, { lead: makeAvatar(p, 30), check: active, onClick: active ? null : () => switchProfile(p.id) }));
+            });
+        }
+
+        // akun
+        const ca = card('Akun');
+        if (acct) ca.appendChild(row('Ubah nama', { onClick: openRenameDialog }));
+        ca.appendChild(row('Ganti foto', { onClick: pickAvatar }));
+        if (hasPhoto) ca.appendChild(row('Hapus foto', { onClick: acct ? removePhotoAccount : removeAvatar }));
+        if (acct) {
+            ca.appendChild(row('Ubah sandi', { onClick: openPasswordDialog }));
+            ca.appendChild(row('Tambah akun lain', { onClick: () => showAuthScreen({ add: true }) }));
+        } else if (prof && prof.password) {
+            ca.appendChild(row('Kunci aplikasi sekarang', { onClick: () => { lockProfileNow(prof); location.reload(); } }));
+        }
+
+        // tampilan
+        const cv = card('Tampilan');
+        cv.appendChild(row('Nilai statistik & kalender', { value: isQuickStatsIdrView ? 'IDR' : 'USDT', onClick: () => { toggleQuickStatsView(); renderProfilePage(); } }));
+        cv.appendChild(row('Total P&L', { value: isNetPnlView ? 'Net' : 'Gross', onClick: () => { try { heroLongPressFired = false; } catch (e) {} toggleNetPnL(); renderProfilePage(); } }));
+        const kurs = $('headerKursValue');
+        cv.appendChild(row('Kurs USDT/IDR', { value: kurs ? kurs.textContent : '–' }));
+
+        // data
+        const cd = card('Data');
+        cd.appendChild(row('Unduh cadangan (CSV)', { onClick: () => { const n = downloadBackupCsv(); showToast(n + ' trade diunduh', 'success'); } }));
+
+        // sesi
+        if (acct) {
+            const cs = card('Sesi');
+            cs.appendChild(row('Keluar', { onClick: openLogoutDialog }));
+            if (Object.keys(SESSIONS).length > 1) cs.appendChild(row('Keluar dari semua akun', { onClick: openLogoutAllDialog }));
+            cs.appendChild(row('Hapus akun', { danger: true, onClick: openDeleteDialog }));
+        }
+
+        host.replaceChildren(frag);
+    }
+
+    // kalau layar dibesarkan ke desktop, bar sembunyi sendiri lewat CSS; kembali ke Beranda supaya rapi saat dikecilkan lagi
+    mq.addEventListener && mq.addEventListener('change', e => { if (!e.matches) { view = 'home'; body.setAttribute('data-view', 'home'); paintNav(); } });
+
+    updateNavAvatar();
+    setView('home');
+})();
+</script>
+
 </body>
 </html>
