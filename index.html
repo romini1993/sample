@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#06070b">
-    <title>Data Trading</title>
+    <title>Data Trading Romini</title>
     <link rel="manifest" href="./manifest.json">
     <script src="./Database.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -1265,7 +1265,13 @@
 
             <!-- WIDGET TAMBAHAN (khusus desktop) -->
             <div id="widgetsCol" class="hidden lg:flex lg:flex-col lg:flex-1 lg:min-h-0 space-y-2.5">
-                <div id="statsToolbar"><button type="button" class="adv" data-proxy="Lanjutan"><span>Lanjutan</span></button><button type="button" data-proxy="Impor"><span>Impor</span></button></div>
+                <div id="statsToolbar" class="porto-card rounded-2xl">
+                    <div class="adv-head">
+                        <div class="flex items-center gap-2"><span class="section-dot"></span><h2 class="section-label">Statistik lanjutan</h2></div>
+                        <button type="button" data-proxy="Impor"><span>Impor</span></button>
+                    </div>
+                    <div id="advInline"></div>
+                </div>
 
                 <!-- Statistik Cepat -->
                 <div class="porto-card p-3.5 rounded-2xl shrink-0 cursor-pointer active:opacity-70 transition" onclick="toggleQuickStatsView()">
@@ -5794,15 +5800,17 @@
         /* Statistik & kalender: widget desktop dipakai langsung, rapat ke tepi seperti kartu lain */
         body[data-view="stats"] #widgetsCol { display: flex !important; flex-direction: column; gap: 6px; }
         #widgetsCol > * { margin: 0 !important; }
-        body[data-view="stats"] #statsToolbar { display: flex; gap: 6px; padding: 0 6px; }
-        #statsToolbar button {
-            flex: 1; display: flex; align-items: center; justify-content: center;
-            padding: 11px 0; border-radius: var(--r-box); cursor: pointer;
-            background: var(--surface-2); border: 1px solid var(--border); color: var(--text-dim);
-        }
-        #statsToolbar button.adv { color: #fbbf24; border-color: rgba(251, 191, 36, .35); }
-        #statsToolbar button:active { transform: scale(.98); }
-        #statsToolbar span { font-size: 13px; font-weight: 600; }
+        body[data-view="stats"] #statsToolbar { display: block; padding: 14px; }
+        .adv-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .adv-head button { background: none; border: 0; padding: 4px 0; margin: -4px 0; cursor: pointer; color: var(--text-dim); }
+        .adv-head button span { font-size: 11px; font-weight: 600; }
+        #advInline { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .adv-box { background: var(--surface-2); border-radius: 12px; padding: 10px; min-width: 0; }
+        .adv-box .k { font-size: 10px; color: var(--text-dim); }
+        .adv-box .v { margin-top: 2px; font-family: 'Space Grotesk', sans-serif; font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .adv-box .v.g { color: var(--profit); }
+        .adv-box .v.r { color: var(--loss); }
+        .adv-empty { grid-column: 1 / -1; text-align: center; font-size: 12px; color: var(--text-faint); padding: 16px 0; }
         #widgetsCol .adv-orig { display: none !important; }
         #widgetsCol .porto-card { border-radius: 0 !important; border-left-width: 0 !important; border-right-width: 0 !important; }
 
@@ -5932,6 +5940,7 @@
         body.setAttribute('data-view', v);
         paintNav();
         if (v === 'profil') renderProfilePage();
+        if (v === 'stats') renderAdvInline();
         if (v === 'home' || v === 'rekap' || v === 'riwayat') {
             // Beranda & Riwayat memakai daftar riwayat, Rekap memakai rekap harian
             requestAnimationFrame(() => {
@@ -5971,7 +5980,34 @@
         };
     }
 
-    // Lanjutan & Impor: tombol aslinya (di header kartu Statistik) disembunyikan di HP, tombol baru di atas meneruskan ketukan ke sana
+    // Statistik lanjutan: tampil langsung di halaman Statistik (semua trade), diperbarui otomatis saat data berubah
+    function renderAdvInline() {
+        const host = $('advInline'); if (!host || typeof advStats !== 'function') return;
+        let arr = []; try { arr = (cachedGlobalResponse && cachedGlobalResponse.history) || []; } catch (e) {}
+        const r = advStats(arr);
+        const f2 = v => (v >= 0 ? '+' : '') + v.toFixed(2);
+        const box = (k, v, c) => `<div class="adv-box"><div class="k">${k}</div><div class="v ${c || ''}">${v}</div></div>`;
+        const sd = r.sides;
+        const sideTxt = k => sd[k].n ? `${sd[k].n}x · ${Math.round(sd[k].w / sd[k].n * 100)}% · ${f2(sd[k].p)}` : '-';
+        host.innerHTML = r.n ? [
+            box('Win rate', r.wr + '%'),
+            box('Profit factor', r.pf === null ? '-' : (isFinite(r.pf) ? r.pf.toFixed(2) : '∞'), r.pf !== null && r.pf >= 1 ? 'g' : 'r'),
+            box('Rata-rata profit', f2(r.avgW), 'g'),
+            box('Rata-rata loss', r.l ? '-' + r.avgL.toFixed(2) : '-', 'r'),
+            box('Max drawdown', r.dd > 0 ? `-${r.dd.toFixed(2)} (${r.ddPct.toFixed(1)}%)` : '0', r.dd > 0 ? 'r' : ''),
+            box('Streak menang / kalah', `${r.mw} / ${r.ml}`),
+            box('Pair terbaik', r.best ? `${r.best[0]} ${f2(r.best[1])}` : '-', 'g'),
+            box('Pair terburuk', r.worst ? `${r.worst[0]} ${f2(r.worst[1])}` : '-', 'r'),
+            box('Buy (jumlah · win · total)', sideTxt('Buy')),
+            box('Sell (jumlah · win · total)', sideTxt('Sell'))
+        ].join('') : '<div class="adv-empty">Belum ada trade.</div>';
+    }
+    let advRaf = 0;
+    const advSoon = () => { if (!advRaf) advRaf = requestAnimationFrame(() => { advRaf = 0; renderAdvInline(); }); };
+    ['tradeList', 'quickStatsGrid'].forEach(id => { const e = $(id); if (e && window.MutationObserver) new MutationObserver(advSoon).observe(e, { childList: true }); });
+    renderAdvInline();
+
+    // Impor: tombol aslinya (di header kartu Statistik) disembunyikan di HP, tombol baru di atas meneruskan ketukan ke sana
     function origBtn(txt) {
         const h = Array.from(document.querySelectorAll('#widgetsCol h2.section-label')).find(x => x.textContent.trim() === 'Statistik');
         const w = h && h.parentElement && h.parentElement.querySelector('.ml-auto');
