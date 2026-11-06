@@ -5784,6 +5784,9 @@
         body[data-view="riwayat"] main.relative { padding-bottom: calc(var(--bnavH) + 84px + env(safe-area-inset-bottom, 0px)) !important; }
         main.view-in { animation: bnViewIn .22s var(--g-ease) backwards; }
 
+        /* filter (cari pair, side, hasil, kalender) hanya ada di menu Riwayat, tidak di Beranda */
+        body[data-view="home"] #fltBar { display: none !important; }
+
         /* satu daftar per menu: Beranda & Riwayat = riwayat, Rekap = rekap (tanpa geser antar-tab) */
         #tabPager { overflow-x: hidden !important; height: auto !important; }
         body[data-view="home"] #tabPager > #rekapCardWrap,
@@ -5941,6 +5944,11 @@
         paintNav();
         if (v === 'profil') renderProfilePage();
         if (v === 'stats') renderAdvInline();
+        if (v === 'home') {                                   // filter dari Riwayat dilepas supaya Beranda selalu menampilkan semua trade
+            const rb = $('fltReset');
+            if (rb && !rb.classList.contains('hidden')) rb.click();
+            const pop = $('fltDatePop'); if (pop) pop.classList.add('hidden');
+        }
         if (v === 'home' || v === 'rekap' || v === 'riwayat') {
             // Beranda & Riwayat memakai daftar riwayat, Rekap memakai rekap harian
             requestAnimationFrame(() => {
