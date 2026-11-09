@@ -5053,14 +5053,14 @@
 
             let html;
             if (val === null || val === undefined) {
-                html = `<div style="font-size:10px;color:#565e70;">Tidak ada trade</div>`;
+                html = `<div style="font-size:10px;color:#a1aabd;">Tidak ada trade</div>`;
             } else {
                 const isProfit = val >= 0;
                 const color = isProfit ? '#34d399' : '#fb7185';
                 const rp = formatRupiah(val * currentKursIdr);
                 html = `
                     <div style="font-size:11px;font-weight:700;color:${color};">${isProfit ? '+' : ''}${val.toFixed(2)} USDT</div>
-                    <div style="font-size:9px;color:#8891a4;margin-top:1px;">${rp}</div>
+                    <div style="font-size:9px;color:#c0c8d8;margin-top:1px;">${rp}</div>
                 `;
             }
 
@@ -5792,6 +5792,15 @@
     .adv-empty { grid-column: 1 / -1; text-align: center; font-size: 12px; color: var(--text-faint); padding: 16px 0; }
     #widgetsCol .adv-orig { display: none !important; }
 
+    /* Statistik: teks abu-abu dipertegas (sebelumnya terlalu gelap) */
+    body[data-view="stats"] #widgetsCol { --text-dim: #c0c8d8; --text-faint: #a1aabd; }
+    body[data-view="stats"] #widgetsCol #heatmapMonthLabel { font-size: 12px !important; color: var(--text-dim); }
+    body[data-view="stats"] #widgetsCol button[onclick^="changeHeatmapMonth"] {
+        width: 30px !important; height: 30px !important; font-size: 20px !important; line-height: 1;
+        color: var(--text) !important; border-color: #3a4156 !important;
+    }
+    #heatmapCalendar { -webkit-user-select: none; user-select: none; }
+
     /* Profil */
     body[data-view="profil"] #profilePage { display: flex !important; flex-direction: column; gap: 6px; }
     #profilePage .porto-card { padding: 0; overflow: hidden; }
@@ -5897,6 +5906,15 @@
         body[data-view="home"] #tabPager > #rekapCardWrap,
         body[data-view="riwayat"] #tabPager > #rekapCardWrap,
         body[data-view="rekap"] #tabPager > #riwayatCardWrap { display: none !important; }
+
+        /* hero & form: sudut membulat seperti kartu Riwayat, tapi tetap dekat tepi layar (6px) */
+        body .hero-panel, body #tradeForm {
+            border-radius: var(--r-box) !important;
+            border-left-width: 1px !important;
+            border-right-width: 1px !important;
+            margin-left: 6px !important;
+            margin-right: 6px !important;
+        }
 
         /* kartu rapat ke tepi layar */
         #widgetsCol .porto-card { border-radius: 0 !important; border-left-width: 0 !important; border-right-width: 0 !important; }
@@ -6066,6 +6084,19 @@
             return r;
         };
     }
+
+    // Kalender aktivitas: tarik (drag) ke kiri/kanan dengan mouse untuk pindah bulan, sama seperti swipe di HP
+    (function () {
+        const cal = $('heatmapCalendar'); if (!cal) return;
+        let mx = 0, my = 0, md = false;
+        cal.addEventListener('mousedown', e => { if (e.button !== 0) return; md = true; mx = e.clientX; my = e.clientY; });
+        window.addEventListener('mouseup', e => {
+            if (!md) return; md = false;
+            const dx = e.clientX - mx, dy = e.clientY - my;
+            if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+            if (typeof changeHeatmapMonth === 'function') changeHeatmapMonth(dx < 0 ? 1 : -1, true);
+        });
+    })();
 
     // Beranda desktop: tiap daftar hanya 6 baris terbaru (rekap = 6 hari, riwayat = 6 trade); HP tidak dibatasi
     const LIM = 6, wide = window.matchMedia('(min-width: 768px)');
