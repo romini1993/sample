@@ -5907,13 +5907,13 @@
         body[data-view="riwayat"] #tabPager > #rekapCardWrap,
         body[data-view="rekap"] #tabPager > #riwayatCardWrap { display: none !important; }
 
-        /* hero & form: sudut membulat seperti kartu Riwayat, tapi tetap dekat tepi layar (6px) */
+        /* hero & form: mepet penuh ke tepi layar, sudutnya membulat sampai ke pinggiran (sama dengan lembaran daftar Riwayat, radius 18px) */
         body .hero-panel, body #tradeForm {
-            border-radius: var(--r-box) !important;
-            border-left-width: 1px !important;
-            border-right-width: 1px !important;
-            margin-left: 6px !important;
-            margin-right: 6px !important;
+            border-radius: 18px !important;
+            border-left-width: 0 !important;
+            border-right-width: 0 !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
         }
 
         /* kartu rapat ke tepi layar */
