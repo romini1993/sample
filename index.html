@@ -1337,6 +1337,7 @@
                         <span class="text-[10px] text-[var(--text-faint)]">Klik untuk buka • Tahan untuk share</span>
                     </div>
                     <div id="dailySummaryList" class="space-y-1.5 overflow-y-auto pr-1 custom-scroll lg:flex-1 lg:min-h-0"></div>
+                    <button type="button" class="see-all" data-go="rekap"><span>Lihat semua rekap harian</span><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5,3 9,7 5,11"/></svg></button>
                 </div>
             </div>
 
@@ -1368,6 +1369,7 @@
                     </div>
                     <div id="loading" class="text-center text-xs text-[var(--text-faint)] py-6" style="display:none;">Memuat data...</div>
                     <div id="tradeList" class="space-y-1.5 overflow-y-auto pr-1 custom-scroll lg:flex-1 lg:min-h-0"></div>
+                    <button type="button" class="see-all" data-go="riwayat"><span>Lihat semua riwayat trade</span><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5,3 9,7 5,11"/></svg></button>
                 </div>
             </div>
             </div><!-- /#tabPager -->
@@ -5741,33 +5743,140 @@
      Hanya aktif di layar < 768px. Desktop tidak berubah sama sekali.
      Satu halaman tampil per menu; semua fungsi lama (form, rekap, riwayat, share card, kalender) dipakai apa adanya. -->
 <style id="bottom-nav">
-    #bnav, #bfab, #profilePage, #statsToolbar { display: none; }
+    #bfab, #profilePage, #statsToolbar, .see-all { display: none; }
+    :root { --bnavH: 60px; }
 
     @keyframes bnViewIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-    @media (max-width: 767px) {
-        :root { --bnavH: 60px; }
+    /* ═════════ BERLAKU DI SEMUA UKURAN LAYAR (HP & desktop) ═════════ */
 
-        /* pengganti: tombol profil di atas, pil tab Rekap/Riwayat, panah laci statistik */
-        #appHeader, .stats-backdrop, .stats-sheet, #statsPeekProbe { display: none !important; }
+    /* pengganti: tombol profil di atas dan panah laci statistik */
+    #appHeader, .stats-backdrop, .stats-sheet, #statsPeekProbe { display: none !important; }
+    main.view-in { animation: bnViewIn .22s var(--g-ease) backwards; }
+
+    /* Pil kuning satu judul (Beranda & Riwayat: "Riwayat Trade", Rekap: "Rekap Harian"), sama persis dengan pil tab lama.
+       Di Rekap & Riwayat pil menempel di paling atas layar dan tetap terlihat saat daftar di-scroll. */
+    body[data-view="home"] #tabIndicator, body[data-view="rekap"] #tabIndicator, body[data-view="riwayat"] #tabIndicator,
+    body[data-view="home"] #tabBtnRekap, body[data-view="riwayat"] #tabBtnRekap,
+    body[data-view="rekap"] #tabBtnRiwayat { display: none !important; }
+    body[data-view="home"] #tabBtnRiwayat, body[data-view="riwayat"] #tabBtnRiwayat, body[data-view="rekap"] #tabBtnRekap {
+        background: #f59e0b;                       /* amber-500, sama dengan penanda kuning lama */
+        color: #1a1305 !important;
+        box-shadow: 0 10px 15px -3px rgba(245, 158, 11, .25), 0 4px 6px -4px rgba(245, 158, 11, .25);
+        pointer-events: none;
+    }
+
+    /* halaman mana yang tampil */
+    body[data-view="home"] #profilePage { display: none !important; }
+    body[data-view="stats"]   .hero-panel, body[data-view="stats"] #tradeForm, body[data-view="stats"] #colList, body[data-view="stats"] #profilePage { display: none !important; }
+    body[data-view="rekap"]   .hero-panel, body[data-view="rekap"] #tradeForm, body[data-view="rekap"] #widgetsCol, body[data-view="rekap"] #profilePage,
+    body[data-view="riwayat"] .hero-panel, body[data-view="riwayat"] #tradeForm, body[data-view="riwayat"] #widgetsCol, body[data-view="riwayat"] #profilePage { display: none !important; }
+    body[data-view="profil"]  .hero-panel, body[data-view="profil"] #tradeForm, body[data-view="profil"] #colList, body[data-view="profil"] #widgetsCol { display: none !important; }
+
+    /* filter (cari pair, side, hasil, kalender) hanya ada di menu Riwayat, tidak di Beranda */
+    body[data-view="home"] #fltBar { display: none !important; }
+
+    /* Statistik & kalender */
+    body[data-view="stats"] #widgetsCol { display: flex !important; flex-direction: column; gap: 6px; }
+    #widgetsCol > * { margin: 0 !important; }
+    body[data-view="stats"] #statsToolbar { display: block; padding: 14px; }
+    .adv-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .adv-head button { background: none; border: 0; padding: 4px 0; margin: -4px 0; cursor: pointer; color: var(--text-dim); }
+    .adv-head button span { font-size: 11px; font-weight: 600; }
+    #advInline { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .adv-box { background: var(--surface-2); border-radius: 12px; padding: 10px; min-width: 0; }
+    .adv-box .k { font-size: 10px; color: var(--text-dim); }
+    .adv-box .v { margin-top: 2px; font-family: 'Space Grotesk', sans-serif; font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .adv-box .v.g { color: var(--profit); }
+    .adv-box .v.r { color: var(--loss); }
+    .adv-empty { grid-column: 1 / -1; text-align: center; font-size: 12px; color: var(--text-faint); padding: 16px 0; }
+    #widgetsCol .adv-orig { display: none !important; }
+
+    /* Profil */
+    body[data-view="profil"] #profilePage { display: flex !important; flex-direction: column; gap: 6px; }
+    #profilePage .porto-card { padding: 0; overflow: hidden; }
+    .pf-head { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 26px 16px 22px !important; text-align: center; }
+    .pf-head .avatar { margin-bottom: 8px; }
+    .pf-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 21px; line-height: 1.15; }
+    .pf-id { font-size: 12px; color: var(--text-dim); }
+    .pf-title { padding: 14px 14px 8px; font-size: 12px; font-weight: 600; color: var(--text-faint); }
+    .pf-row {
+        display: flex; align-items: center; gap: 12px; width: 100%;
+        padding: 14px; background: none; border: 0; border-top: 1px solid var(--border-soft);
+        color: var(--text); text-align: left; cursor: pointer;
+        transition: background .12s ease;
+    }
+    .pf-title + .pf-row { border-top: 0; }
+    .pf-row:hover, .pf-row:active { background: var(--surface-2); }
+    div.pf-row { cursor: default; }
+    div.pf-row:hover, div.pf-row:active { background: none; }
+    .pf-row .pf-label { flex: 1; min-width: 0; font-size: 14px; font-weight: 500; }
+    .pf-row .pf-label small { display: block; margin-top: 2px; font-size: 11px; font-weight: 400; color: var(--text-dim); }
+    .pf-row .pf-val { font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+    .pf-row .pf-chev { color: var(--text-faint); display: flex; }
+    .pf-row.on-acct .pf-val { color: var(--accent-bright); }
+    .pf-row.danger { color: var(--loss); }
+    .pf-row.danger .pf-chev { color: var(--loss); opacity: .6; }
+
+    /* Bar menu bawah */
+    #bnav {
+        display: flex;
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
+        padding: 6px 4px calc(10px + env(safe-area-inset-bottom, 0px));
+        background: rgba(12, 14, 21, .96);
+        -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+        border-top: 1px solid var(--border-soft);
+    }
+    #bnav button {
+        flex: 1; min-width: 0;
+        display: flex; flex-direction: column; align-items: center; gap: 4px;
+        padding: 0; background: none; border: 0; cursor: pointer;
+        color: var(--text-faint);
+        transition: color .15s ease;
+    }
+    #bnav button:hover { color: var(--text-dim); }
+    #bnav .bn-chip {
+        width: 46px; height: 30px; border-radius: 15px;
+        display: grid; place-items: center;
+        transition: background .18s ease, transform .12s ease;
+    }
+    #bnav button:active .bn-chip { transform: scale(.92); }
+    #bnav .bn-label { font-size: 10.5px !important; font-weight: 600; line-height: 1; letter-spacing: .01em; }
+    #bnav button.on { color: var(--text); }
+    #bnav button.on .bn-chip { background: var(--accent-dim); color: var(--accent-bright); }
+    #bnav .bn-chip .avatar { box-shadow: 0 0 0 1.5px var(--border); }
+    #bnav button.on .bn-chip .avatar { box-shadow: 0 0 0 1.5px var(--accent); }
+
+    /* tombol bulat "tambah trade" di halaman selain Beranda */
+    #bfab {
+        position: fixed; right: 14px; z-index: 44;
+        bottom: calc(var(--bnavH) + 16px + env(safe-area-inset-bottom, 0px));
+        width: 52px; height: 52px; border-radius: 50%;
+        place-items: center;
+        background: var(--accent); color: #1a1305; border: 0; cursor: pointer;
+        box-shadow: 0 10px 22px rgba(217, 164, 65, .26), 0 2px 8px rgba(0, 0, 0, .5);
+        transition: transform .12s ease, opacity .15s ease;
+    }
+    #bfab:active { transform: scale(.94); }
+    body[data-view="stats"] #bfab, body[data-view="rekap"] #bfab, body[data-view="riwayat"] #bfab { display: grid; }
+    body.kb-open #bfab { display: none !important; }
+
+    /* toast naik sedikit supaya tidak menutupi bar */
+    #toastHost { bottom: calc(env(safe-area-inset-bottom, 0px) + var(--bnavH) + 12px) !important; }
+
+    /* baris yang disembunyikan oleh batas 6 baris di Beranda desktop */
+    .home-hide { display: none !important; }
+
+    /* ═════════ HP (< 768px) ═════════ */
+    @media (max-width: 767px) {
         body[data-view="stats"] #tabBar, body[data-view="profil"] #tabBar { display: none !important; }
 
-        /* Pil kuning satu judul (Beranda & Riwayat: "Riwayat Trade", Rekap: "Rekap Harian"), sama persis dengan pil tab lama.
-           Di Rekap & Riwayat pil menempel di paling atas layar dan tetap terlihat saat daftar di-scroll. */
-        body[data-view="home"] #tabIndicator, body[data-view="rekap"] #tabIndicator, body[data-view="riwayat"] #tabIndicator,
-        body[data-view="home"] #tabBtnRekap, body[data-view="riwayat"] #tabBtnRekap,
-        body[data-view="rekap"] #tabBtnRiwayat { display: none !important; }
-        body[data-view="home"] #tabBtnRiwayat, body[data-view="riwayat"] #tabBtnRiwayat, body[data-view="rekap"] #tabBtnRekap {
-            background: #f59e0b;                       /* amber-500, sama dengan penanda kuning lama */
-            color: #1a1305 !important;
-            box-shadow: 0 10px 15px -3px rgba(245, 158, 11, .25), 0 4px 6px -4px rgba(245, 158, 11, .25);
-            pointer-events: none;
-        }
         body[data-view="rekap"] #tabBar, body[data-view="riwayat"] #tabBar { top: env(safe-area-inset-top, 0px) !important; }
 
         /* BERANDA = susunan lama: hero terkunci, form tenggelam ditutupi daftar riwayat yang naik.
            Lembaran daftar diberi ruang bawah supaya baris terakhir tidak tertutup menu. */
         body[data-view="home"] #colList { padding-bottom: calc(var(--bnavH) + 24px + env(safe-area-inset-bottom, 0px)) !important; }
+        body[data-view="home"] #widgetsCol { display: none !important; }
 
         /* halaman lain: tanpa tumpukan terkunci, daftar jadi halaman biasa */
         body:not([data-view="home"]) #colList {
@@ -5782,10 +5891,6 @@
         body[data-view="stats"] main.relative,
         body[data-view="rekap"] main.relative,
         body[data-view="riwayat"] main.relative { padding-bottom: calc(var(--bnavH) + 84px + env(safe-area-inset-bottom, 0px)) !important; }
-        main.view-in { animation: bnViewIn .22s var(--g-ease) backwards; }
-
-        /* filter (cari pair, side, hasil, kalender) hanya ada di menu Riwayat, tidak di Beranda */
-        body[data-view="home"] #fltBar { display: none !important; }
 
         /* satu daftar per menu: Beranda & Riwayat = riwayat, Rekap = rekap (tanpa geser antar-tab) */
         #tabPager { overflow-x: hidden !important; height: auto !important; }
@@ -5793,101 +5898,74 @@
         body[data-view="riwayat"] #tabPager > #rekapCardWrap,
         body[data-view="rekap"] #tabPager > #riwayatCardWrap { display: none !important; }
 
-        /* ── halaman mana yang tampil ── */
-        body[data-view="home"]    #widgetsCol, body[data-view="home"]    #profilePage { display: none !important; }
-        body[data-view="stats"]   .hero-panel, body[data-view="stats"] #tradeForm, body[data-view="stats"] #colList, body[data-view="stats"] #profilePage { display: none !important; }
-        body[data-view="rekap"]   .hero-panel, body[data-view="rekap"] #tradeForm, body[data-view="rekap"] #widgetsCol, body[data-view="rekap"] #profilePage,
-        body[data-view="riwayat"] .hero-panel, body[data-view="riwayat"] #tradeForm, body[data-view="riwayat"] #widgetsCol, body[data-view="riwayat"] #profilePage { display: none !important; }
-        body[data-view="profil"]  .hero-panel, body[data-view="profil"] #tradeForm, body[data-view="profil"] #colList, body[data-view="profil"] #widgetsCol { display: none !important; }
-
-        /* Statistik & kalender: widget desktop dipakai langsung, rapat ke tepi seperti kartu lain */
-        body[data-view="stats"] #widgetsCol { display: flex !important; flex-direction: column; gap: 6px; }
-        #widgetsCol > * { margin: 0 !important; }
-        body[data-view="stats"] #statsToolbar { display: block; padding: 14px; }
-        .adv-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-        .adv-head button { background: none; border: 0; padding: 4px 0; margin: -4px 0; cursor: pointer; color: var(--text-dim); }
-        .adv-head button span { font-size: 11px; font-weight: 600; }
-        #advInline { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .adv-box { background: var(--surface-2); border-radius: 12px; padding: 10px; min-width: 0; }
-        .adv-box .k { font-size: 10px; color: var(--text-dim); }
-        .adv-box .v { margin-top: 2px; font-family: 'Space Grotesk', sans-serif; font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .adv-box .v.g { color: var(--profit); }
-        .adv-box .v.r { color: var(--loss); }
-        .adv-empty { grid-column: 1 / -1; text-align: center; font-size: 12px; color: var(--text-faint); padding: 16px 0; }
-        #widgetsCol .adv-orig { display: none !important; }
+        /* kartu rapat ke tepi layar */
         #widgetsCol .porto-card { border-radius: 0 !important; border-left-width: 0 !important; border-right-width: 0 !important; }
-
-        /* ── Profil ── */
-        body[data-view="profil"] #profilePage { display: flex !important; flex-direction: column; gap: 6px; }
-        #profilePage .porto-card { border-radius: 0 !important; border-left-width: 0 !important; border-right-width: 0 !important; padding: 0; overflow: hidden; }
-        .pf-head { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 26px 16px 22px !important; text-align: center; }
-        .pf-head .avatar { margin-bottom: 8px; }
-        .pf-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 21px; line-height: 1.15; }
-        .pf-id { font-size: 12px; color: var(--text-dim); }
-        .pf-title { padding: 14px 14px 8px; font-size: 12px; font-weight: 600; color: var(--text-faint); }
-        .pf-row {
-            display: flex; align-items: center; gap: 12px; width: 100%;
-            padding: 14px; background: none; border: 0; border-top: 1px solid var(--border-soft);
-            color: var(--text); text-align: left; cursor: pointer;
-            transition: background .12s ease;
-        }
-        .pf-title + .pf-row { border-top: 0; }
-        .pf-row:active { background: var(--surface-2); }
-        div.pf-row { cursor: default; }
-        div.pf-row:active { background: none; }
-        .pf-row .pf-label { flex: 1; min-width: 0; font-size: 14px; font-weight: 500; }
-        .pf-row .pf-label small { display: block; margin-top: 2px; font-size: 11px; font-weight: 400; color: var(--text-dim); }
-        .pf-row .pf-val { font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
-        .pf-row .pf-chev { color: var(--text-faint); display: flex; }
-        .pf-row.on-acct .pf-val { color: var(--accent-bright); }
-        .pf-row.danger { color: var(--loss); }
-        .pf-row.danger .pf-chev { color: var(--loss); opacity: .6; }
-
-        /* ── Bar menu bawah ── */
-        #bnav {
-            display: flex;
-            position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
-            padding: 6px 4px calc(10px + env(safe-area-inset-bottom, 0px));
-            background: rgba(12, 14, 21, .96);
-            -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-            border-top: 1px solid var(--border-soft);
-        }
-        #bnav button {
-            flex: 1; min-width: 0;
-            display: flex; flex-direction: column; align-items: center; gap: 4px;
-            padding: 0; background: none; border: 0; cursor: pointer;
-            color: var(--text-faint);
-            transition: color .15s ease;
-        }
-        #bnav .bn-chip {
-            width: 46px; height: 30px; border-radius: 15px;
-            display: grid; place-items: center;
-            transition: background .18s ease, transform .12s ease;
-        }
-        #bnav button:active .bn-chip { transform: scale(.92); }
-        #bnav .bn-label { font-size: 10.5px !important; font-weight: 600; line-height: 1; letter-spacing: .01em; }
-        #bnav button.on { color: var(--text); }
-        #bnav button.on .bn-chip { background: var(--accent-dim); color: var(--accent-bright); }
-        #bnav .bn-chip .avatar { box-shadow: 0 0 0 1.5px var(--border); }
-        #bnav button.on .bn-chip .avatar { box-shadow: 0 0 0 1.5px var(--accent); }
-
-        /* tombol bulat "tambah trade" di halaman daftar */
-        #bfab {
-            position: fixed; right: 14px; z-index: 44;
-            bottom: calc(var(--bnavH) + 16px + env(safe-area-inset-bottom, 0px));
-            width: 52px; height: 52px; border-radius: 50%;
-            place-items: center;
-            background: var(--accent); color: #1a1305; border: 0; cursor: pointer;
-            box-shadow: 0 10px 22px rgba(217, 164, 65, .26), 0 2px 8px rgba(0, 0, 0, .5);
-            transition: transform .12s ease, opacity .15s ease;
-        }
-        #bfab:active { transform: scale(.94); }
-        body[data-view="stats"] #bfab, body[data-view="rekap"] #bfab, body[data-view="riwayat"] #bfab { display: grid; }
-        body.kb-open #bfab { display: none !important; }
-
-        /* toast naik sedikit supaya tidak menutupi bar */
-        #toastHost { bottom: calc(env(safe-area-inset-bottom, 0px) + var(--bnavH) + 12px) !important; }
+        #profilePage .porto-card { border-radius: 0 !important; border-left-width: 0 !important; border-right-width: 0 !important; }
     }
+
+    /* ═════════ DESKTOP / TABLET (>= 768px) ═════════ */
+    @media (min-width: 768px) {
+        #bnav { justify-content: center; gap: 10px; }
+        #bnav button { flex: 0 1 150px; }
+        #bnav button:hover .bn-chip { background: var(--surface-2); }
+        #bnav button.on:hover .bn-chip { background: var(--accent-dim); }
+        main.relative { padding-bottom: calc(var(--bnavH) + 28px + env(safe-area-inset-bottom, 0px)) !important; }
+        body:not([data-view="home"]) main > div { grid-template-columns: minmax(0, 1fr) !important; }
+
+        /* Beranda: tiap kartu punya judul sendiri (pil tab disembunyikan). Rekap & Riwayat: header pil kuning, menempel di atas */
+        #tabBar { display: none !important; }
+        #rekapCard > div:first-child, #riwayatCard > div:first-child { display: flex !important; }
+        body[data-view="rekap"] #tabBar, body[data-view="riwayat"] #tabBar {
+            display: block !important; position: sticky !important; top: 0 !important; z-index: 30;
+            background: var(--bg); padding: 4px 0 6px; margin: 0 !important;
+        }
+        body[data-view="rekap"] #rekapCard > div:first-child, body[data-view="riwayat"] #riwayatCard > div:first-child { display: none !important; }
+
+        /* kartu tidak lagi setinggi 880px dengan scroll di dalam: tinggi mengikuti isi, halaman yang scroll */
+        #rekapCard, #riwayatCard { height: auto !important; }
+        #dailySummaryList, #tradeList { overflow: visible !important; flex: none !important; max-height: none !important; padding-right: 0 !important; }
+        #tabPager { display: flex !important; flex-direction: column; gap: 10px; height: auto !important; overflow: visible !important; margin-top: 0 !important; }
+        #colList { min-height: 0 !important; }
+        body[data-view] #widgetsCol, body[data-view] #profilePage { gap: 10px; }
+
+        /* Beranda rapi: kolom kanan setinggi kolom kiri (kartu Riwayat memanjang, tombol Lihat semua rata di dasar) */
+        body[data-view="home"] #colList { display: flex; flex-direction: column; }
+        body[data-view="home"] #tabPager { flex: 1 1 auto; }
+        body[data-view="home"] #riwayatCardWrap { display: flex !important; flex-direction: column; flex: 1 1 auto; }
+        body[data-view="home"] #riwayatCard { flex: 1 1 auto; }
+        body[data-view="home"] #riwayatCard .see-all { margin-top: auto; }
+        body[data-view="home"] #riwayatCard #tradeList { margin-bottom: 8px; }
+
+        /* BERANDA desktop: Rekap (atas) + Riwayat (bawah), masing-masing 6 baris, lalu tombol "Lihat semua" */
+        body[data-view="home"] #rekapCardWrap, body[data-view="home"] #riwayatCardWrap { display: block !important; }
+        body[data-view="home"] .see-all {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            width: 100%; margin-top: 8px; padding: 10px 0; border-radius: 12px; cursor: pointer;
+            background: var(--surface-2); border: 1px solid var(--border);
+            color: #fbbf24; font-size: 12px; font-weight: 600;
+            transition: border-color .15s ease, background .15s ease;
+        }
+        body[data-view="home"] .see-all:hover { border-color: rgba(251, 191, 36, .45); background: var(--surface-3, var(--surface-2)); }
+
+        /* halaman Rekap & Riwayat: lebar penuh, satu kartu */
+        body[data-view="rekap"] #rekapCardWrap { display: block !important; }
+        body[data-view="rekap"] #riwayatCardWrap { display: none !important; }
+        body[data-view="riwayat"] #riwayatCardWrap { display: block !important; }
+        body[data-view="riwayat"] #rekapCardWrap { display: none !important; }
+    }
+
+    /* ═════════ DESKTOP LEBAR (>= 1024px) ═════════ */
+    @media (min-width: 1024px) {
+        #advInline { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    }
+
+    /* Kalender di halaman Statistik (desktop): kotak tanggal tidak gepeng, kalender di tengah dengan lebar wajar */
+    @media (min-width: 768px) {
+        body[data-view="stats"] #heatmapCalendar { flex: none !important; width: 100%; max-width: 760px; margin: 4px auto 0; }
+        body[data-view="stats"] #heatmapCalendar > div { height: auto !important; grid-template-rows: auto !important; }
+        body[data-view="stats"] #heatmapCalendar .heat-cell { aspect-ratio: 1.3 / 1 !important; font-size: 13px !important; }
+    }
+
     @media (prefers-reduced-motion: reduce) {
         main.view-in { animation: none !important; }
         #bnav, #bnav .bn-chip, #bfab { transition: none !important; }
@@ -5957,6 +6035,7 @@
                 window.dispatchEvent(new Event('resize'));      // hitung ulang tinggi hero (dipakai susunan terkunci di Beranda)
             });
         }
+        applyLimit();
         window.scrollTo(0, 0);
         const m = document.querySelector('main');
         if (m) { m.classList.remove('view-in'); void m.offsetWidth; m.classList.add('view-in'); }
@@ -5987,6 +6066,24 @@
             return r;
         };
     }
+
+    // Beranda desktop: tiap daftar hanya 6 baris terbaru (rekap = 6 hari, riwayat = 6 trade); HP tidak dibatasi
+    const LIM = 6, wide = window.matchMedia('(min-width: 768px)');
+    function applyLimit() {
+        const on = wide.matches && view === 'home';
+        const dl = $('dailySummaryList');
+        if (dl) { let n = 0, hide = false;
+            Array.from(dl.children).forEach(el => {
+                if (el.classList.contains('day-row-bar')) { n++; hide = on && n > LIM; }
+                el.classList.toggle('home-hide', hide);          // panel detail ikut baris induknya
+            });
+        }
+        const tl = $('tradeList');
+        if (tl) Array.from(tl.children).forEach((el, i) => el.classList.toggle('home-hide', on && i >= LIM));
+    }
+    ['dailySummaryList', 'tradeList'].forEach(id => { const e = $(id); if (e && window.MutationObserver) new MutationObserver(applyLimit).observe(e, { childList: true }); });
+    wide.addEventListener && wide.addEventListener('change', applyLimit);
+    document.querySelectorAll('.see-all').forEach(b => b.addEventListener('click', () => setView(b.dataset.go)));
 
     // Statistik lanjutan: tampil langsung di halaman Statistik (semua trade), diperbarui otomatis saat data berubah
     function renderAdvInline() {
@@ -6117,9 +6214,6 @@
 
         host.replaceChildren(frag);
     }
-
-    // kalau layar dibesarkan ke desktop, bar sembunyi sendiri lewat CSS; kembali ke Beranda supaya rapi saat dikecilkan lagi
-    mq.addEventListener && mq.addEventListener('change', e => { if (!e.matches) { view = 'home'; body.setAttribute('data-view', 'home'); paintNav(); } });
 
     updateNavAvatar();
     setView('home');
