@@ -2338,7 +2338,7 @@
                     if (r && r.profile) { storePhoto(SESSION.user, r.profile.photo || ''); renderHeaderProfile(); }
                 }).catch(() => {});
             }
-            if (changed) { persistSession(); renderHeaderProfile(); document.title = document.title.split(' · ')[0] + ' · ' + ACTIVE_PROFILE.name; }
+            if (changed) { persistSession(); renderHeaderProfile(); document.title = document.title.split(' · ')[0]; }
         }
 
         // ── Dialog sederhana ──
@@ -2537,7 +2537,7 @@
                     if (!name) throw new Error('Nama tidak boleh kosong');
                     const r = await acctCall({ action: 'profile', name });
                     ACTIVE_PROFILE.name = r.profile.name; SESSION.name = r.profile.name; persistSession();
-                    renderHeaderProfile(); document.title = document.title.split(' · ')[0] + ' · ' + ACTIVE_PROFILE.name;
+                    renderHeaderProfile(); document.title = document.title.split(' · ')[0];
                     api.close(); showToast('Nama diperbarui', 'success');
                 }
             });
@@ -2815,7 +2815,6 @@
             if (!hdr || !ACTIVE_PROFILE || (!ACCOUNT_MODE && PROFILES.length < 2)) return;
             hdr.hidden = false;
             renderHeaderProfile();
-            document.title = document.title.split(' · ')[0] + ' · ' + ACTIVE_PROFILE.name;
         }
 
         function closeProfileMenu() {
@@ -5810,6 +5809,15 @@
     #profilePage .porto-card { padding: 0; overflow: hidden; }
     .pf-head { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 26px 16px 22px !important; text-align: center; }
     .pf-head .avatar { margin-bottom: 8px; }
+    /* background profil: foto profil (diburamkan halus) atau gambar pilihan sendiri */
+    .pf-head { position: relative; isolation: isolate; }
+    .pf-head .pf-bg { position: absolute; inset: 0; z-index: -2; background: var(--pf-bg) center / cover no-repeat; }
+    .pf-head.bg-photo .pf-bg { inset: -28px; filter: blur(22px) saturate(1.3); }
+    .pf-head .pf-shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(6, 7, 11, .2) 0%, rgba(6, 7, 11, .78) 100%); }
+    .pf-head.has-bg { padding-top: 40px !important; }
+    .pf-head.has-bg .avatar { box-shadow: 0 0 0 3px rgba(255, 255, 255, .9), 0 10px 26px rgba(0, 0, 0, .45); }
+    .pf-head.has-bg .pf-name { text-shadow: 0 2px 10px rgba(0, 0, 0, .55); }
+    .pf-head.has-bg .pf-id { color: rgba(255, 255, 255, .82); text-shadow: 0 1px 6px rgba(0, 0, 0, .55); }
     .pf-name { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 21px; line-height: 1.15; }
     .pf-id { font-size: 12px; color: var(--text-dim); }
     .pf-title { padding: 14px 14px 8px; font-size: 12px; font-weight: 600; color: var(--text-faint); }
@@ -6182,6 +6190,45 @@
         return el;
     }
 
+    // Background profil: disimpan di perangkat ini. mode: 'photo' (pakai foto profil) | 'custom' (gambar sendiri) | '' (tanpa)
+    function fileToBg(file) {
+        return new Promise((resolve, reject) => {
+            const url = URL.createObjectURL(file), img = new Image();
+            img.onload = () => {
+                try {
+                    const sc = Math.min(1, 900 / Math.max(img.naturalWidth, img.naturalHeight));
+                    const w = Math.round(img.naturalWidth * sc), h = Math.round(img.naturalHeight * sc);
+                    const c = document.createElement('canvas'); c.width = w; c.height = h;
+                    c.getContext('2d').drawImage(img, 0, 0, w, h);
+                    resolve(c.toDataURL('image/jpeg', 0.8));
+                } catch (e) { reject(e); } finally { URL.revokeObjectURL(url); }
+            };
+            img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('gambar tidak terbaca')); };
+            img.src = url;
+        });
+    }
+    function setBgMode(pv, mode) {
+        try { if (mode) localStorage.setItem('pfbgmode:' + pv.id, mode); else localStorage.removeItem('pfbgmode:' + pv.id); }
+        catch (e) { showToast('Penyimpanan perangkat penuh', 'error'); }
+        renderProfilePage();
+    }
+    function pickBg(pv) {
+        const inp = document.createElement('input');
+        inp.type = 'file'; inp.accept = 'image/*'; inp.style.display = 'none';
+        inp.addEventListener('change', async () => {
+            const f = inp.files && inp.files[0]; inp.remove();
+            if (!f) return;
+            try {
+                const data = await fileToBg(f);
+                localStorage.setItem('pfbg:' + pv.id, data);
+                localStorage.setItem('pfbgmode:' + pv.id, 'custom');
+                renderProfilePage();
+                showToast('Background diperbarui', 'success');
+            } catch (e) { showToast('Gambar tidak bisa dipakai, coba gambar lain', 'error'); }
+        });
+        document.body.appendChild(inp); inp.click();
+    }
+
     function renderProfilePage() {
         const host = $('profilePage'); if (!host) return;
         const prof = navProfile();
@@ -6196,8 +6243,20 @@
         const photoKey = acct ? 'avatar:u:' + SESSION.user : 'avatar:' + pv.id;
         let hasPhoto = false; try { hasPhoto = !!localStorage.getItem(photoKey); } catch (e) {}
 
+        // background profil (foto profil atau gambar sendiri)
+        let bgMode = '', bgImg = '', photoSrc = '';
+        try { bgMode = localStorage.getItem('pfbgmode:' + pv.id) || ''; bgImg = localStorage.getItem('pfbg:' + pv.id) || ''; } catch (e) {}
+        try { photoSrc = getProfilePhoto(pv) || ''; } catch (e) {}
+        const bgSrc = bgMode === 'photo' ? photoSrc : (bgMode === 'custom' ? bgImg : '');
+
         // kepala: foto / inisial + nama
         const head = card(null, 'pf-head');
+        if (bgSrc) {
+            head.classList.add('has-bg', bgMode === 'photo' ? 'bg-photo' : 'bg-custom');
+            const bg = document.createElement('div'); bg.className = 'pf-bg'; bg.style.setProperty('--pf-bg', 'url("' + bgSrc + '")');
+            const sh = document.createElement('div'); sh.className = 'pf-shade';
+            head.append(bg, sh);
+        }
         head.appendChild(makeAvatar(pv, 76));
         const nm = document.createElement('div'); nm.className = 'pf-name'; nm.textContent = pv.name; head.appendChild(nm);
         const sub = document.createElement('div'); sub.className = 'pf-id';
@@ -6236,6 +6295,20 @@
         } else if (prof && prof.password) {
             ca.appendChild(row('Kunci aplikasi sekarang', { onClick: () => { lockProfileNow(prof); location.reload(); } }));
         }
+
+        // background profil
+        const cb = card('Background profil');
+        cb.appendChild(row('Pakai foto profil sebagai background', {
+            value: bgMode === 'photo' ? 'Aktif' : 'Mati',
+            onClick: () => {
+                if (!photoSrc && bgMode !== 'photo') { showToast('Pasang foto profil dulu lewat "Ganti foto"', 'error'); return; }
+                setBgMode(pv, bgMode === 'photo' ? '' : 'photo');
+            }
+        }));
+        cb.appendChild(row('Pilih background sendiri', { sub: 'Dari galeri, tersimpan di perangkat ini', onClick: () => pickBg(pv) }));
+        if (bgMode) cb.appendChild(row('Hapus background', {
+            onClick: () => { try { localStorage.removeItem('pfbg:' + pv.id); } catch (e) {} setBgMode(pv, ''); }
+        }));
 
         // data
         const cd = card('Data');
