@@ -1,5 +1,5 @@
 {
-  "name": "Fast Trading Log",
+  "name": "TradeApp",
   "short_name": "TradeApp",
   "start_url": "./index.html",
   "display": "standalone",
