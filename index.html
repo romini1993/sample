@@ -5757,12 +5757,13 @@
     #appHeader, .stats-backdrop, .stats-sheet, #statsPeekProbe { display: none !important; }
     main.view-in { animation: bnViewIn .22s var(--g-ease) backwards; }
 
-    /* Pil kuning satu judul (Beranda & Riwayat: "Riwayat Trade", Rekap: "Rekap Harian"), sama persis dengan pil tab lama.
-       Di Rekap & Riwayat pil menempel di paling atas layar dan tetap terlihat saat daftar di-scroll. */
-    body[data-view="home"] #tabIndicator, body[data-view="rekap"] #tabIndicator, body[data-view="riwayat"] #tabIndicator,
-    body[data-view="home"] #tabBtnRekap, body[data-view="riwayat"] #tabBtnRekap,
+    /* Pil kuning satu judul di halaman Rekap ("Rekap Harian") dan Riwayat ("Riwayat Trade"), sama persis dengan pil tab lama.
+       Pil menempel di paling atas layar dan tetap terlihat saat daftar di-scroll.
+       Beranda (HP) memakai pil asli dua tab: Rekap Harian | Riwayat Trade, isinya bisa digeser kiri-kanan. */
+    body[data-view="rekap"] #tabIndicator, body[data-view="riwayat"] #tabIndicator,
+    body[data-view="riwayat"] #tabBtnRekap,
     body[data-view="rekap"] #tabBtnRiwayat { display: none !important; }
-    body[data-view="home"] #tabBtnRiwayat, body[data-view="riwayat"] #tabBtnRiwayat, body[data-view="rekap"] #tabBtnRekap {
+    body[data-view="riwayat"] #tabBtnRiwayat, body[data-view="rekap"] #tabBtnRekap {
         background: #f59e0b;                       /* amber-500, sama dengan penanda kuning lama */
         color: #1a1305 !important;
         box-shadow: 0 10px 15px -3px rgba(245, 158, 11, .25), 0 4px 6px -4px rgba(245, 158, 11, .25);
@@ -5913,9 +5914,8 @@
         body[data-view="rekap"] main.relative,
         body[data-view="riwayat"] main.relative { padding-bottom: calc(var(--bnavH) + 84px + env(safe-area-inset-bottom, 0px)) !important; }
 
-        /* satu daftar per menu: Beranda & Riwayat = riwayat, Rekap = rekap (tanpa geser antar-tab) */
-        #tabPager { overflow-x: hidden !important; height: auto !important; }
-        body[data-view="home"] #tabPager > #rekapCardWrap,
+        /* halaman Rekap & Riwayat: satu daftar per menu (tanpa geser). Beranda: dua tab yang bisa digeser kiri-kanan seperti semula */
+        body:not([data-view="home"]) #tabPager { overflow-x: hidden !important; height: auto !important; }
         body[data-view="riwayat"] #tabPager > #rekapCardWrap,
         body[data-view="rekap"] #tabPager > #riwayatCardWrap { display: none !important; }
 
@@ -6038,6 +6038,7 @@
     const body = document.body;
     const VIEWS = ['home', 'stats', 'rekap', 'riwayat', 'profil'];
     let view = 'home';
+    let homeTab = 'rekap';          // tab yang sedang dibuka di Beranda
 
     function paintNav() {
         document.querySelectorAll('#bnav button').forEach(b => {
@@ -6060,9 +6061,9 @@
             const pop = $('fltDatePop'); if (pop) pop.classList.add('hidden');
         }
         if (v === 'home' || v === 'rekap' || v === 'riwayat') {
-            // Beranda & Riwayat memakai daftar riwayat, Rekap memakai rekap harian
+            // Beranda: tab terakhir yang dibuka (awalnya Rekap). Halaman Rekap / Riwayat: daftar masing-masing
             requestAnimationFrame(() => {
-                try { switchTab(v === 'rekap' ? 'rekap' : 'riwayat', true); } catch (e) {}
+                try { switchTab(v === 'home' ? homeTab : (v === 'rekap' ? 'rekap' : 'riwayat'), true); } catch (e) {}
                 try { fitPagerHeight(); } catch (e) {}
                 window.dispatchEvent(new Event('resize'));      // hitung ulang tinggi hero (dipakai susunan terkunci di Beranda)
             });
@@ -6095,6 +6096,16 @@
             const r = _rh.apply(this, arguments);
             updateNavAvatar();
             if (view === 'profil') renderProfilePage();
+            return r;
+        };
+    }
+
+    // catat tab yang dipakai di Beranda (geser atau ketuk pil)
+    const _sync = window.syncTabState;
+    if (typeof _sync === 'function') {
+        window.syncTabState = function (tab) {
+            const r = _sync.apply(this, arguments);
+            if (view === 'home') homeTab = tab;
             return r;
         };
     }
@@ -6327,6 +6338,9 @@
 
     updateNavAvatar();
     setView('home');
+    // setelah semua gaya selesai dimuat, ukur ulang penanda kuning pil tab supaya pas lebarnya
+    const remeasure = () => { if (view === 'home') { try { switchTab(homeTab, true); fitPagerHeight(); } catch (e) {} } };
+    if (document.readyState === 'complete') setTimeout(remeasure, 300); else window.addEventListener('load', () => setTimeout(remeasure, 300));
 })();
 </script>
 
