@@ -5830,6 +5830,13 @@
     }
     .pf-title + .pf-row { border-top: 0; }
     a.pf-row { text-decoration: none; }
+    .pf-edit { padding: 4px 14px 14px; border-top: 1px solid var(--border-soft); }
+    .pf-edit p { margin: 10px 0 8px; font-size: 11px; line-height: 1.5; color: var(--text-dim); }
+    .pf-edit input { width: 100%; padding: 11px 12px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); outline: none; }
+    .pf-edit input:focus { border-color: var(--accent); }
+    .pf-edit .pf-btns { display: flex; gap: 8px; margin-top: 10px; }
+    .pf-edit .pf-btns button { flex: 1; padding: 10px 0; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-dim); font-weight: 600; cursor: pointer; }
+    .pf-edit .pf-btns button.primary { background: var(--accent); border-color: var(--accent); color: #1a1305; }
     .pf-row:hover, .pf-row:active { background: var(--surface-2); }
     div.pf-row { cursor: default; }
     div.pf-row:hover, div.pf-row:active { background: none; }
@@ -6244,6 +6251,7 @@
         document.body.appendChild(inp); inp.click();
     }
 
+    let bnEditOpen = false;          // editor tautan Binance di Profil sedang terbuka?
     function renderProfilePage() {
         const host = $('profilePage'); if (!host) return;
         const prof = navProfile();
@@ -6301,9 +6309,31 @@
 
         // pintasan
         const cp = card('Pintasan');
-        // app.binance.com = domain yang diverifikasi untuk aplikasi Binance di HP (terbuka di aplikasi); www.binance.com = cadangan di browser
-        cp.appendChild(row('Binance Copy Trading', { sub: 'Kelola copy trading, coba buka di aplikasi Binance', href: 'https://app.binance.com/id/copy-trading/copy-management' }));
-        cp.appendChild(row('Binance Copy Trading (browser)', { sub: 'www.binance.com, kalau aplikasi tidak terbuka', href: 'https://www.binance.com/id/copy-trading/copy-management' }));
+        // Binance: tautan bawaan membuka Copy Trading di aplikasi; tautan halaman lain (mis. Kelola Copy) bisa ditempel sendiri
+        const BN_DEFAULT = 'https://app.binance.com/id/copy-trading';
+        let bnCustom = ''; try { bnCustom = localStorage.getItem('binanceLink') || ''; } catch (e) {}
+        cp.appendChild(row('Binance Copy Trading', { sub: bnCustom ? 'Memakai tautan buatan kamu' : 'Buka di aplikasi Binance', href: bnCustom || BN_DEFAULT }));
+        cp.appendChild(row('Atur tautan Binance', { value: bnEditOpen ? 'Tutup' : '', onClick: () => { bnEditOpen = !bnEditOpen; renderProfilePage(); } }));
+        if (bnEditOpen) {
+            const ed = document.createElement('div'); ed.className = 'pf-edit';
+            const tip = document.createElement('p');
+            tip.textContent = 'Di aplikasi Binance, buka halaman yang kamu mau (misalnya Kelola Copy), tekan Bagikan, salin tautannya, lalu tempel di sini. Hanya tautan binance.com yang diterima.';
+            const inp = document.createElement('input'); inp.type = 'url'; inp.placeholder = 'https://app.binance.com/...'; inp.value = bnCustom; inp.setAttribute('autocapitalize', 'off'); inp.setAttribute('autocomplete', 'off');
+            const btns = document.createElement('div'); btns.className = 'pf-btns';
+            const bSave = document.createElement('button'); bSave.type = 'button'; bSave.className = 'primary'; bSave.textContent = 'Simpan';
+            const bReset = document.createElement('button'); bReset.type = 'button'; bReset.textContent = 'Pakai bawaan';
+            bSave.addEventListener('click', () => {
+                const v = inp.value.trim();
+                try {
+                    const u = new URL(v);
+                    if (u.protocol !== 'https:' || !/(^|\.)binance\.com$/i.test(u.hostname)) throw new Error('host');
+                    localStorage.setItem('binanceLink', u.href);
+                } catch (e) { showToast('Tautan harus https dari binance.com', 'error'); return; }
+                bnEditOpen = false; renderProfilePage(); showToast('Tautan Binance disimpan', 'success');
+            });
+            bReset.addEventListener('click', () => { try { localStorage.removeItem('binanceLink'); } catch (e) {} bnEditOpen = false; renderProfilePage(); showToast('Kembali ke tautan bawaan', 'success'); });
+            btns.append(bReset, bSave); ed.append(tip, inp, btns); cp.appendChild(ed);
+        }
 
         // akun
         const ca = card('Akun');
