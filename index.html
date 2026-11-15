@@ -5829,6 +5829,7 @@
         transition: background .12s ease;
     }
     .pf-title + .pf-row { border-top: 0; }
+    a.pf-row { text-decoration: none; }
     .pf-row:hover, .pf-row:active { background: var(--surface-2); }
     div.pf-row { cursor: default; }
     div.pf-row:hover, div.pf-row:active { background: none; }
@@ -6183,12 +6184,14 @@
 
     // ───────── Halaman Profil: semua aksi memakai fungsi menu akun yang sudah ada ─────────
     const CHEV = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="5,3 9,7 5,11"/></svg>';
+    const EXT = '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5H4a1 1 0 0 0-1 1V12a1 1 0 0 0 1 1h7.5a1 1 0 0 0 1-1V9.5"/><path d="M9.5 3H13v3.5"/><path d="M13 3 7.5 8.5"/></svg>';
     const CHECK = '<svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="2.5,6.5 5,9 9.5,3.5"/></svg>';
 
     function row(label, o) {
         o = o || {};
-        const el = document.createElement(o.onClick ? 'button' : 'div');
-        if (o.onClick) el.type = 'button';
+        const el = document.createElement(o.href ? 'a' : (o.onClick ? 'button' : 'div'));
+        if (o.href) { el.href = o.href; el.target = '_blank'; el.rel = 'noopener noreferrer'; }
+        else if (o.onClick) el.type = 'button';
         el.className = 'pf-row' + (o.danger ? ' danger' : '') + (o.active ? ' on-acct' : '');
         if (o.lead) el.appendChild(o.lead);
         const t = document.createElement('span'); t.className = 'pf-label'; t.textContent = label;
@@ -6196,6 +6199,7 @@
         el.appendChild(t);
         if (o.value != null) { const v = document.createElement('span'); v.className = 'pf-val'; v.textContent = o.value; el.appendChild(v); }
         if (o.check) { const c = document.createElement('span'); c.className = 'pf-chev'; c.style.color = 'var(--accent-bright)'; c.innerHTML = CHECK; el.appendChild(c); }
+        else if (o.href) { const c = document.createElement('span'); c.className = 'pf-chev'; c.innerHTML = EXT; el.appendChild(c); }
         else if (o.onClick && !o.noChev) { const c = document.createElement('span'); c.className = 'pf-chev'; c.innerHTML = CHEV; el.appendChild(c); }
         if (o.onClick) el.addEventListener('click', o.onClick);
         return el;
@@ -6294,6 +6298,12 @@
                 c.appendChild(row(p.name, { lead: makeAvatar(p, 30), check: active, onClick: active ? null : () => switchProfile(p.id) }));
             });
         }
+
+        // pintasan
+        const cp = card('Pintasan');
+        // app.binance.com = domain yang diverifikasi untuk aplikasi Binance di HP (terbuka di aplikasi); www.binance.com = cadangan di browser
+        cp.appendChild(row('Binance Copy Trading', { sub: 'Kelola copy trading, coba buka di aplikasi Binance', href: 'https://app.binance.com/id/copy-trading/copy-management' }));
+        cp.appendChild(row('Binance Copy Trading (browser)', { sub: 'www.binance.com, kalau aplikasi tidak terbuka', href: 'https://www.binance.com/id/copy-trading/copy-management' }));
 
         // akun
         const ca = card('Akun');
