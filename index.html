@@ -1735,6 +1735,8 @@
         function apiUrl(query) {
             return ACCOUNT_MODE ? `${API_URL}?${query}&token=${encodeURIComponent(SESSION ? SESSION.token : '')}` : `${API_URL}?${query}`;
         }
+        // Penanda unik tiap perubahan data (tambah / edit / hapus). Apps Script mengabaikan permintaan dengan rid yang sudah pernah diproses.
+        function newRid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
         function dataQuery() { return ACCOUNT_MODE ? `action=get&_ts=${Date.now()}` : `_ts=${Date.now()}`; }
 
         // ───────── Sandi profil (kunci tampilan) ─────────
@@ -1941,12 +1943,14 @@
         // baris di Sheet pindah posisi & nomornya ikut berubah).
         function syncFromSheet() {
             if (!API_URL) return Promise.resolve();
+            const t0 = Date.now();
             return fetch(apiUrl(dataQuery()), { cache: 'no-store' })
                 .then(res => res.json())
                 .then(data => {
                     if (checkAuthError(data)) return;
                     if (!data || !data.history) return;
                     applyServerProfile(data.profile);
+                    reapplyPending(data, t0);
                     cachedGlobalResponse = data;
                     sortHistoryByClosedDate();
                     localStorage.setItem(CACHE_KEY, JSON.stringify(data));
@@ -2954,6 +2958,7 @@
             if (APP_LOCKED || initialFetchStarted) return;
             initialFetchStarted = true;
             const hadCachedRender = cacheRenderedEarly;
+            const t0 = Date.now();
             document.body.classList.add('is-syncing');
             (API_URL ? fetch(apiUrl(dataQuery()), { cache: 'no-store' }) : Promise.reject(new Error('API_URL kosong - cek Database.js')))
                 .then(res => res.json())
@@ -2961,6 +2966,7 @@
                     if (checkAuthError(data)) return;
                     if (!data || !Array.isArray(data.history)) throw new Error('Respons Sheet tidak valid');
                     applyServerProfile(data.profile);
+                    reapplyPending(data, t0);
                     cachedGlobalResponse = data;
                     sortHistoryByClosedDate();
                     localStorage.setItem(CACHE_KEY, JSON.stringify(data));
@@ -3074,6 +3080,38 @@
             cachedGlobalResponse.winRate = cachedGlobalResponse.totalTrades > 0 ? Math.round((wins / cachedGlobalResponse.totalTrades) * 100) : 0;
         }
 
+        // Trade yang baru disimpan tapi belum tentu sudah tercatat di Sheet. Kalau data dari Sheet (mis. pengambilan data saat aplikasi
+        // dibuka yang lambat) datang SEBELUM penambahan itu selesai, trade tadi tidak boleh hilang dari layar: kalau hilang, kita
+        // mengira gagal lalu mengetik ulang, dan Sheet ujungnya berisi dobel/tiga.
+        const pendingAdds = [];
+        let lastSubmitFp = '', lastSubmitAt = 0;
+        function tradeMatchKey(it) {
+            const d = parseClosedDate(String(it.closed || ''));
+            return [String(it.pair || '').toUpperCase().replace(/[^A-Z0-9]/g, ''), d ? +d : String(it.closed), (parseFloat(it.pnl) || 0).toFixed(6)].join('|');
+        }
+        // data = respons Sheet; t0 = kapan permintaan data itu dikirim. Mengembalikan true kalau ada trade yang dipertahankan.
+        function reapplyPending(data, t0) {
+            if (!pendingAdds.length || !data || !Array.isArray(data.history)) return false;
+            const now = Date.now(), pool = {};
+            data.history.forEach(h => { const k = tradeMatchKey(h); pool[k] = (pool[k] || 0) + 1; });
+            let kept = false;
+            for (let i = 0; i < pendingAdds.length; i++) {
+                const p = pendingAdds[i];
+                let drop = p.failed || now - p.t > 180000;                 // gagal / kedaluwarsa
+                if (!drop && pool[p.key] > 0) { pool[p.key]--; drop = true; }          // sudah ada di Sheet
+                if (!drop && p.doneAt && t0 > p.doneAt) drop = true;      // data diminta SETELAH penambahan selesai: Sheet yang benar
+                if (drop) { pendingAdds.splice(i, 1); i--; continue; }
+                data.history.unshift(Object.assign({}, p.item)); kept = true;
+            }
+            if (kept) {
+                let sum = 0, wins = 0;
+                data.history.forEach(it => { const v = parseFloat(it.pnl) || 0; sum += v; if (v > 0) wins++; });
+                data.totalPnl = sum; data.totalTrades = data.history.length;
+                data.winRate = data.totalTrades > 0 ? Math.round((wins / data.totalTrades) * 100) : 0;
+            }
+            return kept;
+        }
+
         // LOGIKA INSTAN: render lokal duluan, sync ke Sheet di belakang layar.
         // TIDAK ada refetch langsung setelah kirim -> itu penyebab data sempat
         // "kedip" balik ke versi lama (race condition / cache jaringan).
@@ -3086,6 +3124,11 @@
             const openedVal = document.getElementById('opened').value;
             const closedVal = document.getElementById('closed').value;
             const pnlVal = parseFloat(document.getElementById('pnl').value) || 0;
+
+            // kiriman identik dalam 10 detik (mis. ketukan ganda / tombol ditekan lagi) tidak dikirim dua kali
+            const fp = [pairVal, openedVal, closedVal, pnlVal, formSide].join('|');
+            if (fp === lastSubmitFp && Date.now() - lastSubmitAt < 10000) { showToast('Trade yang sama baru saja disimpan', 'error'); return; }
+            lastSubmitFp = fp; lastSubmitAt = Date.now();
 
             const [y, m, d] = closedVal.split('-');
             const formattedClosedDate = `${d}/${m}/${y}`;
@@ -3126,8 +3169,16 @@
             const encPnl = encodeURIComponent(pnlVal);
             const encSide = encodeURIComponent(formSide);
 
-            watchAuth(fetch(apiUrl(`action=add&pair=${encPair}&opened=${encOpened}&closed=${encClosed}&pnl=${encPnl}&side=${encSide}`), { cache: 'no-store' }))
+            // rid = penanda unik permintaan ini. Kalau Apps Script mengecek rid, permintaan yang terkirim ulang (mis. diulang otomatis
+            // oleh jaringan/browser) tidak akan menambah baris lagi.
+            const rid = newRid();
+            const pend = { item: newItem, key: tradeMatchKey(newItem), t: Date.now(), doneAt: 0, failed: false };
+            pendingAdds.push(pend);
+
+            watchAuth(fetch(apiUrl(`action=add&pair=${encPair}&opened=${encOpened}&closed=${encClosed}&pnl=${encPnl}&side=${encSide}&rid=${rid}`), { cache: 'no-store' }))
+                .then(res => { pend.doneAt = Date.now(); return res; })
                 .catch(err => {
+                    pend.failed = true;
                     console.log(err);
                     showToast("Gagal sync ke Sheet", "error");
                 });
@@ -3214,7 +3265,7 @@
             renderDashboard(cachedGlobalResponse);
             showToast("Trade diupdate", "success");
 
-            let query = `action=edit&no=${encodeURIComponent(no)}&pair=${encodeURIComponent(newPair)}&pnl=${encodeURIComponent(newPnl)}&side=${encodeURIComponent(newSide)}`;
+            let query = `action=edit&no=${encodeURIComponent(no)}&pair=${encodeURIComponent(newPair)}&pnl=${encodeURIComponent(newPnl)}&side=${encodeURIComponent(newSide)}&rid=${newRid()}`;
             if (newOpenedISO) query += `&opened=${encodeURIComponent(newOpenedISO)}`;
             if (newClosedISO) query += `&closed=${encodeURIComponent(newClosedISO)}`;
 
@@ -3248,7 +3299,7 @@
 
             showToast("Terhapus", "error");
 
-            watchAuth(fetch(apiUrl(`action=delete&no=${no}`), { cache: 'no-store' }))
+            watchAuth(fetch(apiUrl(`action=delete&no=${no}&rid=${newRid()}`), { cache: 'no-store' }))
                 .catch(err => {
                     console.log(err);
                     showToast("Gagal hapus di Sheet", "error");
@@ -5572,7 +5623,7 @@
             let done = 0, fail = 0; const items = imp.ok;
             for (const t of items) {
                 try {
-                    const r = await watchAuth(fetch(apiUrl(`action=add&pair=${encodeURIComponent(t.pair)}&opened=${t.opened}&closed=${t.closed}&pnl=${encodeURIComponent(t.pnl)}&side=${t.side}`), { cache: 'no-store' }));
+                    const r = await watchAuth(fetch(apiUrl(`action=add&pair=${encodeURIComponent(t.pair)}&opened=${t.opened}&closed=${t.closed}&pnl=${encodeURIComponent(t.pnl)}&side=${t.side}&rid=${newRid()}`), { cache: 'no-store' }));
                     const j = await r.json();
                     if (j && j.status === 'success') done++; else { fail++; if (j && j.error === 'auth') break; }
                 } catch (e) { fail++; }
@@ -6197,7 +6248,7 @@
     function row(label, o) {
         o = o || {};
         const el = document.createElement(o.href ? 'a' : (o.onClick ? 'button' : 'div'));
-        if (o.href) { el.href = o.href; el.target = '_blank'; el.rel = 'noopener noreferrer'; }
+        if (o.href) { el.href = o.href; el.target = o.self ? '_self' : '_blank'; el.rel = 'noopener noreferrer'; }
         else if (o.onClick) el.type = 'button';
         el.className = 'pf-row' + (o.danger ? ' danger' : '') + (o.active ? ' on-acct' : '');
         if (o.lead) el.appendChild(o.lead);
@@ -6309,10 +6360,17 @@
 
         // pintasan
         const cp = card('Pintasan');
-        // Binance: tautan bawaan membuka Copy Trading di aplikasi; tautan halaman lain (mis. Kelola Copy) bisa ditempel sendiri
-        const BN_DEFAULT = 'https://app.binance.com/id/copy-trading';
+        // Binance. Android: meluncurkan aplikasi Binance langsung (tanpa path, jadi tidak memicu popup "Tautan ini tidak berfungsi").
+        // Perangkat lain (desktop/iOS): halaman Kelola Copy di web. Tautan buatan sendiri (tombol "Atur tautan") selalu didahulukan.
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        const BN_APP = 'intent://#Intent;package=com.binance.dev;S.browser_fallback_url=' + encodeURIComponent('https://www.binance.com/id/copy-trading') + ';end';
+        const BN_WEB = 'https://www.binance.com/id/copy-trading/copy-management';
         let bnCustom = ''; try { bnCustom = localStorage.getItem('binanceLink') || ''; } catch (e) {}
-        cp.appendChild(row('Binance Copy Trading', { sub: bnCustom ? 'Memakai tautan buatan kamu' : 'Buka di aplikasi Binance', href: bnCustom || BN_DEFAULT }));
+        const bnHref = bnCustom || (isAndroid ? BN_APP : BN_WEB);
+        cp.appendChild(row(isAndroid && !bnCustom ? 'Buka aplikasi Binance' : 'Binance Copy Trading', {
+            sub: bnCustom ? 'Memakai tautan buatan kamu' : (isAndroid ? 'Membuka aplikasi Binance, lanjut ke Copy Trading' : 'Halaman Kelola Copy di browser'),
+            href: bnHref, self: !bnCustom && isAndroid
+        }));
         cp.appendChild(row('Atur tautan Binance', { value: bnEditOpen ? 'Tutup' : '', onClick: () => { bnEditOpen = !bnEditOpen; renderProfilePage(); } }));
         if (bnEditOpen) {
             const ed = document.createElement('div'); ed.className = 'pf-edit';
