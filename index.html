@@ -385,7 +385,7 @@
             position: relative;
             overflow: hidden;
             border-radius: 26px;
-            background: linear-gradient(180deg, rgba(26,30,43,0.97), rgba(12,15,23,0.98));
+            background: linear-gradient(180deg, rgba(19,27,45,0.98), rgba(15,21,36,0.98));
             border: 1px solid rgba(255,255,255,0.08);
             box-shadow:
                 0 40px 90px rgba(0,0,0,0.7),
@@ -1171,7 +1171,7 @@
                 oncontextmenu="event.preventDefault()">
                 <div class="sync-bar" aria-hidden="true"><span></span></div>
                 <div class="relative flex flex-row items-start justify-between gap-2">
-                    <div class="shrink-0 cursor-pointer active:opacity-70 transition" onclick="toggleNetPnL()">
+                    <div id="heroPnl" class="shrink-0 cursor-pointer active:opacity-70 transition" onclick="toggleNetPnL()">
                         <div id="totalPnlLabel" class="text-[10px] font-semibold tracking-wide text-[var(--text-faint)] mb-1">Total P&amp;L</div>
                         <div id="statTotal" class="font-display text-2xl sm:text-3xl md:text-3xl font-bold leading-none">–</div>
                         <div id="statTotalIdr" class="num text-[11px] text-[var(--text-dim)] mt-1.5">–</div>
@@ -6070,6 +6070,10 @@
     @keyframes sheetUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
     @keyframes bnFade { from { opacity: 0; } to { opacity: 1; } }
 
+    /* pil tab simetris: penanda tanpa bayangan (bayangan sebelumnya terpotong lembar daftar dan hanya ada di sisi aktif) */
+    #tabIndicator, body[data-view="riwayat"] #tabBtnRiwayat, body[data-view="rekap"] #tabBtnRekap { box-shadow: none !important; }
+    #tabSwitcher { padding: 4px; gap: 4px; }
+
     /* ── tombol + mengambang (gaya Material: kotak membulat, ungu) ── */
     #bfab {
         width: 58px; height: 58px; border-radius: 18px;
@@ -6109,31 +6113,43 @@
         .hero-avg-tile .v.r { color: var(--loss); }
         .hero-avg-tile .s { margin-top: 3px; font-size: 10px; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* ── Beranda: hero terkunci di atas dan mengecil mengikuti scroll ── */
+        /* ── Beranda: Total P&L menempel di atas (ukurannya TETAP); kurva & rata-rata ikut scroll biasa lalu hilang di bawahnya.
+              Tidak ada tinggi/posisi yang diubah lewat JS saat scroll, hanya transform/opacity, jadi mulus dan tidak ada celah. ── */
+        :root { --hHead: 112px; }
+        body[data-view="home"] main.relative { padding-top: var(--heroTop) !important; }
         body[data-view="home"] #heroBackdrop {
-            display: block; position: fixed; top: 0; left: 0; right: 0; z-index: 19;
-            height: calc(var(--heroTop) + var(--heroDynH, 340px) + 6px); background: var(--bg); pointer-events: none;
+            display: block; position: fixed; top: 0; left: 0; right: 0; z-index: 19; pointer-events: none; margin: 0 !important;
+            height: calc(var(--heroTop) + 1px + var(--hHead) + 7px * var(--hp, 0)); background: var(--bg);   /* di posisi awal berhenti tepat di bawah header (hero tampak satu kartu); makin di-scroll makin menutup celah */
         }
-        body[data-view="home"] #heroSpacer { display: block; height: calc(var(--heroTop) + var(--heroH0, 340px) - 14px); }
+        body[data-view="home"] #heroSpacer { display: none; }
         body[data-view="home"] .hero-panel {
-            position: fixed !important; top: var(--heroTop) !important; left: 0; right: 0; z-index: 20; margin-top: 0 !important;
-            height: var(--heroDynH, auto); overflow: hidden;
-            padding: 16px 14px 14px !important; border-radius: 22px !important;
+            position: relative !important; z-index: auto !important; overflow: hidden;
+            padding: calc(var(--hHead) + 6px) 14px 14px !important; border-radius: 22px !important; background: var(--surface) !important;
         }
+        body[data-view="home"] #heroPnl {
+            position: fixed; top: calc(var(--heroTop) + 1px); left: 7px; right: 7px; height: var(--hHead); z-index: 21;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+            background: var(--surface); border-radius: 21px;
+            box-shadow: 0 0 0 1px rgba(40, 50, 74, var(--hp, 0));
+        }
+        body[data-view="home"] #statTotal { font-size: 44px; transform: scale(calc(.74 + .26 * var(--hp, 0))); transform-origin: center; will-change: transform; }
+        body[data-view="home"] #statTotalIdr { transform: translateY(calc((1 - var(--hp, 0)) * -7px)); }
         body[data-view="home"] #equityCurve { height: 84px; }
-        /* bagian yang memudar saat hero mengecil */
-        body[data-view="home"] #heroStats { opacity: clamp(0, calc(1 - var(--hp, 0) * 3), 1); }
-        body[data-view="home"] #heroCurveWrap { opacity: clamp(0, calc(1 - var(--hp, 0) * 2), 1); transform: translateY(calc(var(--hp, 0) * -10px)); }
-        body[data-view="home"] #heroAvg { opacity: clamp(0, calc(1.1 - var(--hp, 0) * 1.7), 1); transform: translateY(calc(var(--hp, 0) * -14px)); }
+        body[data-view="home"] #heroStats { opacity: clamp(0, calc(1 - var(--hp, 0) * 1.6), 1); }
+        body[data-view="home"] #heroCurveWrap { opacity: clamp(0, calc(1.1 - var(--hp, 0) * 1.6), 1); }
+        body[data-view="home"] #heroAvg { opacity: clamp(0, calc(1.2 - var(--hp, 0) * 1.6), 1); }
 
         /* form tidak lagi tampil di Beranda: muncul lewat tombol + */
         body[data-view="home"] #tradeForm { display: none; }
         body[data-view="home"] #colList { min-height: calc(100dvh + 70px) !important; }
-        body[data-view="home"] #tabBar { top: calc(var(--heroTop) + var(--heroDynH, 340px) + 6px) !important; }
-        body[data-view="home"] #tabBar.is-docked::after { opacity: 1; top: calc(100% - 2px); }
+        body[data-view="home"] #tabBar { top: calc(var(--heroTop) + var(--hHead) + 8px) !important; }
+        body[data-view="home"] #tabBar.is-stuck #tabSwitcher { transform: none !important; }
+        body[data-view="home"] #tabBar.is-stuck { box-shadow: none !important; }
+        body[data-view="home"] #tabBar.is-stuck::after { opacity: 0; }
+        body[data-view="home"] #tabBar.is-docked::after { opacity: 1; top: 100%; }
 
         /* ── isian trade = lembar yang naik dari bawah ── */
-        body.fab-open #fabBackdrop { display: block; position: fixed; inset: 0; z-index: 65; background: rgba(4, 6, 12, .62); animation: bnFade .2s ease; }
+        body.fab-open #fabBackdrop { display: block; position: fixed; inset: 0; margin: 0 !important; z-index: 65; background: rgba(4, 6, 12, .62); animation: bnFade .2s ease; }
         html body.fab-open #tradeForm {
             display: block !important; position: fixed !important; top: auto !important; left: 0; right: 0; bottom: max(var(--navActual, 66px), var(--kbInset, 0px));
             z-index: 70; margin: 0 !important; max-height: calc(92dvh - max(var(--navActual, 66px), var(--kbInset, 0px))); overflow-y: auto;
@@ -6523,40 +6539,25 @@
         host.replaceChildren(frag);
     }
 
-    // ───────── BERANDA (HP): hero mengecil mengikuti scroll ─────────
-    // Hero terkunci di atas. Saat daftar di bawahnya di-scroll, kurva & rata-rata memudar, tingginya menyusut sampai tinggal
-    // angka Total P&L yang membesar dan di tengah.
+    // ───────── BERANDA (HP): Total P&L menempel di atas dan membesar; sisa hero ikut scroll biasa ─────────
     const rootEl = document.documentElement;
     const heroEl = document.querySelector('.hero-panel');
-    let heroH0 = 340, heroMin = 126, heroRaf = 0;
+    let heroRaf = 0, lastP = -1, lastDock = null;
+    const HERO_RANGE = 150;                                            // jarak scroll (px) sampai angka P&L selesai membesar
     function heroMobile() { return !!heroEl && mq.matches && view === 'home'; }
-    function measureHero() {
-        if (!heroMobile() || window.scrollY > 2) return;                 // ukur hanya saat hero masih utuh (di paling atas)
-        heroEl.style.setProperty('height', 'auto', 'important');
-        const h = Math.ceil(heroEl.getBoundingClientRect().height);
-        heroEl.style.removeProperty('height');
-        if (h > 0) heroH0 = h;
-        heroMin = Math.min(parseFloat(getComputedStyle(rootEl).getPropertyValue('--heroMinH')) || 126, heroH0);
-        rootEl.style.setProperty('--heroH0', heroH0 + 'px');
-    }
     function applyHero() {
         if (!heroMobile()) return;
-        const range = Math.max(1, heroH0 - heroMin);
-        const p = Math.max(0, Math.min(1, window.scrollY / range));
-        rootEl.style.setProperty('--hp', p.toFixed(3));
-        rootEl.style.setProperty('--heroDynH', Math.round(heroH0 - p * range) + 'px');
-        const tb = $('tabBar');
-        if (tb) tb.classList.toggle('is-docked', p >= 1 && tb.getBoundingClientRect().top <= heroEl.getBoundingClientRect().bottom + 7);
+        const p = Math.max(0, Math.min(1, window.scrollY / HERO_RANGE));
+        if (p !== lastP) { lastP = p; rootEl.style.setProperty('--hp', p.toFixed(3)); }
+        const tb = $('tabBar'), bd = $('heroBackdrop');
+        if (tb && bd) {
+            const dock = tb.getBoundingClientRect().top <= bd.getBoundingClientRect().bottom + 1;
+            if (dock !== lastDock) { lastDock = dock; tb.classList.toggle('is-docked', dock); }
+        }
     }
-    function heroSync() { measureHero(); applyHero(); }
+    function heroSync() { lastP = -1; applyHero(); }
     window.addEventListener('scroll', () => { if (!heroRaf) heroRaf = requestAnimationFrame(() => { heroRaf = 0; applyHero(); }); }, { passive: true });
-    window.addEventListener('resize', () => { heroSync(); });
-    window.addEventListener('load', () => setTimeout(heroSync, 400));
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => setTimeout(heroSync, 50));
-    if (heroEl && window.MutationObserver) {
-        let t = 0;
-        new MutationObserver(() => { clearTimeout(t); t = setTimeout(heroSync, 80); }).observe(heroEl, { childList: true, characterData: true, subtree: true });
-    }
+    window.addEventListener('resize', heroSync);
 
     // rata-rata harian / mingguan / bulanan di dalam hero (diambil dari perhitungan Statistik yang sudah ada)
     function renderHeroAvg() {
