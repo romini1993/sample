@@ -1378,7 +1378,9 @@
                                 <button type="button" data-sort="closed">Closed</button>
                                 <button type="button" data-sort="opened">Opened</button>
                             </div>
+                            <button type="button" id="fltReorder" aria-pressed="false"><svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4,5.5 7,2.5 10,5.5"/><polyline points="4,8.5 7,11.5 10,8.5"/></svg><span>Atur urutan</span></button>
                         </div>
+                        <div id="mvHint" class="hidden mt-1.5 text-[10px] leading-snug text-[var(--text-dim)]">Geser ▲ ▼ untuk menyamakan urutan trade di hari yang sama dengan Binance. Trade tidak bisa pindah ke hari lain.</div>
                         <div id="fltDatePop" class="hidden absolute right-0 top-full mt-1 z-20 porto-card p-2.5 rounded-xl shadow-lg space-y-1.5" style="width:220px">
                             <div class="text-[10px] text-slate-400">Closed dari</div>
                             <input id="fltFrom" type="date" class="porto-input rounded-lg px-2 text-xs w-full" style="height:32px;color-scheme:dark">
@@ -6120,6 +6122,15 @@
     #fltSort button { font-size: 11px !important; font-weight: 600; padding: 4px 12px; border-radius: 7px; border: 0; background: none; color: var(--text-dim); cursor: pointer; transition: background .15s ease, color .15s ease; }
     #fltSort button.on { background: var(--accent); color: #ffffff; }
 
+    #fltReorder { display: inline-flex; align-items: center; gap: 5px; margin-left: auto; padding: 5px 10px; border-radius: 8px; border: 1px solid transparent; background: var(--surface-2); color: var(--text-dim); cursor: pointer; transition: background .15s ease, color .15s ease; }
+    #fltReorder span { font-size: 11px; font-weight: 600; }
+    #fltReorder.on { background: var(--accent-dim); color: var(--accent-bright); border-color: rgba(89, 96, 229, .55); }
+    body.reorder-on #tradeList > .row-card { position: relative; padding-left: 50px !important; }
+    .mv-btns { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 3px; }
+    .mv-btns button { width: 30px; height: 22px; padding: 0; border-radius: 7px; display: grid; place-items: center; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); cursor: pointer; }
+    .mv-btns button:disabled { opacity: .22; cursor: default; }
+    .mv-btns button:not(:disabled):active { background: var(--accent); border-color: var(--accent); }
+
     /* ── tombol + mengambang (gaya Material: kotak membulat, ungu) ── */
     #bfab {
         width: 58px; height: 58px; border-radius: 18px;
@@ -6286,6 +6297,7 @@
         }
         applyLimit();
         closeFormSheet();
+        if (body.classList.contains('reorder-on')) setReorder(false);
         window.scrollTo(0, 0);
         heroSync();
         const m = document.querySelector('main');
@@ -6342,12 +6354,84 @@
         });
     })();
 
+    // ───────── Riwayat: geser urutan trade di HARI YANG SAMA (menyamakan dengan urutan asli di Binance) ─────────
+    // Menggeser = menukar nomor dua trade bertetangga yang tanggal Closed-nya sama, lalu mengabari Sheet (action=move) supaya baris
+    // di Sheet ikut berpindah. Tampil langsung; kalau Sheet menolak / gagal, urutan dikembalikan.
+    const reorderBtn = $('fltReorder'), mvHint = $('mvHint');
+    const filterActive = () => { const r = $('fltReset'); return !!(r && !r.classList.contains('hidden')); };
+    const ARROW_UP = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3,9 7,5 11,9"/></svg>';
+    const ARROW_DN = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3,5 7,9 11,5"/></svg>';
+    function decorateRows() {
+        const list = $('tradeList'); if (!list) return;
+        const hist = (cachedGlobalResponse && cachedGlobalResponse.history) || [];
+        const by = {}; hist.forEach(t => { by[parseInt(t.no)] = t; });
+        const rows = Array.from(list.children);
+        const itemOf = row => by[parseInt((row.textContent.match(/#(\d+)/) || [])[1])];
+        rows.forEach(row => { const old = row.querySelector(':scope > .mv-btns'); if (old) old.remove(); });
+        if (!body.classList.contains('reorder-on') || histSortMode !== 'closed') return;
+        rows.forEach((row, i) => {
+            const t = itemOf(row); if (!t) return;
+            const up = rows[i - 1] && itemOf(rows[i - 1]), dn = rows[i + 1] && itemOf(rows[i + 1]);
+            const canUp = !!(up && up.closed === t.closed), canDn = !!(dn && dn.closed === t.closed);
+            if (!canUp && !canDn) return;                               // hari itu cuma satu trade: tidak ada yang digeser
+            const box = document.createElement('div'); box.className = 'mv-btns';
+            const mk = (svg, label, ok, dir) => {
+                const b = document.createElement('button'); b.type = 'button'; b.innerHTML = svg; b.setAttribute('aria-label', label); b.disabled = !ok;
+                ['pointerdown', 'touchstart', 'mousedown', 'click'].forEach(ev => b.addEventListener(ev, e => e.stopPropagation()));   // jangan memicu tekan-tahan baris
+                b.addEventListener('click', () => moveTrade(parseInt(t.no), dir));
+                return b;
+            };
+            box.append(mk(ARROW_UP, 'Geser ke atas', canUp, 1), mk(ARROW_DN, 'Geser ke bawah', canDn, -1));
+            row.appendChild(box);
+        });
+    }
+    function setReorder(on) {
+        body.classList.toggle('reorder-on', on);
+        if (reorderBtn) { reorderBtn.classList.toggle('on', on); reorderBtn.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+        if (mvHint) mvHint.classList.toggle('hidden', !on);
+        decorateRows();
+    }
+    if (reorderBtn) reorderBtn.addEventListener('click', () => {
+        const on = !body.classList.contains('reorder-on');
+        if (on && histSortMode !== 'closed') { showToast('Atur urutan hanya bisa di urutan Closed', 'error'); return; }
+        if (on && filterActive()) { showToast('Hapus filter dulu supaya urutannya tidak keliru', 'error'); return; }
+        setReorder(on);
+    });
+    const tradeListEl = $('tradeList');
+    if (tradeListEl && window.MutationObserver) new MutationObserver(decorateRows).observe(tradeListEl, { childList: true });
+    let moveChain = Promise.resolve();
+    function moveTrade(no, dir) {                                       // dir: 1 = naik di daftar, -1 = turun
+        if (typeof pendingAdds !== 'undefined' && pendingAdds.length) { showToast('Tunggu trade sebelumnya selesai tersimpan', 'error'); return; }
+        if (filterActive()) { showToast('Hapus filter dulu supaya urutannya tidak keliru', 'error'); return; }
+        const hist = (cachedGlobalResponse && cachedGlobalResponse.history) || [];
+        const a = hist.find(t => parseInt(t.no) === no), b = hist.find(t => parseInt(t.no) === no + dir);
+        if (!a || !b || a.closed !== b.closed) return;                  // hanya di hari yang sama
+        const swap = () => { const x = a.no; a.no = b.no; b.no = x; };
+        const show = () => {
+            sortHistoryByClosedDate();
+            try { localStorage.setItem(CACHE_KEY, JSON.stringify(cachedGlobalResponse)); } catch (e) {}
+            const keep = animateRows; animateRows = false; renderDashboard(cachedGlobalResponse); animateRows = keep;
+        };
+        swap(); show();
+        const rid = newRid();
+        moveChain = moveChain
+            .then(() => watchAuth(fetch(apiUrl(`action=move&no=${no}&dir=${dir}&rid=${rid}`), { cache: 'no-store' })))
+            .then(res => res.clone().json().catch(() => null))
+            .then(j => { if (j && j.error) throw new Error(j.msg || j.error); })
+            .catch(err => {
+                swap(); show();
+                const m = err && err.message ? String(err.message) : '';
+                showToast(m && !/failed|network|fetch|load/i.test(m) ? m : 'Gagal menggeser, urutan dikembalikan', 'error');
+            });
+    }
+
     // Riwayat: pilih urutan Closed / Opened (bawaan Closed), pilihan diingat
     function paintSort() { document.querySelectorAll('#fltSort button').forEach(b => b.classList.toggle('on', b.dataset.sort === histSortMode)); }
     document.querySelectorAll('#fltSort button').forEach(b => b.addEventListener('click', () => {
         if (histSortMode === b.dataset.sort) return;
         histSortMode = b.dataset.sort;
         try { localStorage.setItem('histSort', histSortMode); } catch (e) {}
+        if (histSortMode !== 'closed') setReorder(false);
         paintSort(); renderTradeListOnly();
     }));
     paintSort();
