@@ -6172,7 +6172,7 @@
 
         /* ── Beranda: Total P&L menempel di atas (ukurannya TETAP); kurva & rata-rata ikut scroll biasa lalu hilang di bawahnya.
               Tidak ada tinggi/posisi yang diubah lewat JS saat scroll, hanya transform/opacity, jadi mulus dan tidak ada celah. ── */
-        :root { --hHead: 112px; }
+        :root { --hHead: 100px; }
         body[data-view="home"] main.relative { padding-top: var(--heroTop) !important; }
         body[data-view="home"] #heroBackdrop {
             display: block; position: fixed; top: 0; left: 0; right: 0; z-index: 19; pointer-events: none; margin: 0 !important;
@@ -6198,8 +6198,8 @@
             transform: scaleX(0); transform-origin: left; transition: transform .25s ease;
         }
         body[data-view="home"] .hero-panel.holding #heroPnl::after { transform: scaleX(1); transition: transform var(--hold-ms, 500ms) linear; }
-        body[data-view="home"] #statTotal { font-size: 44px; transform: scale(calc(.74 + .26 * var(--hp, 0))); transform-origin: center; will-change: transform; }
-        body[data-view="home"] #statTotalIdr { transform: translateY(calc((1 - var(--hp, 0)) * -7px)); }
+        body[data-view="home"] #statTotal { font-size: 32px; transform: scale(calc(.78 + .22 * var(--hp, 0))); transform-origin: center; will-change: transform; }   /* 25px saat diam, 32px saat hero mengecil */
+        body[data-view="home"] #statTotalIdr { transform: translateY(calc((1 - var(--hp, 0)) * -4px)); }
         body[data-view="home"] #equityCurve { height: 84px; }
         body[data-view="home"] #heroStats { opacity: clamp(0, calc(1 - var(--hp, 0) * 1.6), 1); }
         body[data-view="home"] #heroCurveWrap { opacity: clamp(0, calc(1.1 - var(--hp, 0) * 1.6), 1); }
