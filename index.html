@@ -6131,6 +6131,31 @@
     .mv-btns button:disabled { opacity: .22; cursor: default; }
     .mv-btns button:not(:disabled):active { background: var(--accent); border-color: var(--accent); }
 
+    /* Rekap: header "Rekap Harian" bisa diketuk untuk memilih rentang tanggal */
+    body[data-view="rekap"] #tabBtnRekap { pointer-events: auto !important; cursor: pointer; }
+    body[data-view="rekap"] #tabBtnRekap::before {
+        content: ''; display: inline-block; width: 15px; height: 15px; margin-right: 7px; vertical-align: -2px; background: currentColor;
+        -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='5' width='17' height='15.5' rx='2.5'/%3E%3Cpath d='M3.5 10h17M8 3v4M16 3v4'/%3E%3C/svg%3E") center / contain no-repeat;
+        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='5' width='17' height='15.5' rx='2.5'/%3E%3Cpath d='M3.5 10h17M8 3v4M16 3v4'/%3E%3C/svg%3E") center / contain no-repeat;
+    }
+    body[data-view="rekap"] #tabBtnRekap[data-range]::after { content: " · " attr(data-range); font-weight: 500; opacity: .9; }
+    .rk-hide { display: none !important; }
+    #rekapRange {
+        position: absolute; left: 6px; right: 6px; top: calc(100% - 2px); z-index: 40;
+        background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 10px 8px 8px;
+        box-shadow: 0 22px 44px rgba(0, 0, 0, .65);
+    }
+    #rekapRange .rk-head { display: flex; align-items: center; justify-content: space-between; padding: 2px 6px 6px; font-size: 12px; font-weight: 600; color: var(--text-dim); }
+    #rekapRange .rk-x { width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--surface-2); color: var(--text-dim); font-size: 18px !important; line-height: 1; cursor: pointer; }
+    #rekapRange #rkInput { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; border: 0; padding: 0; }
+    #rekapRange .flatpickr-calendar.inline { margin: 0 auto; box-shadow: none; background: transparent; border: 0; }
+    #rekapRange .flatpickr-day.startRange, #rekapRange .flatpickr-day.endRange, #rekapRange .flatpickr-day.startRange:hover, #rekapRange .flatpickr-day.endRange:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+    #rekapRange .flatpickr-day.inRange { background: rgba(89, 96, 229, .22); border-color: transparent; color: var(--text); box-shadow: -5px 0 0 rgba(89, 96, 229, .22), 5px 0 0 rgba(89, 96, 229, .22); }
+    #rekapRange .rk-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 6px 2px; border-top: 1px solid var(--border-soft); margin-top: 6px; }
+    #rekapRange #rkLabel { font-size: 11px; color: var(--text-dim); }
+    #rekapRange #rkClear { font-size: 11px !important; font-weight: 600; padding: 6px 12px; border-radius: 9px; border: 0; background: var(--surface-2); color: var(--accent-bright); cursor: pointer; }
+    #rekapEmpty { font-size: 12px; color: var(--text-faint); text-align: center; padding: 22px 8px; }
+
     /* ── tombol + mengambang (gaya Material: kotak membulat, ungu) ── */
     #bfab {
         width: 58px; height: 58px; border-radius: 18px;
@@ -6298,6 +6323,7 @@
         applyLimit();
         closeFormSheet();
         if (body.classList.contains('reorder-on')) setReorder(false);
+        if (v !== 'rekap') rkReset();                                   // rentang tanggal Rekap hanya berlaku di halaman Rekap
         window.scrollTo(0, 0);
         heroSync();
         const m = document.querySelector('main');
@@ -6436,6 +6462,76 @@
     }));
     paintSort();
 
+    // ───────── Rekap Harian: ketuk header untuk memilih rentang tanggal ─────────
+    let rkFrom = null, rkTo = null, rkFp = null;
+    const rkBtn = $('tabBtnRekap'), tabBarEl = $('tabBar'), rkList = $('dailySummaryList');
+    const rkPop = document.createElement('div');
+    rkPop.id = 'rekapRange'; rkPop.className = 'hidden';
+    rkPop.innerHTML = '<div class="rk-head"><span>Pilih rentang tanggal</span><button type="button" class="rk-x" aria-label="Tutup">×</button></div><input id="rkInput" type="text" tabindex="-1" aria-hidden="true"><div class="rk-foot"><span id="rkLabel">Semua tanggal</span><button type="button" id="rkClear">Hapus rentang</button></div>';
+    if (tabBarEl) tabBarEl.appendChild(rkPop);
+    const rkEmpty = document.createElement('p'); rkEmpty.id = 'rekapEmpty'; rkEmpty.className = 'hidden'; rkEmpty.textContent = 'Tidak ada rekap di rentang tanggal ini.';
+    if (rkList && rkList.parentNode) rkList.parentNode.insertBefore(rkEmpty, rkList.nextSibling);
+    const p2 = n => String(n).padStart(2, '0');
+    const rkFmt = d => p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + '/' + d.getFullYear();
+    const rkShort = d => p2(d.getDate()) + '/' + p2(d.getMonth() + 1);
+    const rkDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    function rkRowDate(el) { const m = (el.textContent || '').match(/(\d{2})\/(\d{2})\/(\d{4})/); return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null; }
+    function applyRekapRange() {
+        if (!rkList) return;
+        let shown = 0, vis = true, total = 0;
+        Array.from(rkList.children).forEach(el => {
+            if (el.classList.contains('day-row-bar')) {
+                total++;
+                const d = rkRowDate(el);
+                vis = !rkFrom || !!(d && d >= rkFrom && d <= rkTo);
+                if (vis) shown++;
+            }
+            el.classList.toggle('rk-hide', !vis);                       // panel detail ikut baris induknya
+        });
+        rkEmpty.classList.toggle('hidden', !(rkFrom && total && !shown));
+    }
+    function paintRekapRange() {
+        const lbl = $('rkLabel');
+        const same = rkFrom && rkTo && +rkFrom === +rkTo;
+        if (lbl) lbl.textContent = rkFrom ? (same ? rkFmt(rkFrom) : rkFmt(rkFrom) + ' – ' + rkFmt(rkTo)) : 'Semua tanggal';
+        if (rkBtn) { if (rkFrom) rkBtn.dataset.range = same ? rkShort(rkFrom) : rkShort(rkFrom) + ' – ' + rkShort(rkTo); else delete rkBtn.dataset.range; }
+    }
+    function rkClose() { rkPop.classList.add('hidden'); }
+    function rkOpen() {
+        if (view !== 'rekap') return;
+        rkPop.classList.remove('hidden');
+        if (!rkFp) {
+            if (typeof flatpickr !== 'function') { rkClose(); showToast('Kalender tidak termuat, coba muat ulang halaman', 'error'); return; }
+            rkFp = flatpickr($('rkInput'), {
+                mode: 'range', inline: true, dateFormat: 'Y-m-d', disableMobile: true, locale: { firstDayOfWeek: 1 },
+                onChange: dates => {
+                    if (!dates.length) { rkFrom = rkTo = null; }
+                    else { rkFrom = rkDay(dates[0]); rkTo = rkDay(dates[dates.length - 1]); }   // satu klik = satu hari, dua klik = rentang
+                    applyRekapRange(); paintRekapRange();
+                    if (dates.length === 2) setTimeout(rkClose, 350);
+                }
+            });
+        }
+    }
+    function rkReset() {
+        rkFrom = rkTo = null; rkClose();
+        if (rkFp) { try { rkFp.clear(false); } catch (e) {} }
+        applyRekapRange(); paintRekapRange();
+    }
+    if (rkBtn) rkBtn.addEventListener('click', e => {
+        if (view !== 'rekap') return;
+        e.stopPropagation();
+        rkPop.classList.contains('hidden') ? rkOpen() : rkClose();
+    });
+    rkPop.querySelector('.rk-x').addEventListener('click', rkClose);
+    $('rkClear').addEventListener('click', () => { rkReset(); });
+    document.addEventListener('click', e => {                           // tutup kalau mengetuk di luar (fase capture: flatpickr mengganti isi kalender saat diklik)
+        if (rkPop.classList.contains('hidden')) return;
+        if (rkPop.contains(e.target) || (rkBtn && rkBtn.contains(e.target))) return;
+        rkClose();
+    }, true);
+    if (rkList && window.MutationObserver) new MutationObserver(applyRekapRange).observe(rkList, { childList: true });
+
     // Beranda desktop: tiap daftar hanya 6 baris terbaru (rekap = 6 hari, riwayat = 6 trade); HP tidak dibatasi
     const LIM = 6, wide = window.matchMedia('(min-width: 768px)');
     function applyLimit() {
@@ -6557,6 +6653,7 @@
     }
 
     let bnEditOpen = false;          // editor tautan Binance di Profil sedang terbuka?
+    let shEditOpen = false;          // editor tautan Google Sheet di Profil sedang terbuka?
     function renderProfilePage() {
         const host = $('profilePage'); if (!host) return;
         const prof = navProfile();
@@ -6645,6 +6742,34 @@
             });
             bReset.addEventListener('click', () => { try { localStorage.removeItem('binanceLink'); } catch (e) {} bnEditOpen = false; renderProfilePage(); showToast('Kembali ke tautan bawaan', 'success'); });
             btns.append(bReset, bSave); ed.append(tip, inp, btns); cp.appendChild(ed);
+        }
+
+        // Google Sheet: tautan diisi sendiri (tersimpan di perangkat ini, per akun)
+        const shKey = 'sheetLink:' + pv.id;
+        let shLink = ''; try { shLink = localStorage.getItem(shKey) || ''; } catch (e) {}
+        cp.appendChild(row('Google Sheet', shLink
+            ? { sub: 'Buka Sheet data trading', href: shLink }
+            : { sub: 'Belum diatur. Ketuk "Atur tautan Sheet" di bawah' }));
+        cp.appendChild(row('Atur tautan Sheet', { value: shEditOpen ? 'Tutup' : '', onClick: () => { shEditOpen = !shEditOpen; renderProfilePage(); } }));
+        if (shEditOpen) {
+            const ed2 = document.createElement('div'); ed2.className = 'pf-edit';
+            const tip2 = document.createElement('p');
+            tip2.textContent = 'Buka Google Sheet-mu, salin tautan dari kolom alamat atau tombol Bagikan, lalu tempel di sini.';
+            const inp2 = document.createElement('input'); inp2.type = 'url'; inp2.placeholder = 'https://docs.google.com/spreadsheets/d/...'; inp2.value = shLink; inp2.setAttribute('autocapitalize', 'off'); inp2.setAttribute('autocomplete', 'off');
+            const btns2 = document.createElement('div'); btns2.className = 'pf-btns';
+            const bSave2 = document.createElement('button'); bSave2.type = 'button'; bSave2.className = 'primary'; bSave2.textContent = 'Simpan';
+            const bDel2 = document.createElement('button'); bDel2.type = 'button'; bDel2.textContent = 'Hapus tautan';
+            bSave2.addEventListener('click', () => {
+                const v = inp2.value.trim();
+                try {
+                    const u = new URL(v);
+                    if (u.protocol !== 'https:') throw new Error('https');
+                    localStorage.setItem(shKey, u.href);
+                } catch (e) { showToast('Tempel tautan lengkap yang diawali https://', 'error'); return; }
+                shEditOpen = false; renderProfilePage(); showToast('Tautan Sheet disimpan', 'success');
+            });
+            bDel2.addEventListener('click', () => { try { localStorage.removeItem(shKey); } catch (e) {} shEditOpen = false; renderProfilePage(); showToast('Tautan Sheet dihapus', 'success'); });
+            btns2.append(bDel2, bSave2); ed2.append(tip2, inp2, btns2); cp.appendChild(ed2);
         }
 
         // akun
