@@ -6154,6 +6154,18 @@
     #rekapRange .rk-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 6px 2px; border-top: 1px solid var(--border-soft); margin-top: 6px; }
     #rekapRange #rkLabel { font-size: 11px; color: var(--text-dim); }
     #rekapRange #rkClear { font-size: 11px !important; font-weight: 600; padding: 6px 12px; border-radius: 9px; border: 0; background: var(--surface-2); color: var(--accent-bright); cursor: pointer; }
+    #rekapRange .rk-foot-l { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    #rekapRange #rkTotal { font-family: 'Space Grotesk', sans-serif; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    #rekapRange #rkTotal.g, #rekapSum .g { color: var(--profit); }
+    #rekapRange #rkTotal.r, #rekapSum .r { color: var(--loss); }
+    #rekapRange .flatpickr-calendar { touch-action: pan-y; }
+    #rekapSum { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 6px; padding: 10px 12px; border-radius: 14px; background: var(--surface-2); border: 1px solid var(--border); }
+    #rekapSum.hidden { display: none; }
+    #rekapSum .rs-k { font-size: 12px; font-weight: 600; color: var(--text); }
+    #rekapSum .rs-s { margin-top: 3px; font-size: 10.5px; color: var(--text-dim); }
+    #rekapSum .rs-right { text-align: right; }
+    #rekapSum .rs-v { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    #rekapSum .rs-r { margin-top: 2px; font-size: 10.5px; color: var(--text-dim); }
     #rekapEmpty { font-size: 12px; color: var(--text-faint); text-align: center; padding: 22px 8px; }
 
     /* ── tombol + mengambang (gaya Material: kotak membulat, ungu) ── */
@@ -6467,15 +6479,43 @@
     const rkBtn = $('tabBtnRekap'), tabBarEl = $('tabBar'), rkList = $('dailySummaryList');
     const rkPop = document.createElement('div');
     rkPop.id = 'rekapRange'; rkPop.className = 'hidden';
-    rkPop.innerHTML = '<div class="rk-head"><span>Pilih rentang tanggal</span><button type="button" class="rk-x" aria-label="Tutup">×</button></div><input id="rkInput" type="text" tabindex="-1" aria-hidden="true"><div class="rk-foot"><span id="rkLabel">Semua tanggal</span><button type="button" id="rkClear">Hapus rentang</button></div>';
+    rkPop.innerHTML = '<div class="rk-head"><span>Pilih rentang tanggal</span><button type="button" class="rk-x" aria-label="Tutup">×</button></div><input id="rkInput" type="text" tabindex="-1" aria-hidden="true"><div class="rk-foot"><div class="rk-foot-l"><span id="rkLabel">Semua tanggal</span><b id="rkTotal"></b></div><button type="button" id="rkClear">Hapus rentang</button></div>';
     if (tabBarEl) tabBarEl.appendChild(rkPop);
     const rkEmpty = document.createElement('p'); rkEmpty.id = 'rekapEmpty'; rkEmpty.className = 'hidden'; rkEmpty.textContent = 'Tidak ada rekap di rentang tanggal ini.';
     if (rkList && rkList.parentNode) rkList.parentNode.insertBefore(rkEmpty, rkList.nextSibling);
+    const rkSum = document.createElement('div'); rkSum.id = 'rekapSum'; rkSum.className = 'hidden';
+    if (rkList && rkList.parentNode) rkList.parentNode.insertBefore(rkSum, rkList);
     const p2 = n => String(n).padStart(2, '0');
     const rkFmt = d => p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + '/' + d.getFullYear();
     const rkShort = d => p2(d.getDate()) + '/' + p2(d.getMonth() + 1);
     const rkDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
     function rkRowDate(el) { const m = (el.textContent || '').match(/(\d{2})\/(\d{2})\/(\d{4})/); return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null; }
+    function rkTotals() {
+        const hist = (cachedGlobalResponse && cachedGlobalResponse.history) || [];
+        let sum = 0, n = 0; const days = new Set();
+        hist.forEach(t => {
+            const d = parseClosedDate(String(t.closed || '')); if (!d) return;
+            const dd = rkDay(d);
+            if (dd >= rkFrom && dd <= rkTo) { sum += parseFloat(t.pnl) || 0; n++; days.add(+dd); }
+        });
+        return { sum: Math.round(sum * 100) / 100, n: n, days: days.size };
+    }
+    function rkMoney(v) {
+        const kurs = (typeof currentKursIdr === 'number' ? currentKursIdr : Number(currentKursIdr)) || 0;
+        const rp = (typeof formatRupiah === 'function') ? ((v < 0 ? '-' : '') + formatRupiah(Math.abs(v) * kurs)) : '';
+        return { usdt: (v >= 0 ? '+' : '') + v.toFixed(2) + ' USDT', rp: rp };
+    }
+    function paintRekapSum() {
+        const tot = $('rkTotal');
+        if (!rkFrom) { rkSum.classList.add('hidden'); if (tot) tot.textContent = ''; return; }
+        const t = rkTotals(), m = rkMoney(t.sum), cls = t.sum >= 0 ? 'g' : 'r';
+        const same = +rkFrom === +rkTo;
+        const lbl = same ? rkShort(rkFrom) : rkShort(rkFrom) + ' – ' + rkShort(rkTo);
+        rkSum.innerHTML = '<div class="rs-left"><div class="rs-k">Total ' + lbl + '</div><div class="rs-s">' + t.days + ' hari · ' + t.n + ' trade</div></div>' +
+                          '<div class="rs-right"><div class="rs-v ' + cls + '">' + m.usdt + '</div><div class="rs-r">≈ ' + m.rp + '</div></div>';
+        rkSum.classList.remove('hidden');
+        if (tot) { tot.className = cls; tot.textContent = 'Total ' + m.usdt; }
+    }
     function applyRekapRange() {
         if (!rkList) return;
         let shown = 0, vis = true, total = 0;
@@ -6489,6 +6529,7 @@
             el.classList.toggle('rk-hide', !vis);                       // panel detail ikut baris induknya
         });
         rkEmpty.classList.toggle('hidden', !(rkFrom && total && !shown));
+        paintRekapSum();                                                // data diperbarui: total ikut dihitung ulang
     }
     function paintRekapRange() {
         const lbl = $('rkLabel');
@@ -6496,10 +6537,24 @@
         if (lbl) lbl.textContent = rkFrom ? (same ? rkFmt(rkFrom) : rkFmt(rkFrom) + ' – ' + rkFmt(rkTo)) : 'Semua tanggal';
         if (rkBtn) { if (rkFrom) rkBtn.dataset.range = same ? rkShort(rkFrom) : rkShort(rkFrom) + ' – ' + rkShort(rkTo); else delete rkBtn.dataset.range; }
     }
-    function rkClose() { rkPop.classList.add('hidden'); }
+    // Tombol Kembali (HP): saat kalender dibuka kita "titip" satu entri riwayat, jadi Kembali menutup kalender dulu (tidak keluar aplikasi)
+    let rkPushed = false, rkIgnorePop = false, rkAfterPop = null;
+    function rkClose(done) {
+        rkPop.classList.add('hidden');
+        const cb = (typeof done === 'function') ? done : null;
+        if (rkPushed) {
+            rkPushed = false; rkIgnorePop = true; rkAfterPop = cb;
+            try { history.back(); } catch (e) { rkIgnorePop = false; rkAfterPop = null; if (cb) cb(); }
+        } else if (cb) cb();
+    }
+    window.addEventListener('popstate', () => {
+        if (rkIgnorePop) { rkIgnorePop = false; const f = rkAfterPop; rkAfterPop = null; if (f) f(); return; }
+        if (rkPushed) { rkPushed = false; rkPop.classList.add('hidden'); }          // entri sudah dibuang oleh tombol Kembali
+    });
     function rkOpen() {
         if (view !== 'rekap') return;
         rkPop.classList.remove('hidden');
+        if (!rkPushed && !rkIgnorePop) { try { history.pushState({ rekapRange: true }, ''); rkPushed = true; } catch (e) {} }
         if (!rkFp) {
             if (typeof flatpickr !== 'function') { rkClose(); showToast('Kalender tidak termuat, coba muat ulang halaman', 'error'); return; }
             rkFp = flatpickr($('rkInput'), {
@@ -6539,6 +6594,15 @@
         rkClose();
     }, true);
     if (rkList && window.MutationObserver) new MutationObserver(applyRekapRange).observe(rkList, { childList: true });
+    // geser kiri = bulan berikutnya, geser kanan = bulan sebelumnya (sentuh di HP, tarik dengan mouse di desktop)
+    (function () {
+        let sx = 0, sy = 0, on = false, mx = 0, my = 0, md = false;
+        const step = (dx, dy, min) => { if (rkFp && Math.abs(dx) >= min && Math.abs(dx) > Math.abs(dy) * 1.4) rkFp.changeMonth(dx < 0 ? 1 : -1); };
+        rkPop.addEventListener('touchstart', e => { const t = e.touches[0]; sx = t.clientX; sy = t.clientY; on = !!(e.target.closest && e.target.closest('.flatpickr-calendar')); }, { passive: true });
+        rkPop.addEventListener('touchend', e => { if (!on) return; on = false; const t = e.changedTouches[0]; step(t.clientX - sx, t.clientY - sy, 45); }, { passive: true });
+        rkPop.addEventListener('mousedown', e => { if (e.button !== 0 || !(e.target.closest && e.target.closest('.flatpickr-days'))) return; md = true; mx = e.clientX; my = e.clientY; });
+        window.addEventListener('mouseup', e => { if (!md) return; md = false; step(e.clientX - mx, e.clientY - my, 50); });
+    })();
 
     // Beranda desktop: tiap daftar hanya 6 baris terbaru (rekap = 6 hari, riwayat = 6 trade); HP tidak dibatasi
     const LIM = 6, wide = window.matchMedia('(min-width: 768px)');
@@ -6887,6 +6951,8 @@
         }
     });
     function openFormSheet() {
+        if (rkIgnorePop) { rkAfterPop = openFormSheet; return; }          // kalender Rekap sedang menutup: tunggu sampai selesai
+        if (rkPushed) { rkClose(openFormSheet); return; }                 // kalender masih terbuka: tutup dulu, lalu buka lembar
         if (!sheetPushed) { try { history.pushState({ addSheet: true }, ''); sheetPushed = true; } catch (e) {} }
         measureNav(); body.classList.add('fab-open'); liftSheet();
         setTimeout(() => { const p = $('pair'); if (p && body.classList.contains('fab-open')) p.focus(); }, 300);
